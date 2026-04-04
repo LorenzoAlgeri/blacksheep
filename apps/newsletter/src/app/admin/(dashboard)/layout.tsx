@@ -24,7 +24,7 @@ export default async function DashboardLayout({
             width={28}
             height={18}
             className="opacity-30"
-            style={{ height: "auto", filter: "brightness(0) saturate(100%) invert(99%) sepia(3%) saturate(200%) hue-rotate(30deg)" }}
+            style={{ filter: "brightness(0) saturate(100%) invert(99%) sepia(3%) saturate(200%) hue-rotate(30deg)" }}
           />
           <span className="font-[family-name:var(--font-brand)] text-sm tracking-wider text-bs-cream/50">ADMIN</span>
         </div>

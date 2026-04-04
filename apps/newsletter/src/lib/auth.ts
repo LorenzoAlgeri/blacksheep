@@ -14,14 +14,14 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
 
         if (
           email !== process.env.ADMIN_EMAIL ||
-          !process.env.ADMIN_PASSWORD_HASH
+          !process.env.ADMIN_PASSWORD_HASH_B64
         ) {
           return null;
         }
 
-        // Dynamic import to avoid bundling bcrypt on client
+        const hash = Buffer.from(process.env.ADMIN_PASSWORD_HASH_B64, "base64").toString();
         const { compare } = await import("bcryptjs");
-        const valid = await compare(password, process.env.ADMIN_PASSWORD_HASH);
+        const valid = await compare(password, hash);
 
         if (!valid) return null;
 
