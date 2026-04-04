@@ -67,7 +67,7 @@ export function SubscribeForm() {
           type="email"
           placeholder="La tua email"
           autoComplete="email"
-          className="w-full bg-transparent border border-bs-gold/30 rounded-md px-4 py-3 font-body text-bs-cream placeholder:text-bs-cream/30 transition-all duration-300"
+          className="w-full bg-transparent border border-bs-cream/20 rounded-md px-4 py-3 font-body text-bs-cream placeholder:text-bs-cream/30 transition-all duration-300"
           {...register("email")}
         />
         {errors.email && (
@@ -82,7 +82,7 @@ export function SubscribeForm() {
           type="text"
           placeholder="Nome (opzionale)"
           autoComplete="given-name"
-          className="w-full bg-transparent border border-bs-gold/15 rounded-md px-4 py-3 font-body text-bs-cream placeholder:text-bs-cream/20 transition-all duration-300"
+          className="w-full bg-transparent border border-bs-cream/10 rounded-md px-4 py-3 font-body text-bs-cream placeholder:text-bs-cream/20 transition-all duration-300"
           {...register("name")}
         />
       </div>

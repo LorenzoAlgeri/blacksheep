@@ -20,7 +20,7 @@ export function SuccessMessage() {
           className="animate-checkmark"
         />
       </svg>
-      <p className="font-heading text-2xl tracking-wider text-bs-gold">
+      <p className="font-heading text-2xl tracking-wider text-bs-cream">
         CI SEI
       </p>
       <p className="font-body text-sm text-bs-cream/50 text-center max-w-[260px]">

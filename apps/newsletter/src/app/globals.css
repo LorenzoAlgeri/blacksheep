@@ -21,7 +21,7 @@
 }
 
 html {
-  background: #000000;
+  background: var(--bs-black);
 }
 
 body {
@@ -46,10 +46,10 @@ body::before {
   z-index: 50;
 }
 
-/* === CTA breathing glow === */
+/* === CTA breathing glow (gold — uso speciale per CTA) === */
 @keyframes glow-breathe {
-  0%, 100% { box-shadow: 0 0 20px rgba(190, 131, 5, 0.15); }
-  50% { box-shadow: 0 0 20px rgba(190, 131, 5, 0.25); }
+  0%, 100% { box-shadow: 0 0 20px color-mix(in srgb, var(--bs-gold) 15%, transparent); }
+  50% { box-shadow: 0 0 20px color-mix(in srgb, var(--bs-gold) 25%, transparent); }
 }
 
 /* === Page load animations === */
@@ -81,7 +81,7 @@ body::before {
   }
   .animate-glow-breathe:hover {
     animation: none;
-    box-shadow: 0 0 30px rgba(190, 131, 5, 0.35);
+    box-shadow: 0 0 30px color-mix(in srgb, var(--bs-gold) 35%, transparent);
   }
   .animate-checkmark {
     stroke-dasharray: 24;
@@ -103,9 +103,9 @@ body::before {
   }
 }
 
-/* Gold focus ring for inputs */
+/* Focus ring for inputs */
 input:focus {
   outline: none;
-  border-color: var(--bs-gold);
-  box-shadow: 0 0 0 1px var(--bs-gold), var(--bs-shadow-gold);
+  border-color: var(--bs-cream);
+  box-shadow: 0 0 0 1px var(--bs-cream), var(--bs-shadow-gold);
 }

@@ -9,8 +9,8 @@ export default async function ConfirmPage({
 
   return (
     <main className="flex flex-1 flex-col items-center justify-center px-6 text-center">
-      <BSLogo className="text-bs-gold mb-6" width={80} height={80} />
-      <h1 className="font-heading text-4xl tracking-wider text-bs-gold mb-4">
+      <BSLogo className="text-bs-cream mb-6" width={80} height={80} />
+      <h1 className="font-heading text-4xl tracking-wider text-bs-cream mb-4">
         {already ? "GIA' CONFERMATO" : "CI SEI"}
       </h1>
       <p className="font-body text-bs-cream/70 text-lg max-w-xs">

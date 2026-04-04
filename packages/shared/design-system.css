@@ -13,12 +13,15 @@
   --bs-burgundy: #731022;
   --bs-cream: #FFFFF3;
 
-  /* === Semantic Colors === */
-  --bs-bg-primary: var(--bs-black);
-  --bs-bg-secondary: var(--bs-navy);
+  /* === Semantic Colors (per linee guida palette) === */
+  /* Principali: blu=dominante/sfondi, cream=testi, black=neutro, burgundy=evidenziare */
+  /* Secondari (solo casi speciali): gold, green, purple */
+  --bs-bg-primary: var(--bs-navy);
+  --bs-bg-secondary: var(--bs-black);
   --bs-text-primary: var(--bs-cream);
-  --bs-text-secondary: var(--bs-gold);
-  --bs-accent: var(--bs-gold);
+  --bs-text-secondary: var(--bs-cream);
+  --bs-accent: var(--bs-burgundy);
+  --bs-accent-special: var(--bs-gold);
   --bs-accent-alt: var(--bs-purple);
   --bs-error: var(--bs-burgundy);
   --bs-success: var(--bs-green);
