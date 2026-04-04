@@ -3,7 +3,7 @@ import { z } from "zod/v4";
 export const subscribeSchema = z.object({
   email: z.email("Inserisci un'email valida"),
   name: z.string().max(100).optional(),
-  website: z.string().max(0).optional(), // honeypot: must be empty
+  website: z.string().optional(), // honeypot: any value allowed, checked in route
 });
 
 export const sendNewsletterSchema = z.object({

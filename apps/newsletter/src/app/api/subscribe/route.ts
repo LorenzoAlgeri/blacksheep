@@ -43,7 +43,7 @@ export async function POST(request: NextRequest) {
     .single();
 
   if (dbError) {
-    console.error("Supabase error:", dbError);
+    console.error("Supabase error:", dbError.message, dbError.code, dbError.details);
     return Response.json(
       { error: "Errore interno. Riprova." },
       { status: 500 },
@@ -54,6 +54,12 @@ export async function POST(request: NextRequest) {
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
   const confirmUrl = `${siteUrl}/api/confirm?token=${subscriber.token}`;
   const unsubscribeUrl = `${siteUrl}/api/unsubscribe?token=${subscriber.token}`;
+
+  // In dev, skip email send (domain not verified) — log the URL to console instead
+  if (process.env.NODE_ENV === "development") {
+    console.log("[DEV] Confirmation URL (email skipped):", confirmUrl);
+    return Response.json({ success: true });
+  }
 
   const { error: emailError } = await resend.emails.send({
     from: "BLACK SHEEP <noreply@blacksheep.community>",
