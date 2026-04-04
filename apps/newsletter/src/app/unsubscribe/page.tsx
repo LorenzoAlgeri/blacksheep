@@ -8,7 +8,7 @@ export default function UnsubscribePage() {
         DISISCRITTO
       </h1>
       <p className="font-body text-bs-cream/50 text-base max-w-xs">
-        Non riceverai piu' le nostre email. Se cambi idea, puoi sempre
+        Non riceverai pi&ugrave; le nostre email. Se cambi idea, puoi sempre
         reiscriverti dalla pagina principale.
       </p>
     </main>
