@@ -38,17 +38,17 @@ export function SubscriberTable() {
       <div className="grid grid-cols-3 gap-3 mb-6">
         <div className="bg-bs-cream/5 rounded-lg p-4 text-center">
           <Users size={20} className="text-bs-cream mx-auto mb-1" />
-          <p className="font-heading text-2xl text-bs-cream">{subscribers.length}</p>
+          <p className="font-[family-name:var(--font-brand)] text-2xl text-bs-cream">{subscribers.length}</p>
           <p className="font-body text-xs text-bs-cream/40">Totali</p>
         </div>
         <div className="bg-bs-cream/5 rounded-lg p-4 text-center">
           <CheckCircle size={20} className="text-bs-green mx-auto mb-1" />
-          <p className="font-heading text-2xl text-bs-cream">{confirmed}</p>
+          <p className="font-[family-name:var(--font-brand)] text-2xl text-bs-cream">{confirmed}</p>
           <p className="font-body text-xs text-bs-cream/40">Confermati</p>
         </div>
         <div className="bg-bs-cream/5 rounded-lg p-4 text-center">
           <Clock size={20} className="text-bs-cream/60 mx-auto mb-1" />
-          <p className="font-heading text-2xl text-bs-cream">{pending}</p>
+          <p className="font-[family-name:var(--font-brand)] text-2xl text-bs-cream">{pending}</p>
           <p className="font-body text-xs text-bs-cream/40">In attesa</p>
         </div>
       </div>

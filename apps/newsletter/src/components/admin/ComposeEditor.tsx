@@ -69,7 +69,7 @@ export function ComposeEditor() {
       <button
         onClick={handleSend}
         disabled={sending || !subject.trim() || !body.trim()}
-        className="flex items-center justify-center gap-2 bg-bs-gold text-bs-black font-heading text-lg tracking-wider py-3 rounded-md hover:bg-bs-gold/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+        className="flex items-center justify-center gap-2 bg-bs-gold text-bs-navy font-[family-name:var(--font-brand)] text-lg tracking-wider py-3 rounded-md hover:bg-bs-gold/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
       >
         <Send size={18} />
         {sending ? "INVIO IN CORSO..." : "INVIA NEWSLETTER"}

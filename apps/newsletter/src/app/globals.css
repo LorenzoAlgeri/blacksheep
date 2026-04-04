@@ -1,65 +1,70 @@
 @import "tailwindcss";
-@import "@blacksheep/shared/design-system.css";
 
-/* === Noise grain texture (CSS only, no images) === */
-@property --noise-opacity {
-  syntax: "<number>";
-  initial-value: 0.03;
-  inherits: false;
+/* === Brand Design System === */
+:root {
+  --bs-navy: #031240;
+  --bs-cream: #FFFFF3;
+  --bs-gold: #BE8305;
+  --bs-black: #1F1F1F;
+  --bs-green: #334B31;
+  --bs-purple: #65305C;
+  --bs-burgundy: #731022;
+  --font-brand: "Arial Black", "Arial Bold", sans-serif;
+  --font-body: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
 
 @theme inline {
-  --color-bs-black: var(--bs-black);
-  --color-bs-gold: var(--bs-gold);
-  --color-bs-cream: var(--bs-cream);
   --color-bs-navy: var(--bs-navy);
+  --color-bs-cream: var(--bs-cream);
+  --color-bs-gold: var(--bs-gold);
+  --color-bs-black: var(--bs-black);
+  --color-bs-green: var(--bs-green);
   --color-bs-purple: var(--bs-purple);
   --color-bs-burgundy: var(--bs-burgundy);
-  --color-bs-green: var(--bs-green);
-  --font-heading: var(--bs-font-heading);
-  --font-body: var(--bs-font-body);
+  --font-brand: var(--font-brand);
+  --font-body: var(--font-body);
 }
 
 html {
-  background: var(--bs-black);
+  background: #010a20;
 }
 
 body {
-  background: var(--bs-bg-primary);
-  color: var(--bs-text-primary);
-  font-family: var(--bs-font-body);
+  background: var(--bs-navy);
+  color: var(--bs-cream);
+  font-family: var(--font-body);
   min-height: 100dvh;
   max-width: 480px;
   margin: 0 auto;
   position: relative;
 }
 
-/* Noise overlay */
+/* Noise grain overlay */
 body::before {
   content: "";
   position: fixed;
   inset: 0;
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
-  opacity: 0.03;
+  opacity: 0.04;
   mix-blend-mode: overlay;
   pointer-events: none;
   z-index: 50;
 }
 
-/* === CTA breathing glow (gold — uso speciale per CTA) === */
+/* CTA breathing glow */
 @keyframes glow-breathe {
-  0%, 100% { box-shadow: 0 0 20px color-mix(in srgb, var(--bs-gold) 15%, transparent); }
-  50% { box-shadow: 0 0 20px color-mix(in srgb, var(--bs-gold) 25%, transparent); }
+  0%, 100% { box-shadow: 0 0 20px rgba(190, 131, 5, 0.15); }
+  50% { box-shadow: 0 0 25px rgba(190, 131, 5, 0.3); }
 }
 
-/* === Page load animations === */
+/* Page load animations */
 @keyframes fade-in-scale {
   from { opacity: 0; transform: scale(0.95); }
   to { opacity: 1; transform: scale(1); }
 }
 
 @keyframes slide-up {
-  from { opacity: 0; transform: translateY(20px); }
+  from { opacity: 0; transform: translateY(16px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
@@ -68,20 +73,13 @@ body::before {
   to { stroke-dashoffset: 0; }
 }
 
-/* Only animate if user allows motion */
 @media (prefers-reduced-motion: no-preference) {
-  .animate-fade-in-scale {
-    animation: fade-in-scale 600ms ease-out both;
-  }
-  .animate-slide-up {
-    animation: slide-up 500ms ease-out both;
-  }
-  .animate-glow-breathe {
-    animation: glow-breathe 2s ease-in-out infinite;
-  }
+  .animate-fade-in-scale { animation: fade-in-scale 600ms ease-out both; }
+  .animate-slide-up { animation: slide-up 500ms ease-out both; }
+  .animate-glow-breathe { animation: glow-breathe 2s ease-in-out infinite; }
   .animate-glow-breathe:hover {
     animation: none;
-    box-shadow: 0 0 30px color-mix(in srgb, var(--bs-gold) 35%, transparent);
+    box-shadow: 0 0 30px rgba(190, 131, 5, 0.4);
   }
   .animate-checkmark {
     stroke-dasharray: 24;
@@ -90,7 +88,6 @@ body::before {
   }
 }
 
-/* Reduce motion: no animations, instant display */
 @media (prefers-reduced-motion: reduce) {
   .animate-fade-in-scale,
   .animate-slide-up {
@@ -103,9 +100,9 @@ body::before {
   }
 }
 
-/* Focus ring for inputs */
+/* Input focus gold */
 input:focus {
   outline: none;
-  border-color: var(--bs-cream);
-  box-shadow: 0 0 0 1px var(--bs-cream), var(--bs-shadow-gold);
+  border-color: var(--bs-gold) !important;
+  box-shadow: 0 0 0 1px var(--bs-gold), 0 0 12px rgba(190, 131, 5, 0.2);
 }

@@ -3,7 +3,7 @@
 import { Suspense, useState } from "react";
 import { signIn } from "next-auth/react";
 import { useSearchParams } from "next/navigation";
-import { BSLogo } from "@blacksheep/shared/BSLogo";
+import Image from "next/image";
 
 function LoginForm() {
   const searchParams = useSearchParams();
@@ -55,7 +55,7 @@ function LoginForm() {
       <button
         type="submit"
         disabled={loading}
-        className="w-full bg-bs-cream/10 text-bs-cream font-heading text-lg tracking-wider py-3 rounded-md hover:bg-bs-cream/20 transition-colors disabled:opacity-50 cursor-pointer"
+        className="w-full bg-bs-cream/10 text-bs-cream font-[family-name:var(--font-brand)] text-lg tracking-wider py-3 rounded-md hover:bg-bs-cream/20 transition-colors disabled:opacity-50 cursor-pointer"
       >
         {loading ? "..." : "ACCEDI"}
       </button>
@@ -67,8 +67,15 @@ function LoginForm() {
 export default function AdminLoginPage() {
   return (
     <main className="flex flex-1 flex-col items-center justify-center px-6">
-      <BSLogo className="text-bs-cream/20 mb-8" width={60} height={60} />
-      <h1 className="font-heading text-2xl tracking-wider text-bs-cream mb-6">ADMIN</h1>
+      <Image
+        src="/bs-logo.svg"
+        alt="BLACK SHEEP"
+        width={60}
+        height={39}
+        className="mb-8 opacity-20"
+        style={{ filter: "brightness(0) saturate(100%) invert(99%) sepia(3%) saturate(200%) hue-rotate(30deg)" }}
+      />
+      <h1 className="font-[family-name:var(--font-brand)] text-2xl tracking-wider text-bs-cream mb-6">ADMIN</h1>
       <Suspense fallback={<p className="font-body text-bs-cream/30">Caricamento...</p>}>
         <LoginForm />
       </Suspense>

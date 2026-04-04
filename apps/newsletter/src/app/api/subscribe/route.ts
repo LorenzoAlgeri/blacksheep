@@ -60,13 +60,13 @@ export async function POST(request: NextRequest) {
     to: email,
     subject: "Conferma la tua iscrizione — BLACK SHEEP",
     html: `
-      <div style="background:#1F1F1F;color:#FFFFF3;padding:40px;font-family:'Source Sans 3',sans-serif;text-align:center;">
-        <h1 style="font-family:'Bebas Neue',sans-serif;color:#BE8305;font-size:32px;letter-spacing:0.1em;">BLACK SHEEP</h1>
-        <p style="font-size:18px;margin:24px 0;">Conferma la tua email per entrare nella lista.</p>
-        <a href="${confirmUrl}" style="display:inline-block;background:#BE8305;color:#1F1F1F;padding:14px 32px;text-decoration:none;font-weight:700;font-size:16px;letter-spacing:0.05em;">CONFERMA</a>
-        <p style="font-size:12px;color:#FFFFF380;margin-top:32px;">Se non hai richiesto l'iscrizione, ignora questa email.</p>
+      <div style="background:#031240;color:#FFFFF3;padding:40px;font-family:'Arial Black',Arial,sans-serif;text-align:center;">
+        <h1 style="color:#BE8305;font-size:32px;letter-spacing:0.1em;">BLACK SHEEP</h1>
+        <p style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:18px;margin:24px 0;">Conferma la tua email per entrare nella lista.</p>
+        <a href="${confirmUrl}" style="display:inline-block;background:#BE8305;color:#031240;padding:14px 32px;text-decoration:none;font-weight:700;font-size:16px;letter-spacing:0.05em;">CONFERMA</a>
+        <p style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:12px;color:#FFFFF380;margin-top:32px;">Se non hai richiesto l'iscrizione, ignora questa email.</p>
         <hr style="border:none;border-top:1px solid #FFFFF320;margin:32px 0;" />
-        <p style="font-size:11px;color:#FFFFF340;text-align:center;">
+        <p style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:11px;color:#FFFFF340;text-align:center;">
           <a href="${unsubscribeUrl}" style="color:#FFFFF340;text-decoration:underline;">Disiscriviti</a>
         </p>
       </div>

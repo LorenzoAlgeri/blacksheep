@@ -47,8 +47,8 @@ export async function POST(request: Request) {
         to: sub.email,
         subject,
         html: `
-          <div style="background:#1F1F1F;color:#FFFFF3;padding:40px;font-family:'Source Sans 3',sans-serif;">
-            <h1 style="font-family:'Bebas Neue',sans-serif;color:#BE8305;font-size:28px;letter-spacing:0.1em;text-align:center;">BLACK SHEEP</h1>
+          <div style="background:#031240;color:#FFFFF3;padding:40px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
+            <h1 style="font-family:'Arial Black',Arial,sans-serif;color:#BE8305;font-size:28px;letter-spacing:0.1em;text-align:center;">BLACK SHEEP</h1>
             <div style="margin:24px 0;font-size:16px;line-height:1.6;">${content}</div>
             <hr style="border:none;border-top:1px solid #FFFFF320;margin:32px 0;" />
             <p style="font-size:11px;color:#FFFFF340;text-align:center;">

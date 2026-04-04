@@ -1,18 +1,12 @@
 import type { Metadata } from "next";
-import { Bebas_Neue, Source_Sans_3 } from "next/font/google";
+import localFont from "next/font/local";
 import "./globals.css";
 
-const bebasNeue = Bebas_Neue({
-  weight: "400",
-  subsets: ["latin"],
-  variable: "--font-heading",
+const arialBlack = localFont({
+  src: "../fonts/Arial_Black.ttf",
+  variable: "--font-brand",
   display: "swap",
-});
-
-const sourceSans = Source_Sans_3({
-  subsets: ["latin"],
-  variable: "--font-body",
-  display: "swap",
+  weight: "900",
 });
 
 export const metadata: Metadata = {
@@ -34,10 +28,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html
-      lang="it"
-      className={`${bebasNeue.variable} ${sourceSans.variable} h-full antialiased`}
-    >
+    <html lang="it" className={`${arialBlack.variable} h-full antialiased`}>
       <body className="min-h-dvh flex flex-col">{children}</body>
     </html>
   );

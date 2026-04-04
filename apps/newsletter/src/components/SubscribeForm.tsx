@@ -90,7 +90,7 @@ export function SubscribeForm() {
       <button
         type="submit"
         disabled={isSubmitting}
-        className="w-full bg-bs-gold text-bs-black font-heading text-xl tracking-widest py-3.5 rounded-md transition-all duration-300 hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed animate-glow-breathe cursor-pointer"
+        className="w-full bg-bs-gold text-bs-navy font-[family-name:var(--font-brand)] text-xl tracking-widest py-3.5 rounded-md transition-all duration-300 hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed animate-glow-breathe cursor-pointer"
       >
         {isSubmitting ? "..." : "ENTRA NELLA LISTA"}
       </button>
