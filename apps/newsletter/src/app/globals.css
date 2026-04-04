@@ -26,46 +26,66 @@
 }
 
 html {
-  background: #010a20;
+  background: #000000;
 }
 
 body {
-  background: radial-gradient(ellipse at 50% 40%, #0a1e5c 0%, #031240 50%, #010a20 100%);
+  background: #000000;
   color: var(--bs-cream);
   font-family: var(--font-body);
   min-height: 100dvh;
   max-width: 480px;
   margin: 0 auto;
   position: relative;
+  overflow-x: hidden;
 }
 
-/* Noise grain overlay */
+/* Flash spot — simulates camera flash illuminating the center */
+body::after {
+  content: "";
+  position: fixed;
+  top: -10%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 120%;
+  height: 60%;
+  background: radial-gradient(ellipse at 50% 0%, rgba(255,255,243,0.04) 0%, rgba(255,255,243,0.015) 30%, transparent 65%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Noise grain — visible, adds analog texture */
 body::before {
   content: "";
   position: fixed;
   inset: 0;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
-  opacity: 0.04;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+  opacity: 0.06;
   mix-blend-mode: overlay;
   pointer-events: none;
   z-index: 50;
 }
 
-/* CTA breathing glow */
-@keyframes glow-breathe {
-  0%, 100% { box-shadow: 0 0 30px rgba(190, 131, 5, 0.25), 0 0 60px rgba(190, 131, 5, 0.08); }
-  50% { box-shadow: 0 0 35px rgba(190, 131, 5, 0.35), 0 0 70px rgba(190, 131, 5, 0.12); }
-}
-
-/* Page load animations */
+/* === Animations === */
 @keyframes fade-in-scale {
-  from { opacity: 0; transform: scale(0.95); }
+  from { opacity: 0; transform: scale(0.92); }
   to { opacity: 1; transform: scale(1); }
 }
 
 @keyframes slide-up {
-  from { opacity: 0; transform: translateY(16px); }
+  from { opacity: 0; transform: translateY(14px); }
   to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes flash-in {
+  0% { opacity: 0; filter: brightness(3) blur(8px); }
+  40% { opacity: 1; filter: brightness(1.8) blur(0px); }
+  100% { opacity: 1; filter: brightness(1) blur(0px); }
+}
+
+@keyframes line-expand {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
 }
 
 @keyframes checkmark-draw {
@@ -74,12 +94,17 @@ body::before {
 }
 
 @media (prefers-reduced-motion: no-preference) {
-  .animate-fade-in-scale { animation: fade-in-scale 600ms ease-out both; }
-  .animate-slide-up { animation: slide-up 500ms ease-out both; }
-  .animate-glow-breathe { animation: glow-breathe 2s ease-in-out infinite; }
-  .animate-glow-breathe:hover {
-    animation: none;
-    box-shadow: 0 0 40px rgba(190, 131, 5, 0.45), 0 0 80px rgba(190, 131, 5, 0.15);
+  .animate-fade-in-scale {
+    animation: fade-in-scale 800ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+  .animate-slide-up {
+    animation: slide-up 600ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+  .animate-flash-in {
+    animation: flash-in 900ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+  .animate-line-expand {
+    animation: line-expand 600ms cubic-bezier(0.16, 1, 0.3, 1) both;
   }
   .animate-checkmark {
     stroke-dasharray: 24;
@@ -90,19 +115,33 @@ body::before {
 
 @media (prefers-reduced-motion: reduce) {
   .animate-fade-in-scale,
-  .animate-slide-up {
+  .animate-slide-up,
+  .animate-flash-in,
+  .animate-line-expand {
     animation: none;
     opacity: 1;
     transform: none;
-  }
-  .animate-glow-breathe {
-    animation: none;
+    filter: none;
   }
 }
 
-/* Input focus gold */
+/* Input focus */
 input:focus {
   outline: none;
-  border-color: var(--bs-gold) !important;
-  box-shadow: 0 0 0 1px var(--bs-gold), 0 0 12px rgba(190, 131, 5, 0.2);
+  border-color: rgba(255, 255, 243, 0.3) !important;
+  box-shadow: 0 0 0 1px rgba(255, 255, 243, 0.08);
+}
+
+/* CTA button */
+.cta-btn {
+  box-shadow: 0 4px 30px rgba(255, 255, 243, 0.1);
+  transition: box-shadow 200ms ease, transform 200ms ease;
+}
+.cta-btn:hover {
+  box-shadow: 0 4px 40px rgba(255, 255, 243, 0.18);
+  transform: scale(1.015);
+}
+.cta-btn:active {
+  transform: scale(0.98);
+  box-shadow: 0 2px 20px rgba(255, 255, 243, 0.08);
 }

@@ -45,10 +45,10 @@ export function SubscribeForm() {
     <form
       onSubmit={handleSubmit(onSubmit)}
       className="flex flex-col gap-3 w-full animate-slide-up"
-      style={{ animationDelay: "400ms" }}
+      style={{ animationDelay: "600ms" }}
       noValidate
     >
-      {/* Honeypot — hidden from humans, visible to bots */}
+      {/* Honeypot */}
       <div className="absolute opacity-0 h-0 overflow-hidden" aria-hidden="true">
         <label htmlFor="website">Website</label>
         <input
@@ -67,7 +67,7 @@ export function SubscribeForm() {
           type="email"
           placeholder="La tua email"
           autoComplete="email"
-          className="w-full bg-white/[0.03] backdrop-blur-sm border border-bs-cream/15 rounded-lg px-5 py-3.5 font-body text-bs-cream placeholder:text-bs-cream/30 transition-all duration-300"
+          className="w-full bg-white/[0.02] border border-bs-cream/8 rounded-lg px-5 py-3.5 font-body text-sm text-bs-cream placeholder:text-bs-cream/20 transition-all duration-200"
           {...register("email")}
         />
         {errors.email && (
@@ -82,7 +82,7 @@ export function SubscribeForm() {
           type="text"
           placeholder="Nome (opzionale)"
           autoComplete="given-name"
-          className="w-full bg-white/[0.03] backdrop-blur-sm border border-bs-cream/10 rounded-lg px-5 py-3.5 font-body text-bs-cream placeholder:text-bs-cream/20 transition-all duration-300"
+          className="w-full bg-white/[0.02] border border-bs-cream/6 rounded-lg px-5 py-3.5 font-body text-sm text-bs-cream placeholder:text-bs-cream/15 transition-all duration-200"
           {...register("name")}
         />
       </div>
@@ -90,13 +90,13 @@ export function SubscribeForm() {
       <button
         type="submit"
         disabled={isSubmitting}
-        className="w-full bg-bs-gold text-bs-navy font-[family-name:var(--font-brand)] text-xl tracking-widest py-4 rounded-lg shadow-[0_0_30px_rgba(190,131,5,0.25)] transition-all duration-300 hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed animate-glow-breathe cursor-pointer"
+        className="w-full bg-bs-cream text-black font-[family-name:var(--font-brand)] text-lg tracking-[0.15em] py-4 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed cta-btn cursor-pointer mt-1"
       >
-        {isSubmitting ? "..." : "ENTRA NELLA LISTA"}
+        {isSubmitting ? "..." : "THE PLACE TO BE"}
       </button>
 
       {serverError && (
-        <p className="font-body text-xs text-bs-burgundy text-center">{serverError}</p>
+        <p className="font-body text-xs text-bs-burgundy text-center mt-1">{serverError}</p>
       )}
     </form>
   );
