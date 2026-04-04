@@ -1,26 +1,111 @@
 @import "tailwindcss";
+@import "@blacksheep/shared/design-system.css";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+/* === Noise grain texture (CSS only, no images) === */
+@property --noise-opacity {
+  syntax: "<number>";
+  initial-value: 0.03;
+  inherits: false;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-bs-black: var(--bs-black);
+  --color-bs-gold: var(--bs-gold);
+  --color-bs-cream: var(--bs-cream);
+  --color-bs-navy: var(--bs-navy);
+  --color-bs-purple: var(--bs-purple);
+  --color-bs-burgundy: var(--bs-burgundy);
+  --color-bs-green: var(--bs-green);
+  --font-heading: var(--bs-font-heading);
+  --font-body: var(--bs-font-body);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  background: #000000;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--bs-bg-primary);
+  color: var(--bs-text-primary);
+  font-family: var(--bs-font-body);
+  min-height: 100dvh;
+  max-width: 480px;
+  margin: 0 auto;
+  position: relative;
+}
+
+/* Noise overlay */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+  opacity: 0.03;
+  mix-blend-mode: overlay;
+  pointer-events: none;
+  z-index: 50;
+}
+
+/* === CTA breathing glow === */
+@keyframes glow-breathe {
+  0%, 100% { box-shadow: 0 0 20px rgba(190, 131, 5, 0.15); }
+  50% { box-shadow: 0 0 20px rgba(190, 131, 5, 0.25); }
+}
+
+/* === Page load animations === */
+@keyframes fade-in-scale {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes slide-up {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes checkmark-draw {
+  from { stroke-dashoffset: 24; }
+  to { stroke-dashoffset: 0; }
+}
+
+/* Only animate if user allows motion */
+@media (prefers-reduced-motion: no-preference) {
+  .animate-fade-in-scale {
+    animation: fade-in-scale 600ms ease-out both;
+  }
+  .animate-slide-up {
+    animation: slide-up 500ms ease-out both;
+  }
+  .animate-glow-breathe {
+    animation: glow-breathe 2s ease-in-out infinite;
+  }
+  .animate-glow-breathe:hover {
+    animation: none;
+    box-shadow: 0 0 30px rgba(190, 131, 5, 0.35);
+  }
+  .animate-checkmark {
+    stroke-dasharray: 24;
+    stroke-dashoffset: 24;
+    animation: checkmark-draw 400ms ease-out 200ms forwards;
+  }
+}
+
+/* Reduce motion: no animations, instant display */
+@media (prefers-reduced-motion: reduce) {
+  .animate-fade-in-scale,
+  .animate-slide-up {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+  .animate-glow-breathe {
+    animation: none;
+  }
+}
+
+/* Gold focus ring for inputs */
+input:focus {
+  outline: none;
+  border-color: var(--bs-gold);
+  box-shadow: 0 0 0 1px var(--bs-gold), var(--bs-shadow-gold);
 }
