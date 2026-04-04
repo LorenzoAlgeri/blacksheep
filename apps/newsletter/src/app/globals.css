@@ -30,7 +30,7 @@ html {
 }
 
 body {
-  background: var(--bs-navy);
+  background: radial-gradient(ellipse at 50% 40%, #0a1e5c 0%, #031240 50%, #010a20 100%);
   color: var(--bs-cream);
   font-family: var(--font-body);
   min-height: 100dvh;
@@ -53,8 +53,8 @@ body::before {
 
 /* CTA breathing glow */
 @keyframes glow-breathe {
-  0%, 100% { box-shadow: 0 0 20px rgba(190, 131, 5, 0.15); }
-  50% { box-shadow: 0 0 25px rgba(190, 131, 5, 0.3); }
+  0%, 100% { box-shadow: 0 0 30px rgba(190, 131, 5, 0.25), 0 0 60px rgba(190, 131, 5, 0.08); }
+  50% { box-shadow: 0 0 35px rgba(190, 131, 5, 0.35), 0 0 70px rgba(190, 131, 5, 0.12); }
 }
 
 /* Page load animations */
@@ -79,7 +79,7 @@ body::before {
   .animate-glow-breathe { animation: glow-breathe 2s ease-in-out infinite; }
   .animate-glow-breathe:hover {
     animation: none;
-    box-shadow: 0 0 30px rgba(190, 131, 5, 0.4);
+    box-shadow: 0 0 40px rgba(190, 131, 5, 0.45), 0 0 80px rgba(190, 131, 5, 0.15);
   }
   .animate-checkmark {
     stroke-dasharray: 24;

@@ -15,7 +15,7 @@ export default async function ConfirmPage({
         width={80}
         height={52}
         className="mb-6 opacity-60"
-        style={{ filter: "brightness(0) saturate(100%) invert(99%) sepia(3%) saturate(200%) hue-rotate(30deg)" }}
+        style={{ height: "auto", filter: "brightness(0) saturate(100%) invert(99%) sepia(3%) saturate(200%) hue-rotate(30deg)" }}
       />
       <h1 className="font-[family-name:var(--font-brand)] text-4xl tracking-wider text-bs-cream mb-4">
         {already ? "GIA' CONFERMATO" : "CI SEI"}

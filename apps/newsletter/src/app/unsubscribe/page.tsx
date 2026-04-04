@@ -9,7 +9,7 @@ export default function UnsubscribePage() {
         width={80}
         height={52}
         className="mb-6 opacity-30"
-        style={{ filter: "brightness(0) saturate(100%) invert(99%) sepia(3%) saturate(200%) hue-rotate(30deg)" }}
+        style={{ height: "auto", filter: "brightness(0) saturate(100%) invert(99%) sepia(3%) saturate(200%) hue-rotate(30deg)" }}
       />
       <h1 className="font-[family-name:var(--font-brand)] text-3xl tracking-wider text-bs-cream mb-4">
         DISISCRITTO

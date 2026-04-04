@@ -73,7 +73,7 @@ export default function AdminLoginPage() {
         width={60}
         height={39}
         className="mb-8 opacity-20"
-        style={{ filter: "brightness(0) saturate(100%) invert(99%) sepia(3%) saturate(200%) hue-rotate(30deg)" }}
+        style={{ height: "auto", filter: "brightness(0) saturate(100%) invert(99%) sepia(3%) saturate(200%) hue-rotate(30deg)" }}
       />
       <h1 className="font-[family-name:var(--font-brand)] text-2xl tracking-wider text-bs-cream mb-6">ADMIN</h1>
       <Suspense fallback={<p className="font-body text-bs-cream/30">Caricamento...</p>}>
