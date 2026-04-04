@@ -1,0 +1,12 @@
+{
+  "name": "@blacksheep/shared",
+  "version": "1.0.0",
+  "private": true,
+  "main": "./index.ts",
+  "types": "./index.ts",
+  "exports": {
+    "./brand": "./brand.ts",
+    "./design-system.css": "./design-system.css",
+    "./BSLogo": "./BSLogo.tsx"
+  }
+}

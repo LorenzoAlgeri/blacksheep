@@ -1,0 +1,68 @@
+/**
+ * BLACK SHEEP — Design System
+ * CSS Custom Properties
+ */
+
+:root {
+  /* === Colors (from official Adobe Color palette) === */
+  --bs-green: #334B31;
+  --bs-gold: #BE8305;
+  --bs-black: #1F1F1F;
+  --bs-purple: #65305C;
+  --bs-navy: #031240;
+  --bs-burgundy: #731022;
+  --bs-cream: #FFFFF3;
+
+  /* === Semantic Colors === */
+  --bs-bg-primary: var(--bs-black);
+  --bs-bg-secondary: var(--bs-navy);
+  --bs-text-primary: var(--bs-cream);
+  --bs-text-secondary: var(--bs-gold);
+  --bs-accent: var(--bs-gold);
+  --bs-accent-alt: var(--bs-purple);
+  --bs-error: var(--bs-burgundy);
+  --bs-success: var(--bs-green);
+
+  /* === Typography === */
+  --bs-font-heading: 'Bebas Neue', sans-serif;
+  --bs-font-body: 'Source Sans 3', sans-serif;
+  --bs-font-size-xs: 0.75rem;
+  --bs-font-size-sm: 0.875rem;
+  --bs-font-size-base: 1rem;
+  --bs-font-size-lg: 1.25rem;
+  --bs-font-size-xl: 1.5rem;
+  --bs-font-size-2xl: 2rem;
+  --bs-font-size-3xl: 3rem;
+  --bs-font-size-4xl: 4rem;
+  --bs-font-size-5xl: 6rem;
+
+  /* === Spacing === */
+  --bs-space-1: 0.25rem;
+  --bs-space-2: 0.5rem;
+  --bs-space-3: 0.75rem;
+  --bs-space-4: 1rem;
+  --bs-space-6: 1.5rem;
+  --bs-space-8: 2rem;
+  --bs-space-12: 3rem;
+  --bs-space-16: 4rem;
+  --bs-space-24: 6rem;
+  --bs-space-32: 8rem;
+
+  /* === Border Radius === */
+  --bs-radius-sm: 0.25rem;
+  --bs-radius-md: 0.5rem;
+  --bs-radius-lg: 1rem;
+  --bs-radius-full: 9999px;
+
+  /* === Transitions === */
+  --bs-transition-fast: 150ms ease;
+  --bs-transition-base: 300ms ease;
+  --bs-transition-slow: 500ms ease;
+  --bs-transition-spring: 500ms cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  /* === Shadows === */
+  --bs-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
+  --bs-shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
+  --bs-shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.5);
+  --bs-shadow-gold: 0 0 20px rgba(190, 131, 5, 0.3);
+}
