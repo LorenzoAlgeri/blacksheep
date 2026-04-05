@@ -1,4 +1,4 @@
-import { resend } from "@/lib/resend";
+import { getResend } from "@/lib/resend";
 
 interface Subscriber {
   email: string;
@@ -30,7 +30,7 @@ export async function sendBatchEmails(
       const unsubscribeLink = `<br><a href="${siteUrl}/api/unsubscribe?token=${sub.token}" style="color:rgba(255,255,243,0.25);text-decoration:underline;">Disiscriviti</a> &middot; <a href="${siteUrl}/privacy" style="color:rgba(255,255,243,0.25);text-decoration:underline;">Privacy Policy</a>`;
       const personalizedHtml = html.replaceAll("{{UNSUB}}", unsubscribeLink);
 
-      return resend.emails.send({
+      return getResend().emails.send({
         from: fromEmail,
         to: sub.email,
         subject,

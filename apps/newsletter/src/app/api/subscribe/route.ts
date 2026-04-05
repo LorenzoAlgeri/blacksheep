@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 import { subscribeSchema } from "@/lib/validations";
 import { getSupabase } from "@/lib/supabase";
-import { resend } from "@/lib/resend";
+import { getResend } from "@/lib/resend";
 import { rateLimit } from "@/lib/rate-limit";
 
 function escapeHtml(str: string): string {
@@ -92,7 +92,7 @@ export async function POST(request: NextRequest) {
 
   const greeting = name ? `${escapeHtml(name)}, sei dentro.` : "Sei dentro.";
 
-  const { error: emailError } = await resend.emails.send({
+  const { error: emailError } = await getResend().emails.send({
     from: process.env.RESEND_FROM_EMAIL ?? "BLACK SHEEP <noreply@blacksheep.community>",
     to: email,
     subject: "Conferma la tua iscrizione — BLACK SHEEP",
