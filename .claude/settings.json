@@ -5,5 +5,20 @@
   },
   "enabledPlugins": {
     "gsap-scrolltrigger@claude-design-skillstack": true
-  }
+  },
+  "env": {
+    "SLASH_COMMAND_TOOL_CHAR_BUDGET": "32000"
+  },
+  "hooks": [
+    {
+      "event": "PreToolUse",
+      "matcher": {
+        "tools": ["Bash"]
+      },
+      "handler": {
+        "type": "command",
+        "command": "bash -c 'TOOL_INPUT=\"$TOOL_INPUT\"; if echo \"$TOOL_INPUT\" | grep -qE \"git push.*(-f|--force).*main|git push.*(-f|--force).*master\"; then echo \"BLOCKED: Force push to main/master non consentito\" >&2; exit 2; fi; exit 0'"
+      }
+    }
+  ]
 }

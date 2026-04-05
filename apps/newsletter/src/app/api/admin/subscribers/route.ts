@@ -1,20 +1,48 @@
+import { NextRequest } from "next/server";
 import { auth } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
 
-export async function GET() {
+const DEFAULT_LIMIT = 100;
+const MAX_LIMIT = 500;
+
+export async function GET(request: NextRequest) {
   const session = await auth();
   if (!session) {
-    return Response.json({ error: "Non autorizzato" }, { status: 401 });
+    console.warn("[AUTH] Unauthorized access to /api/admin/subscribers");
+    return Response.json({ error: "Non autorizzato", code: "UNAUTHORIZED" }, { status: 401 });
+  }
+
+  const url = request.nextUrl;
+  const limit = Math.min(
+    Math.max(1, Number(url.searchParams.get("limit")) || DEFAULT_LIMIT),
+    MAX_LIMIT,
+  );
+  const offset = Math.max(0, Number(url.searchParams.get("offset")) || 0);
+
+  const { count, error: countError } = await supabase
+    .from("subscribers")
+    .select("*", { count: "exact", head: true });
+
+  if (countError) {
+    console.error("[SUBSCRIBE] Count error:", countError.message);
+    return Response.json({ error: "Errore database", code: "DB_ERROR" }, { status: 500 });
   }
 
   const { data: subscribers, error } = await supabase
     .from("subscribers")
     .select("id, email, name, status, created_at, confirmed_at")
-    .order("created_at", { ascending: false });
+    .order("created_at", { ascending: false })
+    .range(offset, offset + limit - 1);
 
   if (error) {
-    return Response.json({ error: "Errore database" }, { status: 500 });
+    console.error("[SUBSCRIBE] Fetch error:", error.message);
+    return Response.json({ error: "Errore database", code: "DB_ERROR" }, { status: 500 });
   }
 
-  return Response.json({ subscribers });
+  return Response.json({
+    subscribers,
+    total: count ?? 0,
+    limit,
+    offset,
+  });
 }

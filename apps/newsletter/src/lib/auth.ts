@@ -12,10 +12,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         const email = credentials?.email as string;
         const password = credentials?.password as string;
 
-        if (
-          email !== process.env.ADMIN_EMAIL ||
-          !process.env.ADMIN_PASSWORD_HASH_B64
-        ) {
+        if (email !== process.env.ADMIN_EMAIL || !process.env.ADMIN_PASSWORD_HASH_B64) {
           return null;
         }
 
@@ -32,5 +29,5 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   pages: {
     signIn: "/admin/login",
   },
-  session: { strategy: "jwt" },
+  session: { strategy: "jwt", maxAge: 3600 },
 });

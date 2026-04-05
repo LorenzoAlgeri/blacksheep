@@ -33,7 +33,9 @@ export function SubscriberTable() {
           setLoading(false);
         }
       });
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const retry = () => {
@@ -75,10 +77,12 @@ export function SubscriberTable() {
   return (
     <div>
       {/* Stats */}
-      <div className="grid grid-cols-3 gap-3 mb-6">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
         <div className="bg-bs-cream/5 rounded-lg p-4 text-center">
           <Users size={20} className="text-bs-cream mx-auto mb-1" />
-          <p className="font-[family-name:var(--font-brand)] text-2xl text-bs-cream">{subscribers.length}</p>
+          <p className="font-[family-name:var(--font-brand)] text-2xl text-bs-cream">
+            {subscribers.length}
+          </p>
           <p className="font-body text-xs text-bs-cream/40">Totali</p>
         </div>
         <div className="bg-bs-cream/5 rounded-lg p-4 text-center">
@@ -93,8 +97,38 @@ export function SubscriberTable() {
         </div>
       </div>
 
-      {/* Table */}
-      <div className="overflow-x-auto">
+      {/* Mobile cards (visible below sm) */}
+      <div className="flex flex-col gap-3 sm:hidden">
+        {subscribers.map((sub) => (
+          <div key={sub.id} className="bg-bs-cream/5 rounded-lg p-4 space-y-2">
+            <div className="flex items-center justify-between">
+              <p className="font-body text-sm text-bs-cream truncate">{sub.email}</p>
+              {sub.status === "confirmed" && (
+                <span className="text-bs-green flex items-center gap-1 text-xs flex-shrink-0">
+                  <CheckCircle size={12} /> Confermato
+                </span>
+              )}
+              {sub.status === "pending" && (
+                <span className="text-bs-cream/60 flex items-center gap-1 text-xs flex-shrink-0">
+                  <Clock size={12} /> In attesa
+                </span>
+              )}
+              {sub.status === "unsubscribed" && (
+                <span className="text-bs-cream/30 flex items-center gap-1 text-xs flex-shrink-0">
+                  <XCircle size={12} /> Disiscritto
+                </span>
+              )}
+            </div>
+            <div className="flex items-center justify-between font-body text-xs text-bs-cream/40">
+              <span>{sub.name ?? "\u2014"}</span>
+              <span>{new Date(sub.created_at).toLocaleDateString("it-IT")}</span>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Desktop table (visible at sm and above) */}
+      <div className="hidden sm:block overflow-x-auto">
         <table className="w-full font-body text-sm">
           <thead>
             <tr className="text-bs-cream/50 text-left border-b border-bs-cream/10">

@@ -42,31 +42,23 @@ export function SubscribeForm() {
   }
 
   return (
-    <form
-      onSubmit={handleSubmit(onSubmit)}
-      className="flex flex-col gap-3 w-full"
-      noValidate
-    >
+    <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-3 w-full" noValidate>
       {/* Honeypot */}
       <div className="absolute opacity-0 h-0 overflow-hidden" aria-hidden="true">
         <label htmlFor="website">Website</label>
-        <input
-          id="website"
-          type="text"
-          tabIndex={-1}
-          autoComplete="off"
-          {...register("website")}
-        />
+        <input id="website" type="text" tabIndex={-1} autoComplete="off" {...register("website")} />
       </div>
 
       <div data-motion="input">
-        <label htmlFor="email" className="sr-only">Email</label>
+        <label htmlFor="email" className="sr-only">
+          Email
+        </label>
         <input
           id="email"
           type="email"
           placeholder="La tua email"
           autoComplete="email"
-          className="w-full bg-white/[0.02] border border-bs-cream/15 rounded-lg px-5 input-responsive input-field font-body text-sm text-bs-cream placeholder:text-bs-cream/35 transition-all duration-200"
+          className="w-full bg-white/5 border border-bs-cream/10 rounded-lg px-5 input-responsive input-field font-body text-sm text-bs-cream placeholder:text-bs-cream/30 focus:outline-none focus:border-bs-cream/30 focus:ring-1 focus:ring-bs-cream/10 transition-all duration-200"
           {...register("email")}
         />
         {errors.email && (
@@ -75,13 +67,15 @@ export function SubscribeForm() {
       </div>
 
       <div data-motion="input">
-        <label htmlFor="name" className="sr-only">Nome (opzionale)</label>
+        <label htmlFor="name" className="sr-only">
+          Nome (opzionale)
+        </label>
         <input
           id="name"
           type="text"
           placeholder="Nome (opzionale)"
           autoComplete="given-name"
-          className="w-full bg-white/[0.02] border border-bs-cream/12 rounded-lg px-5 input-responsive input-field font-body text-sm text-bs-cream placeholder:text-bs-cream/30 transition-all duration-200"
+          className="w-full bg-white/5 border border-bs-cream/10 rounded-lg px-5 input-responsive input-field font-body text-sm text-bs-cream placeholder:text-bs-cream/30 focus:outline-none focus:border-bs-cream/30 focus:ring-1 focus:ring-bs-cream/10 transition-all duration-200"
           {...register("name")}
         />
       </div>
@@ -92,12 +86,42 @@ export function SubscribeForm() {
         disabled={isSubmitting}
         className="w-full bg-bs-cream text-black font-[family-name:var(--font-brand)] text-lg tracking-[0.15em] cta-responsive cta-button rounded-lg disabled:opacity-50 disabled:cursor-not-allowed cta-btn cursor-pointer mt-1"
       >
-        {isSubmitting ? "..." : "THE PLACE TO BE"}
+        {isSubmitting ? (
+          <span className="flex items-center justify-center gap-2">
+            <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
+              <circle
+                className="opacity-25"
+                cx="12"
+                cy="12"
+                r="10"
+                stroke="currentColor"
+                strokeWidth="3"
+              />
+              <path
+                className="opacity-75"
+                fill="currentColor"
+                d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+              />
+            </svg>
+            ISCRIZIONE IN CORSO...
+          </span>
+        ) : (
+          "THE PLACE TO BE"
+        )}
       </button>
 
       {serverError && (
-        <p role="alert" className="font-body text-xs text-bs-burgundy text-center mt-1">{serverError}</p>
+        <p role="alert" className="font-body text-xs text-bs-burgundy text-center mt-1">
+          {serverError}
+        </p>
       )}
+
+      <p className="font-body text-[10px] text-bs-cream/20 text-center mt-2">
+        Iscrivendoti accetti la nostra{" "}
+        <a href="/privacy" className="underline hover:text-bs-cream/40 transition-colors">
+          Privacy Policy
+        </a>
+      </p>
     </form>
   );
 }

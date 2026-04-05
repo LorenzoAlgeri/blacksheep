@@ -1,5 +1,5 @@
 import { SubscribeForm } from "@/components/SubscribeForm";
-import { LandingMotion } from "@/components/LandingMotion";
+import { LandingMotionLazy as LandingMotion } from "@/components/LandingMotionLazy";
 
 export default function Home() {
   return (
@@ -32,8 +32,7 @@ export default function Home() {
             data-motion="title"
             className="font-[family-name:var(--font-brand)] text-title leading-[0.85] tracking-[0.02em] text-bs-cream mt-2"
             style={{
-              textShadow:
-                "0 0 80px rgba(255,255,243,0.05), 0 0 4px rgba(255,255,243,0.03)",
+              textShadow: "0 0 80px rgba(255,255,243,0.05), 0 0 4px rgba(255,255,243,0.03)",
             }}
           >
             BLACK

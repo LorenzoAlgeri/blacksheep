@@ -11,9 +11,7 @@ export function LandingMotion({ children }: { children: React.ReactNode }) {
 
   useGSAP(
     () => {
-      const prefersReducedMotion = window.matchMedia(
-        "(prefers-reduced-motion: reduce)"
-      ).matches;
+      const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
       if (prefersReducedMotion) {
         // Everything visible, no motion
@@ -145,7 +143,11 @@ export function LandingMotion({ children }: { children: React.ReactNode }) {
       // --- Entrance timeline: "Entri nel club" ---
       const tl = gsap.timeline({
         onComplete: () => {
-          try { sessionStorage.setItem("bs-entrance-seen", "true"); } catch { /* ignore */ }
+          try {
+            sessionStorage.setItem("bs-entrance-seen", "true");
+          } catch {
+            /* ignore */
+          }
           startAmbientMotion();
         },
       });
@@ -153,18 +155,14 @@ export function LandingMotion({ children }: { children: React.ReactNode }) {
       // PHASE 1: IL BUIO (0 – 1.2s) — suspense
       // 0.0–0.4s: deliberate darkness. Nothing happens. Tension builds.
       // 0.4s: background gradient — eyes adjusting to the dark
-      tl.to(
-        "[data-motion='gradient']",
-        { opacity: 1, duration: 0.8, ease: "power2.inOut" },
-        0.4
-      );
+      tl.to("[data-motion='gradient']", { opacity: 1, duration: 0.8, ease: "power2.inOut" }, 0.4);
 
       // PHASE 2: IL RICONOSCIMENTO (1.2 – 2.0s) — brand emerges
       // 1.2s: Logo materializes with decisive overshoot + glow lights up
       tl.to(
         "[data-motion='logo']",
         { opacity: 1, scale: 1, duration: 0.8, ease: "back.out(1.7)" },
-        1.2
+        1.2,
       );
       tl.to(
         "[data-motion='logo'] svg",
@@ -173,14 +171,14 @@ export function LandingMotion({ children }: { children: React.ReactNode }) {
           duration: 0.8,
           ease: "power2.out",
         },
-        1.2
+        1.2,
       );
 
       // 1.6s: "EVERY MONDAY" — fast, discrete context
       tl.to(
         "[data-motion='every-monday']",
         { opacity: 1, y: 0, duration: 0.3, ease: "power2.out" },
-        1.6
+        1.6,
       );
 
       // PHASE 3: IL DROP (2.0 – 2.7s) — the WOW moment
@@ -190,41 +188,33 @@ export function LandingMotion({ children }: { children: React.ReactNode }) {
       tl.to(
         "[data-motion='title']",
         { clipPath: "inset(0 0% 0 0)", duration: 0.8, ease: "power3.out" },
-        2.0
+        2.0,
       );
       tl.to(
         "[data-motion='title']",
         { filter: "blur(0px)", duration: 0.6, ease: "power2.out" },
-        2.0
+        2.0,
       );
 
       // 2.5s: Location text — ghost opacity, just context
-      tl.to(
-        "[data-motion='location']",
-        { opacity: 0.25, duration: 0.3, ease: "power2.out" },
-        2.5
-      );
+      tl.to("[data-motion='location']", { opacity: 0.25, duration: 0.3, ease: "power2.out" }, 2.5);
 
       // PHASE 4: LA DISCESA (2.7 – 3.5s) — calm, the form appears
       // 2.7s: Divider fades to ambient start level (0.2)
-      tl.to(
-        "[data-motion='divider']",
-        { opacity: 0.2, duration: 0.3, ease: "power2.out" },
-        2.7
-      );
+      tl.to("[data-motion='divider']", { opacity: 0.2, duration: 0.3, ease: "power2.out" }, 2.7);
 
       // 2.8s: Input fields slide up with stagger
       tl.to(
         "[data-motion='input']",
         { opacity: 1, y: 0, duration: 0.4, stagger: 0.1, ease: "power2.out" },
-        2.8
+        2.8,
       );
 
       // 3.1s: CTA — glow breathing starts DURING fade-in so it feels alive
       tl.to(
         "[data-motion='cta']",
         { opacity: 1, scale: 1, duration: 0.4, ease: "power2.out" },
-        3.1
+        3.1,
       );
       tl.call(
         () => {
@@ -233,29 +223,17 @@ export function LandingMotion({ children }: { children: React.ReactNode }) {
             ?.classList.add("cta-glow-active");
         },
         [],
-        3.1
+        3.1,
       );
 
       // 3.3s: Microcopy + footer — ghost presence
-      tl.to(
-        "[data-motion='microcopy']",
-        { opacity: 0.35, duration: 0.3, ease: "power2.out" },
-        3.3
-      );
-      tl.to(
-        "[data-motion='footer']",
-        { opacity: 0.35, duration: 0.3, ease: "power2.out" },
-        3.3
-      );
+      tl.to("[data-motion='microcopy']", { opacity: 0.35, duration: 0.3, ease: "power2.out" }, 3.3);
+      tl.to("[data-motion='footer']", { opacity: 0.35, duration: 0.3, ease: "power2.out" }, 3.3);
 
       // Spotlight fades in during Phase 2 for ambient readiness
-      tl.to(
-        "[data-motion='spotlight']",
-        { opacity: 0.05, duration: 1.5, ease: "power1.out" },
-        1.2
-      );
+      tl.to("[data-motion='spotlight']", { opacity: 0.05, duration: 1.5, ease: "power1.out" }, 1.2);
     },
-    { scope: containerRef }
+    { scope: containerRef },
   );
 
   return (
@@ -263,20 +241,12 @@ export function LandingMotion({ children }: { children: React.ReactNode }) {
       {/* Animated background gradient */}
       <div
         data-motion="gradient"
-        className="absolute top-[-10%] left-1/2 -translate-x-1/2 w-[120%] h-[60%] pointer-events-none z-0"
-        style={{
-          background:
-            "radial-gradient(ellipse at 50% 0%, rgba(255,255,243,0.04) 0%, rgba(255,255,243,0.015) 30%, transparent 65%)",
-        }}
+        className="absolute top-[-10%] left-1/2 -translate-x-1/2 w-[120%] h-[60%] pointer-events-none z-0 bg-[radial-gradient(ellipse_at_50%_0%,rgba(255,255,243,0.04)_0%,rgba(255,255,243,0.02)_30%,transparent_65%)]"
       />
       {/* Ambient spotlight — slow-drifting club light, 350px radius, 5% opacity */}
       <div
         data-motion="spotlight"
-        className="absolute inset-0 pointer-events-none z-[1]"
-        style={{
-          background:
-            "radial-gradient(circle 350px, rgba(255,255,243,0.05), transparent)",
-        }}
+        className="absolute inset-0 pointer-events-none z-[1] bg-[radial-gradient(circle_350px,rgba(255,255,243,0.05),transparent)]"
       />
       {children}
     </div>

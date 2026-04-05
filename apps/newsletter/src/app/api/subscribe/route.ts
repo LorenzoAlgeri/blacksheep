@@ -5,35 +5,30 @@ import { resend } from "@/lib/resend";
 import { rateLimit } from "@/lib/rate-limit";
 
 function escapeHtml(str: string): string {
-  return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  return str
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
 }
 
 export async function POST(request: NextRequest) {
   // Rate limit by IP
   const ip = request.headers.get("x-forwarded-for") ?? "unknown";
   if (!rateLimit(ip)) {
-    return Response.json(
-      { error: "Troppi tentativi. Riprova tra un minuto." },
-      { status: 429 },
-    );
+    return Response.json({ error: "Troppi tentativi. Riprova tra un minuto." }, { status: 429 });
   }
 
   let body: unknown;
   try {
     body = await request.json();
   } catch {
-    return Response.json(
-      { error: "Richiesta non valida." },
-      { status: 400 },
-    );
+    return Response.json({ error: "Richiesta non valida." }, { status: 400 });
   }
   const parsed = subscribeSchema.safeParse(body);
 
   if (!parsed.success) {
-    return Response.json(
-      { error: "Dati non validi." },
-      { status: 400 },
-    );
+    return Response.json({ error: "Dati non validi." }, { status: 400 });
   }
 
   // Honeypot: if "website" field has content, it's a bot
@@ -42,7 +37,13 @@ export async function POST(request: NextRequest) {
     return Response.json({ success: true });
   }
 
-  const { email, name } = parsed.data;
+  const email = parsed.data.email.toLowerCase();
+  const { name } = parsed.data;
+
+  // GDPR: capture consent metadata for audit trail
+  const subscribedIp = ip;
+  const subscribedUserAgent = request.headers.get("user-agent") ?? "unknown";
+  const consentVersion = "1.0";
 
   // Check if subscriber already exists
   const { data: existing } = await supabase
@@ -65,18 +66,22 @@ export async function POST(request: NextRequest) {
   const { data: subscriber, error: dbError } = await supabase
     .from("subscribers")
     .upsert(
-      { email, name, status: "pending" },
+      {
+        email,
+        name,
+        status: "pending",
+        subscribed_ip: subscribedIp,
+        subscribed_user_agent: subscribedUserAgent,
+        consent_version: consentVersion,
+      },
       { onConflict: "email" },
     )
     .select("token")
     .single();
 
   if (dbError) {
-    console.error("Supabase error:", dbError.message, dbError.code, dbError.details);
-    return Response.json(
-      { error: "Errore interno. Riprova." },
-      { status: 500 },
-    );
+    console.error("[SUBSCRIBE] Supabase error:", dbError.message, dbError.code, dbError.details);
+    return Response.json({ error: "Errore interno. Riprova." }, { status: 500 });
   }
 
   // Send confirmation email
@@ -165,6 +170,8 @@ export async function POST(request: NextRequest) {
           <p style="margin:0 0 8px;font-size:10px;color:rgba(255,255,243,0.15);line-height:1.5;">Se non hai richiesto questa iscrizione, ignora questa email.</p>
           <p style="margin:0;font-size:10px;">
             <a href="${unsubscribeUrl}" style="color:rgba(255,255,243,0.15);text-decoration:underline;">Disiscriviti</a>
+            &nbsp;&middot;&nbsp;
+            <a href="${siteUrl}/privacy" style="color:rgba(255,255,243,0.15);text-decoration:underline;">Privacy Policy</a>
           </p>
         </td></tr>
 
@@ -182,11 +189,8 @@ export async function POST(request: NextRequest) {
   });
 
   if (emailError) {
-    console.error("Resend error:", emailError);
-    return Response.json(
-      { error: "Errore nell'invio dell'email. Riprova." },
-      { status: 500 },
-    );
+    console.error("[SUBSCRIBE] Resend error:", emailError);
+    return Response.json({ error: "Errore nell'invio dell'email. Riprova." }, { status: 500 });
   }
 
   return Response.json({ success: true });

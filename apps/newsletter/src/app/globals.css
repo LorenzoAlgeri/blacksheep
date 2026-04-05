@@ -3,11 +3,11 @@
 /* === Brand Design System === */
 :root {
   --bs-navy: #031240;
-  --bs-cream: #FFFFF3;
-  --bs-gold: #BE8305;
-  --bs-black: #1F1F1F;
-  --bs-green: #334B31;
-  --bs-purple: #65305C;
+  --bs-cream: #fffff3;
+  --bs-gold: #be8305;
+  --bs-black: #1f1f1f;
+  --bs-green: #334b31;
+  --bs-purple: #65305c;
   --bs-burgundy: #731022;
   --font-brand: "Arial Black", "Arial Bold", sans-serif;
   --font-body: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
@@ -66,7 +66,9 @@ body::before {
 
 /* Fallback: if GSAP doesn't run within 4s, make everything visible */
 @keyframes motion-fallback {
-  to { opacity: 1; }
+  to {
+    opacity: 1;
+  }
 }
 
 @media (prefers-reduced-motion: no-preference) {
@@ -88,16 +90,30 @@ body::before {
 }
 
 @keyframes grain-drift {
-  0%, 100% { transform: translate(0, 0); }
-  25% { transform: translate(-2%, 2%); }
-  50% { transform: translate(1%, -1%); }
-  75% { transform: translate(2%, 1%); }
+  0%,
+  100% {
+    transform: translate(0, 0);
+  }
+  25% {
+    transform: translate(-2%, 2%);
+  }
+  50% {
+    transform: translate(1%, -1%);
+  }
+  75% {
+    transform: translate(2%, 1%);
+  }
 }
 
 /* === CTA breathing glow (2s half-cycle, aligned to 4s base rhythm) === */
 @keyframes cta-breathe {
-  0%, 100% { box-shadow: 0 4px 30px rgba(255, 255, 243, 0.1); }
-  50% { box-shadow: 0 4px 50px rgba(255, 255, 243, 0.22); }
+  0%,
+  100% {
+    box-shadow: 0 4px 30px rgba(255, 255, 243, 0.1);
+  }
+  50% {
+    box-shadow: 0 4px 50px rgba(255, 255, 243, 0.22);
+  }
 }
 
 .cta-glow-active {
@@ -136,15 +152,63 @@ body::before {
   }
 }
 
-/* === Animations (success state only) === */
+/* === Animations === */
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
 @keyframes fade-in-scale {
-  from { opacity: 0; transform: scale(0.92); }
-  to { opacity: 1; transform: scale(1); }
+  from {
+    opacity: 0;
+    transform: scale(0.92);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .animate-fade-in-up {
+    animation: fade-in-up 500ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+  .animate-fade-in {
+    animation: fade-in 200ms ease-out both;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-fade-in-up,
+  .animate-fade-in {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
 }
 
 @keyframes checkmark-draw {
-  from { stroke-dashoffset: 24; }
-  to { stroke-dashoffset: 0; }
+  from {
+    stroke-dashoffset: 24;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
 }
 
 @media (prefers-reduced-motion: no-preference) {
@@ -227,17 +291,14 @@ body::before {
   }
 }
 
-/* Input focus */
-input:focus {
-  outline: none;
-  border-color: rgba(255, 255, 243, 0.3) !important;
-  box-shadow: 0 0 0 1px rgba(255, 255, 243, 0.08);
-}
+/* Input focus — applied via Tailwind focus: utilities on each input */
 
 /* CTA button */
 .cta-btn {
   box-shadow: 0 4px 30px rgba(255, 255, 243, 0.1);
-  transition: box-shadow 200ms ease, transform 200ms ease;
+  transition:
+    box-shadow 200ms ease,
+    transform 200ms ease;
 }
 .cta-btn:hover {
   box-shadow: 0 4px 40px rgba(255, 255, 243, 0.18);

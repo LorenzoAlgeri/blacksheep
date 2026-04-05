@@ -7,8 +7,14 @@ export async function GET(request: Request) {
   const cronSecret = process.env.CRON_SECRET;
 
   const expected = `Bearer ${cronSecret}`;
-  if (!cronSecret || !authHeader || authHeader.length !== expected.length || !timingSafeEqual(Buffer.from(authHeader), Buffer.from(expected))) {
-    return Response.json({ error: "Non autorizzato" }, { status: 401 });
+  if (
+    !cronSecret ||
+    !authHeader ||
+    authHeader.length !== expected.length ||
+    !timingSafeEqual(Buffer.from(authHeader), Buffer.from(expected))
+  ) {
+    console.warn("[CRON] Unauthorized access to send-scheduled");
+    return Response.json({ error: "Non autorizzato", code: "UNAUTHORIZED" }, { status: 401 });
   }
 
   const { data: newsletters, error: fetchError } = await supabase
@@ -18,7 +24,8 @@ export async function GET(request: Request) {
     .lte("scheduled_at", new Date().toISOString());
 
   if (fetchError || !newsletters) {
-    return Response.json({ error: "Errore database" }, { status: 500 });
+    console.error("[CRON] Database error:", fetchError?.message);
+    return Response.json({ error: "Errore database", code: "DB_ERROR" }, { status: 500 });
   }
 
   if (newsletters.length === 0) {

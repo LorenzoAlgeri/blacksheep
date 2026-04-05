@@ -1,4 +1,10 @@
+import type { Metadata } from "next";
 import { ComposeEditor } from "@/components/admin/ComposeEditor";
+
+export const metadata: Metadata = {
+  title: "Invia Newsletter — BLACK SHEEP Admin",
+  robots: { index: false, follow: false },
+};
 
 export default function ComposePage() {
   return (

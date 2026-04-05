@@ -5,19 +5,22 @@ import { scheduleNewsletterSchema } from "@/lib/validations";
 export async function POST(request: Request) {
   const session = await auth();
   if (!session) {
-    return Response.json({ error: "Non autorizzato" }, { status: 401 });
+    return Response.json({ error: "Non autorizzato", code: "UNAUTHORIZED" }, { status: 401 });
   }
 
   let body: unknown;
   try {
     body = await request.json();
   } catch {
-    return Response.json({ error: "Richiesta non valida" }, { status: 400 });
+    return Response.json(
+      { error: "Richiesta non valida", code: "INVALID_REQUEST" },
+      { status: 400 },
+    );
   }
   const parsed = scheduleNewsletterSchema.safeParse(body);
 
   if (!parsed.success) {
-    return Response.json({ error: "Dati non validi" }, { status: 400 });
+    return Response.json({ error: "Dati non validi", code: "VALIDATION_ERROR" }, { status: 400 });
   }
 
   const { subject, html, scheduledAt } = parsed.data;
@@ -29,8 +32,8 @@ export async function POST(request: Request) {
   });
 
   if (error) {
-    console.error("Schedule error:", error);
-    return Response.json({ error: "Errore database" }, { status: 500 });
+    console.error("[SEND] Schedule error:", error.message);
+    return Response.json({ error: "Errore database", code: "DB_ERROR" }, { status: 500 });
   }
 
   return Response.json({ success: true });

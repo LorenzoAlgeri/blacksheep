@@ -1,9 +1,11 @@
 export interface ArtistEntry {
+  id: string;
   name: string;
   role: string;
 }
 
 export interface EventEntry {
+  id: string;
   title: string;
   time: string;
   location: string;
@@ -27,16 +29,11 @@ export interface EmailTemplateData {
   ctaText: string;
   ctaLink: string;
   unsubscribeUrl: string;
+  privacyUrl?: string;
   palette: EmailPalette;
 }
 
-const ARTIST_ROLES = [
-  "DJ SET",
-  "LIVE",
-  "DANCE PERFORMANCE",
-  "SPECIAL GUEST",
-  "HOST",
-] as const;
+const ARTIST_ROLES = ["DJ SET", "LIVE", "DANCE PERFORMANCE", "SPECIAL GUEST", "HOST"] as const;
 
 export type ArtistRole = (typeof ARTIST_ROLES)[number];
 export { ARTIST_ROLES };
@@ -47,18 +44,22 @@ export interface PalettePreset {
 }
 
 export const PALETTE_PRESETS: PalettePreset[] = [
-  { name: "Classic",    palette: { bg: "#000000", text: "#FFFFF3", accent: "#BE8305" } },
-  { name: "Midnight",   palette: { bg: "#031240", text: "#FFFFF3", accent: "#BE8305" } },
+  { name: "Classic", palette: { bg: "#000000", text: "#FFFFF3", accent: "#BE8305" } },
+  { name: "Midnight", palette: { bg: "#031240", text: "#FFFFF3", accent: "#BE8305" } },
   { name: "Monochrome", palette: { bg: "#000000", text: "#FFFFF3", accent: "#FFFFF3" } },
-  { name: "Burgundy",   palette: { bg: "#0a0a0a", text: "#FFFFF3", accent: "#731022" } },
-  { name: "Purple",     palette: { bg: "#0a0a0a", text: "#FFFFF3", accent: "#65305C" } },
-  { name: "Forest",     palette: { bg: "#0a0a0a", text: "#FFFFF3", accent: "#334B31" } },
-  { name: "Daylight",   palette: { bg: "#FFFFF3", text: "#1F1F1F", accent: "#BE8305" } },
-  { name: "Clean",      palette: { bg: "#FFFFF3", text: "#1F1F1F", accent: "#1F1F1F" } },
+  { name: "Burgundy", palette: { bg: "#0a0a0a", text: "#FFFFF3", accent: "#731022" } },
+  { name: "Purple", palette: { bg: "#0a0a0a", text: "#FFFFF3", accent: "#65305C" } },
+  { name: "Forest", palette: { bg: "#0a0a0a", text: "#FFFFF3", accent: "#334B31" } },
+  { name: "Daylight", palette: { bg: "#FFFFF3", text: "#1F1F1F", accent: "#BE8305" } },
+  { name: "Clean", palette: { bg: "#FFFFF3", text: "#1F1F1F", accent: "#1F1F1F" } },
 ];
 
 function escapeHtml(str: string): string {
-  return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  return str
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
 }
 
 function sanitizeUrl(url: string): string {
@@ -95,11 +96,7 @@ function buildLineupHtml(lineup: ArtistEntry[], p: EmailPalette): string {
   return `<div style="margin-top:14px;"><div style="font-size:9px;letter-spacing:0.3em;color:${hexAlpha(p.text, 0.3)};margin-bottom:6px;">LINEUP</div>${lines}</div>`;
 }
 
-function buildEventBlockHtml(
-  event: EventEntry,
-  isFirst: boolean,
-  p: EmailPalette,
-): string {
+function buildEventBlockHtml(event: EventEntry, isFirst: boolean, p: EmailPalette): string {
   const divider = isFirst
     ? ""
     : `<div style="width:24px;height:1px;background:${hexAlpha(p.accent, 0.19)};margin:16px auto;"></div>`;
@@ -127,9 +124,7 @@ export function buildEmailHtml(data: EmailTemplateData): string {
 
   const eventsBlock =
     data.showEvents && data.events.length > 0
-      ? data.events
-          .map((ev, i) => buildEventBlockHtml(ev, i === 0, p))
-          .join("")
+      ? data.events.map((ev, i) => buildEventBlockHtml(ev, i === 0, p)).join("")
       : "";
 
   const ctaBlock = data.showCta
@@ -140,7 +135,7 @@ export function buildEmailHtml(data: EmailTemplateData): string {
     : "";
 
   const unsubscribeLink = data.unsubscribeUrl
-    ? `<br><a href="${data.unsubscribeUrl}" style="color:${hexAlpha(p.text, 0.25)};text-decoration:underline;">Disiscriviti</a>`
+    ? `<br><a href="${data.unsubscribeUrl}" style="color:${hexAlpha(p.text, 0.25)};text-decoration:underline;">Disiscriviti</a> &middot; <a href="${data.privacyUrl ?? "#"}" style="color:${hexAlpha(p.text, 0.25)};text-decoration:underline;">Privacy Policy</a>`
     : "{{UNSUB}}";
 
   return `<!DOCTYPE html>
@@ -191,11 +186,20 @@ export function getNextMonday(): string {
   });
 }
 
+export function makeDefaultArtist(): ArtistEntry {
+  return {
+    id: crypto.randomUUID(),
+    name: "",
+    role: "DJ SET",
+  };
+}
+
 export function makeDefaultEvent(): EventEntry {
   return {
+    id: crypto.randomUUID(),
     title: getNextMonday(),
     time: "23:00 \u2014 05:00",
     location: "11 Clubroom \u00b7 Corso Como \u00b7 Milano",
-    lineup: [{ name: "", role: "DJ SET" }],
+    lineup: [makeDefaultArtist()],
   };
 }

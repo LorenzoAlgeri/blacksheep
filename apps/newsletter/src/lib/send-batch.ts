@@ -19,9 +19,7 @@ export async function sendBatchEmails(
   html: string,
   siteUrl: string,
 ): Promise<BatchSendResult> {
-  const fromEmail =
-    process.env.RESEND_FROM_EMAIL ??
-    "BLACK SHEEP <noreply@blacksheep.community>";
+  const fromEmail = process.env.RESEND_FROM_EMAIL ?? "BLACK SHEEP <noreply@blacksheep.community>";
 
   let sentCount = 0;
 
@@ -29,7 +27,7 @@ export async function sendBatchEmails(
     const batch = subscribers.slice(i, i + BATCH_SIZE);
 
     const promises = batch.map((sub) => {
-      const unsubscribeLink = `<br><a href="${siteUrl}/api/unsubscribe?token=${sub.token}" style="color:rgba(255,255,243,0.25);text-decoration:underline;">Disiscriviti</a>`;
+      const unsubscribeLink = `<br><a href="${siteUrl}/api/unsubscribe?token=${sub.token}" style="color:rgba(255,255,243,0.25);text-decoration:underline;">Disiscriviti</a> &middot; <a href="${siteUrl}/privacy" style="color:rgba(255,255,243,0.25);text-decoration:underline;">Privacy Policy</a>`;
       const personalizedHtml = html.replaceAll("{{UNSUB}}", unsubscribeLink);
 
       return resend.emails.send({

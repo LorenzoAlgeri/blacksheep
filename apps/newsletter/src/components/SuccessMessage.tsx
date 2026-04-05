@@ -1,15 +1,7 @@
-"use client";
-
 export function SuccessMessage() {
   return (
-    <div className="flex flex-col items-center gap-4 animate-fade-in-scale">
-      <svg
-        width="48"
-        height="48"
-        viewBox="0 0 48 48"
-        fill="none"
-        className="text-bs-green"
-      >
+    <div className="flex flex-col items-center gap-4 animate-fade-in-up">
+      <svg width="48" height="48" viewBox="0 0 48 48" fill="none" className="text-bs-green">
         <circle cx="24" cy="24" r="22" stroke="currentColor" strokeWidth="2" opacity="0.4" />
         <path
           d="M14 24l7 7 13-13"

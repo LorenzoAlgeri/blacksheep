@@ -29,7 +29,7 @@ export async function GET(request: NextRequest) {
     .eq("id", subscriber.id);
 
   if (updateError) {
-    console.error("Confirm update error:", updateError);
+    console.error("[SUBSCRIBE] Confirm update error:", updateError.message);
     return Response.redirect(new URL("/?error=server", request.url));
   }
 
