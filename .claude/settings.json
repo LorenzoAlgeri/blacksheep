@@ -2,5 +2,8 @@
   "permissions": {
     "allow": [],
     "deny": []
+  },
+  "enabledPlugins": {
+    "gsap-scrolltrigger@claude-design-skillstack": true
   }
 }

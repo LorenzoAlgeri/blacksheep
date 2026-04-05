@@ -44,8 +44,7 @@ export function SubscribeForm() {
   return (
     <form
       onSubmit={handleSubmit(onSubmit)}
-      className="flex flex-col gap-3 w-full animate-slide-up"
-      style={{ animationDelay: "600ms" }}
+      className="flex flex-col gap-3 w-full"
       noValidate
     >
       {/* Honeypot */}
@@ -60,14 +59,14 @@ export function SubscribeForm() {
         />
       </div>
 
-      <div>
+      <div data-motion="input">
         <label htmlFor="email" className="sr-only">Email</label>
         <input
           id="email"
           type="email"
           placeholder="La tua email"
           autoComplete="email"
-          className="w-full bg-white/[0.02] border border-bs-cream/8 rounded-lg px-5 py-3.5 font-body text-sm text-bs-cream placeholder:text-bs-cream/20 transition-all duration-200"
+          className="w-full bg-white/[0.02] border border-bs-cream/15 rounded-lg px-5 input-responsive input-field font-body text-sm text-bs-cream placeholder:text-bs-cream/35 transition-all duration-200"
           {...register("email")}
         />
         {errors.email && (
@@ -75,22 +74,23 @@ export function SubscribeForm() {
         )}
       </div>
 
-      <div>
+      <div data-motion="input">
         <label htmlFor="name" className="sr-only">Nome (opzionale)</label>
         <input
           id="name"
           type="text"
           placeholder="Nome (opzionale)"
           autoComplete="given-name"
-          className="w-full bg-white/[0.02] border border-bs-cream/6 rounded-lg px-5 py-3.5 font-body text-sm text-bs-cream placeholder:text-bs-cream/15 transition-all duration-200"
+          className="w-full bg-white/[0.02] border border-bs-cream/12 rounded-lg px-5 input-responsive input-field font-body text-sm text-bs-cream placeholder:text-bs-cream/30 transition-all duration-200"
           {...register("name")}
         />
       </div>
 
       <button
+        data-motion="cta"
         type="submit"
         disabled={isSubmitting}
-        className="w-full bg-bs-cream text-black font-[family-name:var(--font-brand)] text-lg tracking-[0.15em] py-4 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed cta-btn cursor-pointer mt-1"
+        className="w-full bg-bs-cream text-black font-[family-name:var(--font-brand)] text-lg tracking-[0.15em] cta-responsive cta-button rounded-lg disabled:opacity-50 disabled:cursor-not-allowed cta-btn cursor-pointer mt-1"
       >
         {isSubmitting ? "..." : "THE PLACE TO BE"}
       </button>

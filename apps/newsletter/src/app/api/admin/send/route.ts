@@ -16,7 +16,7 @@ export async function POST(request: Request) {
     return Response.json({ error: "Dati non validi" }, { status: 400 });
   }
 
-  const { subject, body: content } = parsed.data;
+  const { subject, html } = parsed.data;
 
   // Get confirmed subscribers
   const { data: subscribers, error: dbError } = await supabase
@@ -41,23 +41,17 @@ export async function POST(request: Request) {
   for (let i = 0; i < subscribers.length; i += batchSize) {
     const batch = subscribers.slice(i, i + batchSize);
 
-    const promises = batch.map((sub) =>
-      resend.emails.send({
-        from: "BLACK SHEEP <noreply@blacksheep.community>",
+    const promises = batch.map((sub) => {
+      const unsubscribeLink = `<br><a href="${siteUrl}/api/unsubscribe?token=${sub.token}" style="color:#FFFFF340;text-decoration:underline;">Disiscriviti</a>`;
+      const personalizedHtml = html.replace("{{UNSUB}}", unsubscribeLink);
+
+      return resend.emails.send({
+        from: process.env.RESEND_FROM_EMAIL ?? "BLACK SHEEP <noreply@blacksheep.community>",
         to: sub.email,
         subject,
-        html: `
-          <div style="background:#031240;color:#FFFFF3;padding:40px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
-            <h1 style="font-family:'Arial Black',Arial,sans-serif;color:#BE8305;font-size:28px;letter-spacing:0.1em;text-align:center;">BLACK SHEEP</h1>
-            <div style="margin:24px 0;font-size:16px;line-height:1.6;">${content}</div>
-            <hr style="border:none;border-top:1px solid #FFFFF320;margin:32px 0;" />
-            <p style="font-size:11px;color:#FFFFF340;text-align:center;">
-              <a href="${siteUrl}/api/unsubscribe?token=${sub.token}" style="color:#FFFFF340;text-decoration:underline;">Disiscriviti</a>
-            </p>
-          </div>
-        `,
-      }),
-    );
+        html: personalizedHtml,
+      });
+    });
 
     const results = await Promise.allSettled(promises);
     sentCount += results.filter((r) => r.status === "fulfilled").length;

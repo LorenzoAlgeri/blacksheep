@@ -8,8 +8,15 @@ export const subscribeSchema = z.object({
 
 export const sendNewsletterSchema = z.object({
   subject: z.string().min(1, "Oggetto obbligatorio").max(200),
-  body: z.string().min(1, "Contenuto obbligatorio").max(50000),
+  html: z.string().min(1, "Contenuto obbligatorio").max(200000),
+});
+
+export const scheduleNewsletterSchema = z.object({
+  subject: z.string().min(1, "Oggetto obbligatorio").max(200),
+  html: z.string().min(1, "Contenuto obbligatorio").max(200000),
+  scheduledAt: z.string().min(1, "Data obbligatoria"),
 });
 
 export type SubscribeInput = z.infer<typeof subscribeSchema>;
 export type SendNewsletterInput = z.infer<typeof sendNewsletterSchema>;
+export type ScheduleNewsletterInput = z.infer<typeof scheduleNewsletterSchema>;

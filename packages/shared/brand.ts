@@ -14,8 +14,8 @@ export const colors = {
 } as const;
 
 export const fonts = {
-  heading: "'Bebas Neue', sans-serif",
-  body: "'Source Sans 3', sans-serif",
+  heading: "'Arial Black', 'Arial Bold', sans-serif",
+  body: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
 } as const;
 
 export const social = {

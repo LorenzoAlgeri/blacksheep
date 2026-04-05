@@ -40,21 +40,7 @@ body {
   overflow-x: hidden;
 }
 
-/* Flash spot — simulates camera flash illuminating the center */
-body::after {
-  content: "";
-  position: fixed;
-  top: -10%;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 120%;
-  height: 60%;
-  background: radial-gradient(ellipse at 50% 0%, rgba(255,255,243,0.04) 0%, rgba(255,255,243,0.015) 30%, transparent 65%);
-  pointer-events: none;
-  z-index: 0;
-}
-
-/* Noise grain — visible, adds analog texture */
+/* Noise grain — analog texture */
 body::before {
   content: "";
   position: fixed;
@@ -66,26 +52,78 @@ body::before {
   z-index: 50;
 }
 
-/* === Animations === */
+/* === GSAP entrance — initial hidden states (prevents FOUC) === */
+@media (prefers-reduced-motion: no-preference) {
+  [data-motion] {
+    opacity: 0;
+  }
+  [data-motion="title"] {
+    opacity: 1;
+    clip-path: inset(0 100% 0 0);
+    filter: blur(8px);
+  }
+}
+
+/* === Micro-motion: grain drift (CSS-only, lightweight) === */
+@media (prefers-reduced-motion: no-preference) {
+  body::before {
+    animation: grain-drift 8s steps(4) infinite;
+  }
+}
+
+@keyframes grain-drift {
+  0%, 100% { transform: translate(0, 0); }
+  25% { transform: translate(-2%, 2%); }
+  50% { transform: translate(1%, -1%); }
+  75% { transform: translate(2%, 1%); }
+}
+
+/* === CTA breathing glow (2s half-cycle, aligned to 4s base rhythm) === */
+@keyframes cta-breathe {
+  0%, 100% { box-shadow: 0 4px 30px rgba(255, 255, 243, 0.1); }
+  50% { box-shadow: 0 4px 50px rgba(255, 255, 243, 0.22); }
+}
+
+.cta-glow-active {
+  animation: cta-breathe 2s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cta-glow-active {
+    animation: none;
+  }
+}
+
+/* === "EVERY MONDAY" shimmer === */
+.shimmer-text {
+  background: linear-gradient(
+    105deg,
+    rgba(255, 255, 243, 0.4) 0%,
+    rgba(255, 255, 243, 0.4) 35%,
+    rgba(255, 255, 243, 0.8) 50%,
+    rgba(255, 255, 243, 0.4) 65%,
+    rgba(255, 255, 243, 0.4) 100%
+  );
+  background-size: 200% 100%;
+  background-position: 200% 0;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .shimmer-text {
+    background: none;
+    -webkit-background-clip: initial;
+    -webkit-text-fill-color: initial;
+    background-clip: initial;
+  }
+}
+
+/* === Animations (success state only) === */
 @keyframes fade-in-scale {
   from { opacity: 0; transform: scale(0.92); }
   to { opacity: 1; transform: scale(1); }
-}
-
-@keyframes slide-up {
-  from { opacity: 0; transform: translateY(14px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-@keyframes flash-in {
-  0% { opacity: 0; filter: brightness(3) blur(8px); }
-  40% { opacity: 1; filter: brightness(1.8) blur(0px); }
-  100% { opacity: 1; filter: brightness(1) blur(0px); }
-}
-
-@keyframes line-expand {
-  from { transform: scaleX(0); }
-  to { transform: scaleX(1); }
 }
 
 @keyframes checkmark-draw {
@@ -97,15 +135,6 @@ body::before {
   .animate-fade-in-scale {
     animation: fade-in-scale 800ms cubic-bezier(0.16, 1, 0.3, 1) both;
   }
-  .animate-slide-up {
-    animation: slide-up 600ms cubic-bezier(0.16, 1, 0.3, 1) both;
-  }
-  .animate-flash-in {
-    animation: flash-in 900ms cubic-bezier(0.16, 1, 0.3, 1) both;
-  }
-  .animate-line-expand {
-    animation: line-expand 600ms cubic-bezier(0.16, 1, 0.3, 1) both;
-  }
   .animate-checkmark {
     stroke-dasharray: 24;
     stroke-dashoffset: 24;
@@ -114,14 +143,71 @@ body::before {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .animate-fade-in-scale,
-  .animate-slide-up,
-  .animate-flash-in,
-  .animate-line-expand {
+  .animate-fade-in-scale {
     animation: none;
     opacity: 1;
     transform: none;
-    filter: none;
+  }
+}
+
+/* === Responsive fluid spacing (dvh/dvw clamp) === */
+
+/* FIX 2: Main container padding — 24px on iPhone SE, 64px on desktop */
+.space-main-y {
+  padding-top: clamp(24px, 5dvh, 64px);
+  padding-bottom: clamp(16px, 3dvh, 64px);
+}
+
+/* FIX 4: Logo-to-title gap — 16px on iPhone SE, 40px on desktop */
+.space-logo-gap {
+  margin-top: clamp(16px, 3dvh, 40px);
+}
+
+/* FIX 5: Title "BLACK SHEEP" — 48px on iPhone SE, 72px on desktop */
+.text-title {
+  font-size: clamp(3rem, 10dvw, 4.5rem);
+}
+
+/* FIX 6: Divider margins — 12px each on iPhone SE, 32px on desktop */
+.space-divider {
+  margin-top: clamp(12px, 2dvh, 32px);
+  margin-bottom: clamp(12px, 2dvh, 32px);
+}
+
+/* FIX 7: Input padding — 10px on iPhone SE (46px total), 14px on desktop (50px) */
+.input-responsive {
+  padding-top: clamp(10px, 1.5dvh, 14px);
+  padding-bottom: clamp(10px, 1.5dvh, 14px);
+}
+
+/* FIX 8: CTA button padding — 12px on iPhone SE (52px total), 16px on desktop (60px) */
+.cta-responsive {
+  padding-top: clamp(12px, 2dvh, 16px);
+  padding-bottom: clamp(12px, 2dvh, 16px);
+}
+
+/* FIX 9: Footer padding — 16px on small, 48px on desktop */
+.space-footer {
+  padding-top: clamp(16px, 3dvh, 48px);
+}
+
+/* FIX 10: Microcopy margin — 12px on small, 24px on desktop */
+.space-microcopy {
+  margin-top: clamp(12px, 2dvh, 24px);
+}
+
+/* FIX 11: Desktop — tighter proportions, luxury feel */
+@media (min-width: 640px) {
+  .input-field {
+    padding-top: 12px;
+    padding-bottom: 12px;
+    font-size: 13px;
+  }
+  .cta-button {
+    padding-top: 14px;
+    padding-bottom: 14px;
+    font-size: 15px;
+    letter-spacing: 0.15em;
   }
 }
 

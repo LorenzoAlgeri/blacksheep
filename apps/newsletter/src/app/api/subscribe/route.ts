@@ -55,27 +55,100 @@ export async function POST(request: NextRequest) {
   const confirmUrl = `${siteUrl}/api/confirm?token=${subscriber.token}`;
   const unsubscribeUrl = `${siteUrl}/api/unsubscribe?token=${subscriber.token}`;
 
-  // In dev, skip email send (domain not verified) — log the URL to console instead
-  if (process.env.NODE_ENV === "development") {
-    console.log("[DEV] Confirmation URL (email skipped):", confirmUrl);
-    return Response.json({ success: true });
-  }
+  const greeting = name ? `${name}, sei dentro.` : "Sei dentro.";
 
   const { error: emailError } = await resend.emails.send({
-    from: "BLACK SHEEP <noreply@blacksheep.community>",
+    from: process.env.RESEND_FROM_EMAIL ?? "BLACK SHEEP <noreply@blacksheep.community>",
     to: email,
     subject: "Conferma la tua iscrizione — BLACK SHEEP",
     html: `
-      <div style="background:#031240;color:#FFFFF3;padding:40px;font-family:'Arial Black',Arial,sans-serif;text-align:center;">
-        <h1 style="color:#BE8305;font-size:32px;letter-spacing:0.1em;">BLACK SHEEP</h1>
-        <p style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:18px;margin:24px 0;">Conferma la tua email per entrare nella lista.</p>
-        <a href="${confirmUrl}" style="display:inline-block;background:#BE8305;color:#031240;padding:14px 32px;text-decoration:none;font-weight:700;font-size:16px;letter-spacing:0.05em;">CONFERMA</a>
-        <p style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:12px;color:#FFFFF380;margin-top:32px;">Se non hai richiesto l'iscrizione, ignora questa email.</p>
-        <hr style="border:none;border-top:1px solid #FFFFF320;margin:32px 0;" />
-        <p style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:11px;color:#FFFFF340;text-align:center;">
-          <a href="${unsubscribeUrl}" style="color:#FFFFF340;text-decoration:underline;">Disiscriviti</a>
-        </p>
-      </div>
+<!DOCTYPE html>
+<html lang="it">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"></head>
+<body style="margin:0;padding:0;background:#000000;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#000000;">
+    <tr><td align="center" style="padding:0;">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;background:#0a0a0a;">
+
+        <!-- Spacer top -->
+        <tr><td style="height:60px;font-size:0;line-height:0;">&nbsp;</td></tr>
+
+        <!-- EVERY MONDAY -->
+        <tr><td align="center" style="padding:0 40px;">
+          <p style="margin:0;font-family:'Arial Black',Arial,Helvetica,sans-serif;font-size:10px;letter-spacing:0.45em;color:rgba(255,255,243,0.30);text-align:center;">EVERY MONDAY</p>
+        </td></tr>
+
+        <!-- BLACK SHEEP -->
+        <tr><td align="center" style="padding:14px 40px 0;">
+          <h1 style="margin:0;font-family:'Arial Black',Arial,Helvetica,sans-serif;font-size:52px;letter-spacing:0.02em;line-height:0.85;color:#FFFFF3;">BLACK<br>SHEEP</h1>
+        </td></tr>
+
+        <!-- Venue -->
+        <tr><td align="center" style="padding:20px 40px 0;">
+          <p style="margin:0;font-family:'Arial Black',Arial,Helvetica,sans-serif;font-size:9px;letter-spacing:0.25em;color:rgba(255,255,243,0.25);text-transform:uppercase;">11 Clubroom &middot; Corso Como &middot; Milano</p>
+        </td></tr>
+
+        <!-- Spacer -->
+        <tr><td style="height:48px;font-size:0;line-height:0;">&nbsp;</td></tr>
+
+        <!-- Cream divider -->
+        <tr><td align="center" style="padding:0 80px;">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>
+            <td style="height:1px;background:rgba(255,255,243,0.08);font-size:0;line-height:0;">&nbsp;</td>
+          </tr></table>
+        </td></tr>
+
+        <!-- Spacer -->
+        <tr><td style="height:48px;font-size:0;line-height:0;">&nbsp;</td></tr>
+
+        <!-- Main message -->
+        <tr><td align="center" style="padding:0 40px;">
+          <p style="margin:0 0 12px;font-family:'Arial Black',Arial,Helvetica,sans-serif;font-size:20px;color:#FFFFF3;letter-spacing:0.02em;">${greeting}</p>
+          <p style="margin:0;font-size:14px;line-height:1.7;color:rgba(255,255,243,0.50);">Manca solo un click per entrare nella lista.<br>Lineup, date esclusive e backstage pass &mdash; prima di tutti.</p>
+        </td></tr>
+
+        <!-- CTA Button -->
+        <tr><td align="center" style="padding:40px 40px 0;">
+          <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="max-width:320px;"><tr>
+            <td align="center" style="background:#FFFFF3;border-radius:4px;">
+              <a href="${confirmUrl}" target="_blank" style="display:block;padding:18px 32px;font-family:'Arial Black',Arial,Helvetica,sans-serif;font-size:13px;letter-spacing:0.15em;color:#0a0a0a;text-decoration:none;font-weight:700;text-align:center;">THE PLACE TO BE</a>
+            </td>
+          </tr></table>
+        </td></tr>
+
+        <!-- Micro copy -->
+        <tr><td align="center" style="padding:16px 40px 0;">
+          <p style="margin:0;font-size:11px;color:rgba(255,255,243,0.25);line-height:1.5;">Iscriviti. Lineup e date prima di tutti.</p>
+        </td></tr>
+
+        <!-- Spacer -->
+        <tr><td style="height:56px;font-size:0;line-height:0;">&nbsp;</td></tr>
+
+        <!-- Bottom divider -->
+        <tr><td align="center" style="padding:0 80px;">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>
+            <td style="height:1px;background:rgba(255,255,243,0.06);font-size:0;line-height:0;">&nbsp;</td>
+          </tr></table>
+        </td></tr>
+
+        <!-- Footer -->
+        <tr><td align="center" style="padding:24px 40px;">
+          <p style="margin:0 0 8px;font-size:10px;color:rgba(255,255,243,0.15);line-height:1.5;">Se non hai richiesto questa iscrizione, ignora questa email.</p>
+          <p style="margin:0;font-size:10px;">
+            <a href="${unsubscribeUrl}" style="color:rgba(255,255,243,0.15);text-decoration:underline;">Disiscriviti</a>
+          </p>
+        </td></tr>
+
+        <!-- Instagram -->
+        <tr><td align="center" style="padding:0 40px 40px;">
+          <a href="https://instagram.com/blacksheep.community_" style="font-family:'Arial Black',Arial,Helvetica,sans-serif;font-size:9px;letter-spacing:0.1em;color:rgba(255,255,243,0.20);text-decoration:none;">@BLACKSHEEP.COMMUNITY_</a>
+        </td></tr>
+
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>
     `,
   });
 

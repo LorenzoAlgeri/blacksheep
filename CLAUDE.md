@@ -29,7 +29,7 @@ npx tsc --noEmit                           # Typecheck tutto
 - TypeScript strict mode su tutto
 - Ogni componente: loading + error + empty state
 - Animazioni: SEMPRE rispettare prefers-reduced-motion
-- Font: Bebas Neue (heading) + Source Sans 3 (body) — MAI Inter/Roboto/Arial
+- Font: Arial Black (heading + display) — MAI Inter/Roboto/Bebas Neue. Body text: system font stack.
 - Colori: SEMPRE via CSS variables, mai hardcodare hex
 - Secrets: .env.local per i secrets, .env.example come template
 - Git: conventional commits (feat:, fix:, chore:)
