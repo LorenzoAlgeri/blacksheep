@@ -1,10 +1,11 @@
 import { NextRequest } from "next/server";
-import { supabase } from "@/lib/supabase";
+import { getSupabase } from "@/lib/supabase";
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 // GET: standard unsubscribe (status change only)
 export async function GET(request: NextRequest) {
+  const supabase = getSupabase();
   const token = request.nextUrl.searchParams.get("token");
 
   if (!token || !UUID_RE.test(token)) {
@@ -37,6 +38,7 @@ export async function GET(request: NextRequest) {
 
 // POST: GDPR Art. 17 — full data erasure
 export async function POST(request: NextRequest) {
+  const supabase = getSupabase();
   let body: { token?: string } = {};
   try {
     body = await request.json();

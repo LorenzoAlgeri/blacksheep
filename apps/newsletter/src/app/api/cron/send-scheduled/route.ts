@@ -1,8 +1,9 @@
 import { timingSafeEqual } from "crypto";
-import { supabase } from "@/lib/supabase";
+import { getSupabase } from "@/lib/supabase";
 import { sendBatchEmails } from "@/lib/send-batch";
 
 export async function GET(request: Request) {
+  const supabase = getSupabase();
   const authHeader = request.headers.get("authorization");
   const cronSecret = process.env.CRON_SECRET;
 

@@ -1,7 +1,8 @@
 import { auth } from "@/lib/auth";
-import { supabase } from "@/lib/supabase";
+import { getSupabase } from "@/lib/supabase";
 
 export async function POST(request: Request) {
+  const supabase = getSupabase();
   const session = await auth();
   if (!session) {
     return Response.json({ error: "Non autorizzato" }, { status: 401 });

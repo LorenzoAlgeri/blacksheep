@@ -1,8 +1,9 @@
 import { auth } from "@/lib/auth";
-import { supabase } from "@/lib/supabase";
+import { getSupabase } from "@/lib/supabase";
 import { scheduleNewsletterSchema } from "@/lib/validations";
 
 export async function POST(request: Request) {
+  const supabase = getSupabase();
   const session = await auth();
   if (!session) {
     return Response.json({ error: "Non autorizzato", code: "UNAUTHORIZED" }, { status: 401 });

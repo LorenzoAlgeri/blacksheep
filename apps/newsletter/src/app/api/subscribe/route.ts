@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 import { subscribeSchema } from "@/lib/validations";
-import { supabase } from "@/lib/supabase";
+import { getSupabase } from "@/lib/supabase";
 import { resend } from "@/lib/resend";
 import { rateLimit } from "@/lib/rate-limit";
 
@@ -13,6 +13,7 @@ function escapeHtml(str: string): string {
 }
 
 export async function POST(request: NextRequest) {
+  const supabase = getSupabase();
   // Rate limit by IP
   const ip = request.headers.get("x-forwarded-for") ?? "unknown";
   if (!rateLimit(ip)) {

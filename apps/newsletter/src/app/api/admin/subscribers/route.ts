@@ -1,11 +1,12 @@
 import { NextRequest } from "next/server";
 import { auth } from "@/lib/auth";
-import { supabase } from "@/lib/supabase";
+import { getSupabase } from "@/lib/supabase";
 
 const DEFAULT_LIMIT = 100;
 const MAX_LIMIT = 500;
 
 export async function GET(request: NextRequest) {
+  const supabase = getSupabase();
   const session = await auth();
   if (!session) {
     console.warn("[AUTH] Unauthorized access to /api/admin/subscribers");
