@@ -7,7 +7,9 @@ import Image from "next/image";
 
 function LoginForm() {
   const searchParams = useSearchParams();
-  const callbackUrl = searchParams.get("callbackUrl") ?? "/admin";
+  const rawCallbackUrl = searchParams.get("callbackUrl") ?? "/admin";
+  // Only allow callbacks starting with /admin to prevent open redirect
+  const callbackUrl = rawCallbackUrl.startsWith("/admin") ? rawCallbackUrl : "/admin";
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -17,18 +19,23 @@ function LoginForm() {
     setLoading(true);
 
     const formData = new FormData(e.currentTarget);
-    const result = await signIn("credentials", {
-      email: formData.get("email") as string,
-      password: formData.get("password") as string,
-      callbackUrl,
-      redirect: false,
-    });
+    try {
+      const result = await signIn("credentials", {
+        email: formData.get("email") as string,
+        password: formData.get("password") as string,
+        callbackUrl,
+        redirect: false,
+      });
 
-    if (result?.error) {
-      setError("Credenziali non valide.");
+      if (result?.error) {
+        setError("Credenziali non valide.");
+        setLoading(false);
+      } else if (result?.url) {
+        window.location.href = result.url;
+      }
+    } catch {
+      setError("Errore di rete. Riprova.");
       setLoading(false);
-    } else if (result?.url) {
-      window.location.href = result.url;
     }
   }
 

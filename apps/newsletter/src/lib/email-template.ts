@@ -57,6 +57,20 @@ export const PALETTE_PRESETS: PalettePreset[] = [
   { name: "Clean",      palette: { bg: "#FFFFF3", text: "#1F1F1F", accent: "#1F1F1F" } },
 ];
 
+function escapeHtml(str: string): string {
+  return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}
+
+function sanitizeUrl(url: string): string {
+  try {
+    const u = new URL(url);
+    if (!["http:", "https:"].includes(u.protocol)) return "#";
+    return u.href;
+  } catch {
+    return "#";
+  }
+}
+
 function nl2br(text: string): string {
   return text.replace(/\n/g, "<br>");
 }
@@ -75,7 +89,7 @@ function buildLineupHtml(lineup: ArtistEntry[], p: EmailPalette): string {
   const lines = filtered
     .map(
       (a) =>
-        `<div style="font-size:11px;letter-spacing:0.15em;color:${hexAlpha(p.text, 0.7)};margin-top:4px;">${a.name.toUpperCase()} &mdash; ${a.role}</div>`,
+        `<div style="font-size:11px;letter-spacing:0.15em;color:${hexAlpha(p.text, 0.7)};margin-top:4px;">${escapeHtml(a.name).toUpperCase()} &mdash; ${escapeHtml(a.role)}</div>`,
     )
     .join("");
   return `<div style="margin-top:14px;"><div style="font-size:9px;letter-spacing:0.3em;color:${hexAlpha(p.text, 0.3)};margin-bottom:6px;">LINEUP</div>${lines}</div>`;
@@ -93,9 +107,9 @@ function buildEventBlockHtml(
   return `${divider}
   <div style="background:${hexAlpha(p.text, 0.03)};border-left:2px solid ${p.accent};margin:0 24px;padding:20px 24px;">
     <div style="font-size:10px;letter-spacing:0.3em;color:${p.accent};margin-bottom:8px;">PROSSIMO EVENTO</div>
-    <div style="font-family:'Arial Black',sans-serif;font-size:16px;color:${p.text};">${event.title}</div>
-    <div style="font-size:13px;color:${hexAlpha(p.text, 0.5)};margin-top:4px;">${event.time}</div>
-    <div style="font-size:13px;color:${hexAlpha(p.text, 0.5)};">${event.location}</div>
+    <div style="font-family:'Arial Black',sans-serif;font-size:16px;color:${p.text};">${escapeHtml(event.title)}</div>
+    <div style="font-size:13px;color:${hexAlpha(p.text, 0.5)};margin-top:4px;">${escapeHtml(event.time)}</div>
+    <div style="font-size:13px;color:${hexAlpha(p.text, 0.5)};">${escapeHtml(event.location)}</div>
     ${buildLineupHtml(event.lineup, p)}
   </div>`;
 }
@@ -107,7 +121,7 @@ export function buildEmailHtml(data: EmailTemplateData): string {
     data.showPhoto && data.photoUrl.trim()
       ? `
   <div style="padding:0 24px 8px;">
-    <img src="${data.photoUrl}" alt="BLACK SHEEP" style="width:100%;border-radius:4px;opacity:0.9;" />
+    <img src="${sanitizeUrl(data.photoUrl)}" alt="BLACK SHEEP" style="width:100%;border-radius:4px;opacity:0.9;" />
   </div>`
       : "";
 
@@ -121,7 +135,7 @@ export function buildEmailHtml(data: EmailTemplateData): string {
   const ctaBlock = data.showCta
     ? `
   <div style="padding:32px 24px;text-align:center;">
-    <a href="${data.ctaLink}" style="display:inline-block;background:${p.text};color:${p.bg};font-family:'Arial Black',sans-serif;font-size:13px;letter-spacing:0.15em;padding:14px 32px;text-decoration:none;">${data.ctaText}</a>
+    <a href="${sanitizeUrl(data.ctaLink)}" style="display:inline-block;background:${p.text};color:${p.bg};font-family:'Arial Black',sans-serif;font-size:13px;letter-spacing:0.15em;padding:14px 32px;text-decoration:none;">${escapeHtml(data.ctaText)}</a>
   </div>`
     : "";
 
@@ -143,8 +157,8 @@ export function buildEmailHtml(data: EmailTemplateData): string {
   <div style="width:40px;height:1px;background:${hexAlpha(p.accent, 0.25)};margin:0 auto;"></div>
 
   <div style="padding:32px 24px;">
-    <div style="font-family:'Arial Black',sans-serif;font-size:18px;letter-spacing:0.05em;color:${p.text};text-align:center;">${data.title}</div>
-    <p style="font-size:14px;line-height:1.7;color:${hexAlpha(p.text, 0.7)};margin:20px 0;text-align:center;">${nl2br(data.body)}</p>
+    <div style="font-family:'Arial Black',sans-serif;font-size:18px;letter-spacing:0.05em;color:${p.text};text-align:center;">${escapeHtml(data.title)}</div>
+    <p style="font-size:14px;line-height:1.7;color:${hexAlpha(p.text, 0.7)};margin:20px 0;text-align:center;">${nl2br(escapeHtml(data.body))}</p>
   </div>
 
   ${photoBlock}

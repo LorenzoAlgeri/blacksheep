@@ -4,6 +4,10 @@ import { supabase } from "@/lib/supabase";
 import { resend } from "@/lib/resend";
 import { rateLimit } from "@/lib/rate-limit";
 
+function escapeHtml(str: string): string {
+  return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}
+
 export async function POST(request: NextRequest) {
   // Rate limit by IP
   const ip = request.headers.get("x-forwarded-for") ?? "unknown";
@@ -14,7 +18,15 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const body = await request.json();
+  let body: unknown;
+  try {
+    body = await request.json();
+  } catch {
+    return Response.json(
+      { error: "Richiesta non valida." },
+      { status: 400 },
+    );
+  }
   const parsed = subscribeSchema.safeParse(body);
 
   if (!parsed.success) {
@@ -32,7 +44,24 @@ export async function POST(request: NextRequest) {
 
   const { email, name } = parsed.data;
 
-  // Insert subscriber (upsert to handle re-subscribes)
+  // Check if subscriber already exists
+  const { data: existing } = await supabase
+    .from("subscribers")
+    .select("id, token, status")
+    .eq("email", email)
+    .single();
+
+  // If already confirmed, return success silently (no-op)
+  if (existing?.status === "confirmed") {
+    return Response.json({ success: true });
+  }
+
+  // If already pending, don't resend confirmation (prevents subscription bombing)
+  if (existing?.status === "pending") {
+    return Response.json({ success: true });
+  }
+
+  // Insert or update subscriber (for new or unsubscribed users)
   const { data: subscriber, error: dbError } = await supabase
     .from("subscribers")
     .upsert(
@@ -55,7 +84,7 @@ export async function POST(request: NextRequest) {
   const confirmUrl = `${siteUrl}/api/confirm?token=${subscriber.token}`;
   const unsubscribeUrl = `${siteUrl}/api/unsubscribe?token=${subscriber.token}`;
 
-  const greeting = name ? `${name}, sei dentro.` : "Sei dentro.";
+  const greeting = name ? `${escapeHtml(name)}, sei dentro.` : "Sei dentro.";
 
   const { error: emailError } = await resend.emails.send({
     from: process.env.RESEND_FROM_EMAIL ?? "BLACK SHEEP <noreply@blacksheep.community>",

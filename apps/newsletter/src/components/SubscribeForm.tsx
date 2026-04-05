@@ -96,7 +96,7 @@ export function SubscribeForm() {
       </button>
 
       {serverError && (
-        <p className="font-body text-xs text-bs-burgundy text-center mt-1">{serverError}</p>
+        <p role="alert" className="font-body text-xs text-bs-burgundy text-center mt-1">{serverError}</p>
       )}
     </form>
   );

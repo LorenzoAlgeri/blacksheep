@@ -952,16 +952,14 @@ function EventBlock({
             className={inputClass}
           />
         </div>
-        <div className="flex gap-2">
-          <div className="flex-1">
-            <label className={labelClass}>Orario</label>
-            <input
-              type="text"
-              value={event.time}
-              onChange={(e) => onUpdate({ time: e.target.value })}
-              className={inputClass}
-            />
-          </div>
+        <div>
+          <label className={labelClass}>Orario</label>
+          <input
+            type="text"
+            value={event.time}
+            onChange={(e) => onUpdate({ time: e.target.value })}
+            className={inputClass}
+          />
         </div>
         <div>
           <label className={labelClass}>Location</label>

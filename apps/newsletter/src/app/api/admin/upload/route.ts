@@ -31,7 +31,13 @@ export async function POST(request: Request) {
     );
   }
 
-  const ext = file.name.split(".").pop() ?? "jpg";
+  const mimeToExt: Record<string, string> = {
+    "image/jpeg": "jpg",
+    "image/png": "png",
+    "image/webp": "webp",
+    "image/gif": "gif",
+  };
+  const ext = mimeToExt[file.type] ?? "jpg";
   const fileName = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
 
   const buffer = Buffer.from(await file.arrayBuffer());

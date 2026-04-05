@@ -8,7 +8,12 @@ export async function POST(request: Request) {
     return Response.json({ error: "Non autorizzato" }, { status: 401 });
   }
 
-  const body = await request.json();
+  let body: unknown;
+  try {
+    body = await request.json();
+  } catch {
+    return Response.json({ error: "Richiesta non valida" }, { status: 400 });
+  }
   const parsed = scheduleNewsletterSchema.safeParse(body);
 
   if (!parsed.success) {

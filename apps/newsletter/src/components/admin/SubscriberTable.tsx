@@ -15,21 +15,61 @@ type Subscriber = {
 export function SubscriberTable() {
   const [subscribers, setSubscribers] = useState<Subscriber[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    let cancelled = false;
+    fetch("/api/admin/subscribers")
+      .then((res) => res.json())
+      .then((data) => {
+        if (!cancelled) {
+          setSubscribers(data.subscribers ?? []);
+          setLoading(false);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setError("Errore nel caricamento degli iscritti.");
+          setLoading(false);
+        }
+      });
+    return () => { cancelled = true; };
+  }, []);
+
+  const retry = () => {
+    setLoading(true);
+    setError(null);
     fetch("/api/admin/subscribers")
       .then((res) => res.json())
       .then((data) => {
         setSubscribers(data.subscribers ?? []);
         setLoading(false);
+      })
+      .catch(() => {
+        setError("Errore nel caricamento degli iscritti.");
+        setLoading(false);
       });
-  }, []);
+  };
 
   const confirmed = subscribers.filter((s) => s.status === "confirmed").length;
   const pending = subscribers.filter((s) => s.status === "pending").length;
 
   if (loading) {
     return <p className="font-body text-bs-cream/50 text-center py-12">Caricamento...</p>;
+  }
+
+  if (error) {
+    return (
+      <div className="text-center py-12">
+        <p className="font-body text-bs-burgundy mb-4">{error}</p>
+        <button
+          onClick={retry}
+          className="font-body text-sm text-bs-cream/60 underline hover:text-bs-cream cursor-pointer"
+        >
+          Riprova
+        </button>
+      </div>
+    );
   }
 
   return (

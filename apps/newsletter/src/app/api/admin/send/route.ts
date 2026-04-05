@@ -1,7 +1,7 @@
 import { auth } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
-import { resend } from "@/lib/resend";
 import { sendNewsletterSchema } from "@/lib/validations";
+import { sendBatchEmails } from "@/lib/send-batch";
 
 export async function POST(request: Request) {
   const session = await auth();
@@ -9,7 +9,12 @@ export async function POST(request: Request) {
     return Response.json({ error: "Non autorizzato" }, { status: 401 });
   }
 
-  const body = await request.json();
+  let body: unknown;
+  try {
+    body = await request.json();
+  } catch {
+    return Response.json({ error: "Richiesta non valida" }, { status: 400 });
+  }
   const parsed = sendNewsletterSchema.safeParse(body);
 
   if (!parsed.success) {
@@ -18,7 +23,6 @@ export async function POST(request: Request) {
 
   const { subject, html } = parsed.data;
 
-  // Get confirmed subscribers
   const { data: subscribers, error: dbError } = await supabase
     .from("subscribers")
     .select("email, token")
@@ -33,34 +37,7 @@ export async function POST(request: Request) {
   }
 
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+  const result = await sendBatchEmails(subscribers, subject, html, siteUrl);
 
-  // Send in batches of 50
-  const batchSize = 50;
-  let sentCount = 0;
-
-  for (let i = 0; i < subscribers.length; i += batchSize) {
-    const batch = subscribers.slice(i, i + batchSize);
-
-    const promises = batch.map((sub) => {
-      const unsubscribeLink = `<br><a href="${siteUrl}/api/unsubscribe?token=${sub.token}" style="color:#FFFFF340;text-decoration:underline;">Disiscriviti</a>`;
-      const personalizedHtml = html.replace("{{UNSUB}}", unsubscribeLink);
-
-      return resend.emails.send({
-        from: process.env.RESEND_FROM_EMAIL ?? "BLACK SHEEP <noreply@blacksheep.community>",
-        to: sub.email,
-        subject,
-        html: personalizedHtml,
-      });
-    });
-
-    const results = await Promise.allSettled(promises);
-    sentCount += results.filter((r) => r.status === "fulfilled").length;
-
-    // Small delay between batches
-    if (i + batchSize < subscribers.length) {
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-    }
-  }
-
-  return Response.json({ sent: sentCount, total: subscribers.length });
+  return Response.json(result);
 }

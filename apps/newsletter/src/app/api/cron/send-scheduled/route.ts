@@ -1,15 +1,16 @@
+import { timingSafeEqual } from "crypto";
 import { supabase } from "@/lib/supabase";
-import { resend } from "@/lib/resend";
+import { sendBatchEmails } from "@/lib/send-batch";
 
 export async function GET(request: Request) {
   const authHeader = request.headers.get("authorization");
   const cronSecret = process.env.CRON_SECRET;
 
-  if (!cronSecret || authHeader !== `Bearer ${cronSecret}`) {
+  const expected = `Bearer ${cronSecret}`;
+  if (!cronSecret || !authHeader || authHeader.length !== expected.length || !timingSafeEqual(Buffer.from(authHeader), Buffer.from(expected))) {
     return Response.json({ error: "Non autorizzato" }, { status: 401 });
   }
 
-  // Find scheduled newsletters that are due and not yet sent
   const { data: newsletters, error: fetchError } = await supabase
     .from("scheduled_newsletters")
     .select("*")
@@ -28,7 +29,18 @@ export async function GET(request: Request) {
   const results: { id: string; sent: number; total: number }[] = [];
 
   for (const nl of newsletters) {
-    // Get confirmed subscribers
+    // Atomic claim: mark as sent BEFORE sending to prevent double-fire
+    const { data: claimed } = await supabase
+      .from("scheduled_newsletters")
+      .update({ sent: true })
+      .eq("id", nl.id)
+      .eq("sent", false)
+      .select("id")
+      .single();
+
+    // If no rows affected, another instance already claimed it — skip
+    if (!claimed) continue;
+
     const { data: subscribers } = await supabase
       .from("subscribers")
       .select("email, token")
@@ -36,48 +48,14 @@ export async function GET(request: Request) {
 
     if (!subscribers || subscribers.length === 0) continue;
 
-    let sentCount = 0;
-    const batchSize = 50;
+    const result = await sendBatchEmails(
+      subscribers,
+      nl.subject as string,
+      nl.html as string,
+      siteUrl,
+    );
 
-    for (let i = 0; i < subscribers.length; i += batchSize) {
-      const batch = subscribers.slice(i, i + batchSize);
-
-      const promises = batch.map((sub) => {
-        const unsubscribeLink = `<br><a href="${siteUrl}/api/unsubscribe?token=${sub.token}" style="color:#FFFFF340;text-decoration:underline;">Disiscriviti</a>`;
-        const personalizedHtml = (nl.html as string).replace(
-          "{{UNSUB}}",
-          unsubscribeLink,
-        );
-
-        return resend.emails.send({
-          from:
-            process.env.RESEND_FROM_EMAIL ??
-            "BLACK SHEEP <noreply@blacksheep.community>",
-          to: sub.email,
-          subject: nl.subject as string,
-          html: personalizedHtml,
-        });
-      });
-
-      const settled = await Promise.allSettled(promises);
-      sentCount += settled.filter((r) => r.status === "fulfilled").length;
-
-      if (i + batchSize < subscribers.length) {
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-      }
-    }
-
-    // Mark as sent
-    await supabase
-      .from("scheduled_newsletters")
-      .update({ sent: true })
-      .eq("id", nl.id);
-
-    results.push({
-      id: nl.id as string,
-      sent: sentCount,
-      total: subscribers.length,
-    });
+    results.push({ id: nl.id as string, ...result });
   }
 
   return Response.json({ results });

@@ -64,6 +64,22 @@ body::before {
   }
 }
 
+/* Fallback: if GSAP doesn't run within 4s, make everything visible */
+@keyframes motion-fallback {
+  to { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  [data-motion] {
+    animation: motion-fallback 0s 4s forwards;
+  }
+  [data-motion="title"] {
+    animation: motion-fallback 0s 4s forwards;
+    clip-path: none;
+    filter: none;
+  }
+}
+
 /* === Micro-motion: grain drift (CSS-only, lightweight) === */
 @media (prefers-reduced-motion: no-preference) {
   body::before {

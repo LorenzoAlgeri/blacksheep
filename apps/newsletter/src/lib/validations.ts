@@ -14,7 +14,10 @@ export const sendNewsletterSchema = z.object({
 export const scheduleNewsletterSchema = z.object({
   subject: z.string().min(1, "Oggetto obbligatorio").max(200),
   html: z.string().min(1, "Contenuto obbligatorio").max(200000),
-  scheduledAt: z.string().min(1, "Data obbligatoria"),
+  scheduledAt: z.string().min(1, "Data obbligatoria").refine(
+    (val) => !isNaN(Date.parse(val)),
+    { message: "Data non valida. Usa formato ISO." },
+  ),
 });
 
 export type SubscribeInput = z.infer<typeof subscribeSchema>;
