@@ -33,6 +33,8 @@ body {
   background: #000000;
   color: var(--bs-cream);
   font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
   min-height: 100dvh;
   max-width: 480px;
   margin: 0 auto;

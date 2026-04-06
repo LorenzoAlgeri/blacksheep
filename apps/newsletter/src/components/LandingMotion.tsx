@@ -23,6 +23,7 @@ export function LandingMotion({ children }: { children: React.ReactNode }) {
         gsap.set("[data-motion='location']", { opacity: 0.25 });
         gsap.set("[data-motion='divider']", { opacity: 0.3 });
         gsap.set("[data-motion='microcopy']", { opacity: 0.35 });
+        gsap.set("[data-motion='consent']", { opacity: 1 });
         gsap.set("[data-motion='footer']", { opacity: 0.35 });
         return;
       }
@@ -112,6 +113,7 @@ export function LandingMotion({ children }: { children: React.ReactNode }) {
         gsap.set("[data-motion='input']", { opacity: 1, y: 0 });
         gsap.set("[data-motion='cta']", { opacity: 1, scale: 1 });
         gsap.set("[data-motion='microcopy']", { opacity: 0.35 });
+        gsap.set("[data-motion='consent']", { opacity: 1 });
         gsap.set("[data-motion='footer']", { opacity: 0.35 });
         gsap.set("[data-motion='spotlight']", { opacity: 0.05 });
         containerRef.current
@@ -137,6 +139,7 @@ export function LandingMotion({ children }: { children: React.ReactNode }) {
       gsap.set("[data-motion='input']", { opacity: 0, y: 12 });
       gsap.set("[data-motion='cta']", { opacity: 0, scale: 0.97 });
       gsap.set("[data-motion='microcopy']", { opacity: 0 });
+      gsap.set("[data-motion='consent']", { opacity: 0 });
       gsap.set("[data-motion='footer']", { opacity: 0 });
       gsap.set("[data-motion='spotlight']", { opacity: 0 });
 
@@ -226,8 +229,9 @@ export function LandingMotion({ children }: { children: React.ReactNode }) {
         3.1,
       );
 
-      // 3.3s: Microcopy + footer — ghost presence
+      // 3.3s: Microcopy, consent + footer — ghost presence
       tl.to("[data-motion='microcopy']", { opacity: 0.35, duration: 0.3, ease: "power2.out" }, 3.3);
+      tl.to("[data-motion='consent']", { opacity: 1, duration: 0.3, ease: "power2.out" }, 3.3);
       tl.to("[data-motion='footer']", { opacity: 0.35, duration: 0.3, ease: "power2.out" }, 3.3);
 
       // Spotlight fades in during Phase 2 for ambient readiness

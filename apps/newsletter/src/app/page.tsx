@@ -30,8 +30,11 @@ export default function Home() {
           </p>
           <h1
             data-motion="title"
-            className="font-[family-name:var(--font-brand)] text-title leading-[0.85] tracking-[0.02em] text-bs-cream mt-2"
+            className="font-[family-name:var(--font-brand)] font-black text-title leading-[0.85] tracking-[0.02em] text-bs-cream mt-2"
             style={{
+              fontWeight: 900,
+              WebkitFontSmoothing: "antialiased",
+              MozOsxFontSmoothing: "grayscale",
               textShadow: "0 0 80px rgba(255,255,243,0.05), 0 0 4px rgba(255,255,243,0.03)",
             }}
           >
