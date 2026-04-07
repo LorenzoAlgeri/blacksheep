@@ -333,12 +333,10 @@ body::before {
 
 .mascotte-video {
   position: absolute;
-  right: calc(100% + clamp(4px, 1dvw, 12px));
-  top: 50%;
-  transform: translateY(-50%);
+  right: calc(100% - clamp(16px, 3dvw, 40px));
+  top: 18%;
   height: clamp(80px, 22dvh, 200px);
   width: auto;
-  border-radius: 6px;
   filter: drop-shadow(0 0 15px rgba(255, 255, 243, 0.06));
 }
 

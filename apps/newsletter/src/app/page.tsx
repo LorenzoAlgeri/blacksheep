@@ -28,13 +28,15 @@ export default async function Home() {
           {/* Mascotte video — positioned left of scritta, doesn't affect centering */}
           <video
             data-motion="mascotte"
-            src="/mascotte-video.mp4"
             poster="/mascotte.png"
             muted
             playsInline
             preload="auto"
             className="mascotte-video"
-          />
+          >
+            <source src="/mascotte-video.webm" type="video/webm" />
+            <source src="/mascotte-video.mp4" type="video/mp4" />
+          </video>
           {/* Scritta SVG */}
           <div data-motion="scritta">
             <svg
