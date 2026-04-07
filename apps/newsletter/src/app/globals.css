@@ -351,6 +351,13 @@ body::before {
     filter: none;
     mix-blend-mode: normal;
     -webkit-mix-blend-mode: normal;
+    /* Force isolated GPU compositing layer — prevents alpha bleeding on iOS */
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+    will-change: transform;
+    image-rendering: -webkit-optimize-contrast;
   }
 }
 

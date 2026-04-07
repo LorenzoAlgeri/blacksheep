@@ -12,6 +12,8 @@ export function LandingMotion({ children }: { children: React.ReactNode }) {
   useGSAP(
     () => {
       const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      const isMobile = window.matchMedia("(max-width: 640px)").matches;
+      const mascotteOpacity = isMobile ? 1 : 0.85;
 
       // Cancel CSS fallback — GSAP is now in control
       document.querySelectorAll("[data-motion]").forEach((el) => {
@@ -30,7 +32,7 @@ export function LandingMotion({ children }: { children: React.ReactNode }) {
         gsap.set("[data-motion='microcopy']", { opacity: 1 });
         gsap.set("[data-motion='consent']", { opacity: 1 });
         gsap.set("[data-motion='socials']", { opacity: 1 });
-        gsap.set("[data-motion='mascotte']", { opacity: 0.85, x: 0 });
+        gsap.set("[data-motion='mascotte']", { opacity: mascotteOpacity, x: 0 });
         return;
       }
 
@@ -140,7 +142,7 @@ export function LandingMotion({ children }: { children: React.ReactNode }) {
 
       if (hasSeenEntrance) {
         // Set everything to final visible state immediately
-        gsap.set("[data-motion='mascotte']", { opacity: 0.85, x: 0 });
+        gsap.set("[data-motion='mascotte']", { opacity: mascotteOpacity, x: 0 });
         // On revisit: seek video to end (frozen at last frame)
         const revisitVideo = containerRef.current?.querySelector<HTMLVideoElement>(
           "[data-motion='mascotte']",
@@ -296,7 +298,7 @@ export function LandingMotion({ children }: { children: React.ReactNode }) {
       tl.to(
         "[data-motion='mascotte']",
         {
-          opacity: 0.85,
+          opacity: mascotteOpacity,
           x: 0,
           duration: 0.6,
           ease: "power2.out",
