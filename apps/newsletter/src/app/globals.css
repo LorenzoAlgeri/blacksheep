@@ -338,10 +338,11 @@ body::before {
   height: clamp(80px, 22dvh, 200px);
   width: auto;
   background: transparent;
+  mix-blend-mode: screen;
   filter: drop-shadow(0 0 15px rgba(255, 255, 243, 0.06));
 }
 
-/* Mobile: mascotte smaller, tighter to scritta, no glow (MP4 fallback on Safari) */
+/* Mobile: mascotte smaller, tighter to scritta */
 @media (max-width: 640px) {
   .mascotte-video {
     right: calc(100% - 10px);
