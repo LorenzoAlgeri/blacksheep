@@ -331,6 +331,7 @@ body::before {
   justify-content: center;
 }
 
+/* Mascotte wrapper — absolute positioned left of scritta */
 .mascotte-video {
   position: absolute;
   right: calc(100% - clamp(16px, 3dvw, 40px));
@@ -338,26 +339,34 @@ body::before {
   height: clamp(80px, 22dvh, 200px);
   width: auto;
   background: transparent;
+}
+
+/* Desktop: show video with blend, hide static image */
+.mascotte-desktop {
+  display: block;
+  width: auto;
+  height: 100%;
   mix-blend-mode: screen;
   filter: drop-shadow(0 0 15px rgba(255, 255, 243, 0.06));
 }
+.mascotte-mobile {
+  display: none;
+}
 
-/* Mobile: mascotte smaller, tighter to scritta, no blend (Safari iOS artifact) */
+/* Mobile: hide video (alpha channel halo on iOS/Chrome), show static PNG */
 @media (max-width: 640px) {
   .mascotte-video {
     right: calc(100% - 16px);
     top: 20%;
     height: clamp(60px, 16dvh, 140px);
-    filter: none;
-    mix-blend-mode: normal;
-    -webkit-mix-blend-mode: normal;
-    /* Force isolated GPU compositing layer — prevents alpha bleeding on iOS */
-    -webkit-transform: translateZ(0);
-    transform: translateZ(0);
-    -webkit-backface-visibility: hidden;
-    backface-visibility: hidden;
-    will-change: transform;
-    image-rendering: -webkit-optimize-contrast;
+  }
+  .mascotte-desktop {
+    display: none;
+  }
+  .mascotte-mobile {
+    display: block;
+    width: auto;
+    height: 100%;
   }
 }
 
