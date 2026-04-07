@@ -13,18 +13,24 @@ export function LandingMotion({ children }: { children: React.ReactNode }) {
     () => {
       const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
+      // Cancel CSS fallback — GSAP is now in control
+      document.querySelectorAll("[data-motion]").forEach((el) => {
+        (el as HTMLElement).style.animation = "none";
+      });
+
       if (prefersReducedMotion) {
         // Everything visible, no motion
         gsap.set("[data-motion]", { opacity: 1 });
-        gsap.set("[data-motion='title']", {
+        gsap.set("[data-motion='scritta']", {
           clipPath: "inset(0 0% 0 0)",
           filter: "blur(0px)",
         });
-        gsap.set("[data-motion='location']", { opacity: 0.25 });
+        gsap.set("[data-motion='location']", { opacity: 1 });
         gsap.set("[data-motion='divider']", { opacity: 0.3 });
-        gsap.set("[data-motion='microcopy']", { opacity: 0.35 });
+        gsap.set("[data-motion='microcopy']", { opacity: 1 });
         gsap.set("[data-motion='consent']", { opacity: 1 });
-        gsap.set("[data-motion='footer']", { opacity: 0.35 });
+        gsap.set("[data-motion='socials']", { opacity: 1 });
+        gsap.set("[data-motion='mascotte']", { opacity: 0.85, x: 0 });
         return;
       }
 
@@ -35,10 +41,20 @@ export function LandingMotion({ children }: { children: React.ReactNode }) {
       //   8s = double (shimmer repeat)
       //  12s = triple (spotlight drift)
       function startAmbientMotion() {
-        // 1. Logo breathing — 4s base cycle
+        // 0. Scritta ambient — subtle scale breathing, 8s double cycle
+        gsap.to("[data-motion='scritta']", {
+          scale: 1.025,
+          duration: 8,
+          ease: "sine.inOut",
+          yoyo: true,
+          repeat: -1,
+        });
+
+        // 1. Logo breathing — 4s base cycle, visible float + scale
         gsap.to("[data-motion='logo']", {
-          scale: 1.05,
-          opacity: 0.8,
+          scale: 1.12,
+          y: -4,
+          opacity: 0.75,
           duration: 4,
           ease: "sine.inOut",
           yoyo: true,
@@ -48,7 +64,7 @@ export function LandingMotion({ children }: { children: React.ReactNode }) {
         // 2. Logo glow — 4s cycle, offset 1s from breathing
         // Glow FOLLOWS scale: when logo is at max scale, glow is still rising.
         gsap.to("[data-motion='logo'] svg", {
-          filter: "drop-shadow(0 0 30px rgba(255,255,243,0.3))",
+          filter: "drop-shadow(0 0 40px rgba(255,255,243,0.45))",
           duration: 4,
           delay: 1,
           ease: "sine.inOut",
@@ -75,14 +91,19 @@ export function LandingMotion({ children }: { children: React.ReactNode }) {
           repeat: -1,
         });
 
-        // 5. Shimmer "EVERY MONDAY" — 1.2s flash every 8s (double cycle)
-        gsap.to(".shimmer-text", {
-          backgroundPosition: "-200% 0",
-          duration: 1.2,
-          ease: "power2.inOut",
-          repeat: -1,
-          repeatDelay: 8,
-        });
+        // 5. Shimmer "EVERY MONDAY" — 1.2s sweep every 4s base cycle
+        // 400% bg-size: at 150% and -50% the bright center (50% of gradient) is fully off-screen
+        gsap.fromTo(
+          ".shimmer-text",
+          { backgroundPosition: "150% 0" },
+          {
+            backgroundPosition: "-50% 0",
+            duration: 3.5,
+            ease: "power2.inOut",
+            repeat: -1,
+            repeatDelay: 4,
+          },
+        );
 
         // CTA glow is CSS (2s cycle), activated via class during entrance
       }
@@ -98,23 +119,39 @@ export function LandingMotion({ children }: { children: React.ReactNode }) {
 
       if (hasSeenEntrance) {
         // Set everything to final visible state immediately
+        gsap.set("[data-motion='mascotte']", { opacity: 0.85, x: 0 });
+        // On revisit: seek video to end (frozen at last frame)
+        const revisitVideo = containerRef.current?.querySelector<HTMLVideoElement>(
+          "[data-motion='mascotte']",
+        );
+        if (revisitVideo) {
+          revisitVideo
+            .play()
+            .then(() => {
+              // Let it play to end naturally, it freezes at last frame
+            })
+            .catch(() => {
+              /* poster shown as fallback */
+            });
+        }
         gsap.set("[data-motion='gradient']", { opacity: 1 });
+        gsap.set("[data-motion='scritta']", {
+          clipPath: "inset(0 0% 0 0)",
+          filter: "blur(0px)",
+          opacity: 1,
+        });
+        gsap.set("[data-motion='every-monday']", { opacity: 1, y: 0 });
         gsap.set("[data-motion='logo']", { opacity: 1, scale: 1 });
         gsap.set("[data-motion='logo'] svg", {
           filter: "drop-shadow(0 0 30px rgba(255,255,243,0.15))",
         });
-        gsap.set("[data-motion='every-monday']", { opacity: 1, y: 0 });
-        gsap.set("[data-motion='title']", {
-          clipPath: "inset(0 0% 0 0)",
-          filter: "blur(0px)",
-        });
-        gsap.set("[data-motion='location']", { opacity: 0.25 });
+        gsap.set("[data-motion='location']", { opacity: 1 });
         gsap.set("[data-motion='divider']", { opacity: 0.2 });
         gsap.set("[data-motion='input']", { opacity: 1, y: 0 });
         gsap.set("[data-motion='cta']", { opacity: 1, scale: 1 });
-        gsap.set("[data-motion='microcopy']", { opacity: 0.35 });
+        gsap.set("[data-motion='socials']", { opacity: 1 });
+        gsap.set("[data-motion='microcopy']", { opacity: 1 });
         gsap.set("[data-motion='consent']", { opacity: 1 });
-        gsap.set("[data-motion='footer']", { opacity: 0.35 });
         gsap.set("[data-motion='spotlight']", { opacity: 0.05 });
         containerRef.current
           ?.querySelector("[data-motion='cta']")
@@ -124,23 +161,25 @@ export function LandingMotion({ children }: { children: React.ReactNode }) {
       }
 
       // --- Initial hidden states (before paint via useLayoutEffect timing) ---
+      gsap.set("[data-motion='mascotte']", { opacity: 0, x: -20 });
       gsap.set("[data-motion='gradient']", { opacity: 0 });
+      gsap.set("[data-motion='scritta']", {
+        clipPath: "inset(0 100% 0 0)",
+        filter: "blur(8px)",
+        opacity: 1,
+      });
+      gsap.set("[data-motion='every-monday']", { opacity: 0, y: -5 });
       gsap.set("[data-motion='logo']", { opacity: 0, scale: 0.7 });
       gsap.set("[data-motion='logo'] svg", {
         filter: "drop-shadow(0 0 30px rgba(255,255,243,0))",
-      });
-      gsap.set("[data-motion='every-monday']", { opacity: 0, y: -5 });
-      gsap.set("[data-motion='title']", {
-        clipPath: "inset(0 100% 0 0)",
-        filter: "blur(8px)",
       });
       gsap.set("[data-motion='location']", { opacity: 0 });
       gsap.set("[data-motion='divider']", { opacity: 0 });
       gsap.set("[data-motion='input']", { opacity: 0, y: 12 });
       gsap.set("[data-motion='cta']", { opacity: 0, scale: 0.97 });
+      gsap.set("[data-motion='socials']", { opacity: 0 });
       gsap.set("[data-motion='microcopy']", { opacity: 0 });
       gsap.set("[data-motion='consent']", { opacity: 0 });
-      gsap.set("[data-motion='footer']", { opacity: 0 });
       gsap.set("[data-motion='spotlight']", { opacity: 0 });
 
       // --- Entrance timeline: "Entri nel club" ---
@@ -156,16 +195,26 @@ export function LandingMotion({ children }: { children: React.ReactNode }) {
       });
 
       // PHASE 1: IL BUIO (0 – 1.2s) — suspense
-      // 0.0–0.4s: deliberate darkness. Nothing happens. Tension builds.
-      // 0.4s: background gradient — eyes adjusting to the dark
       tl.to("[data-motion='gradient']", { opacity: 1, duration: 0.8, ease: "power2.inOut" }, 0.4);
 
-      // PHASE 2: IL RICONOSCIMENTO (1.2 – 2.0s) — brand emerges
-      // 1.2s: Logo materializes with decisive overshoot + glow lights up
+      // PHASE 2: IL RICONOSCIMENTO (1.2 – 2.5s) — brand emerges
+      // 1.2s: Scritta SVG — clip-path reveal + blur-to-focus
+      tl.to(
+        "[data-motion='scritta']",
+        { clipPath: "inset(0 0% 0 0)", duration: 0.8, ease: "power3.out" },
+        1.2,
+      );
+      tl.to(
+        "[data-motion='scritta']",
+        { filter: "blur(0px)", duration: 0.6, ease: "power2.out" },
+        1.2,
+      );
+
+      // 1.8s: Logo icon materializes with decisive overshoot + glow (tight with scritta)
       tl.to(
         "[data-motion='logo']",
         { opacity: 1, scale: 1, duration: 0.8, ease: "back.out(1.7)" },
-        1.2,
+        1.8,
       );
       tl.to(
         "[data-motion='logo'] svg",
@@ -174,35 +223,20 @@ export function LandingMotion({ children }: { children: React.ReactNode }) {
           duration: 0.8,
           ease: "power2.out",
         },
-        1.2,
+        1.8,
       );
 
-      // 1.6s: "EVERY MONDAY" — fast, discrete context
+      // 2.3s: "EVERY MONDAY" — fast, discrete context
       tl.to(
         "[data-motion='every-monday']",
         { opacity: 1, y: 0, duration: 0.3, ease: "power2.out" },
-        1.6,
-      );
-
-      // PHASE 3: IL DROP (2.0 – 2.7s) — the WOW moment
-      // 2.0s: "BLACK SHEEP" — clip-path reveal + blur-to-focus, simultaneous
-      // Blur clears faster (600ms) than clip opens (800ms) — text sharpens
-      // while still being revealed, like stage lights cutting through fog.
-      tl.to(
-        "[data-motion='title']",
-        { clipPath: "inset(0 0% 0 0)", duration: 0.8, ease: "power3.out" },
-        2.0,
-      );
-      tl.to(
-        "[data-motion='title']",
-        { filter: "blur(0px)", duration: 0.6, ease: "power2.out" },
-        2.0,
+        2.3,
       );
 
       // 2.5s: Location text — ghost opacity, just context
-      tl.to("[data-motion='location']", { opacity: 0.25, duration: 0.3, ease: "power2.out" }, 2.5);
+      tl.to("[data-motion='location']", { opacity: 1, duration: 0.3, ease: "power2.out" }, 2.5);
 
-      // PHASE 4: LA DISCESA (2.7 – 3.5s) — calm, the form appears
+      // PHASE 3: LA DISCESA (2.7 – 3.5s) — calm, the form appears
       // 2.7s: Divider fades to ambient start level (0.2)
       tl.to("[data-motion='divider']", { opacity: 0.2, duration: 0.3, ease: "power2.out" }, 2.7);
 
@@ -213,7 +247,7 @@ export function LandingMotion({ children }: { children: React.ReactNode }) {
         2.8,
       );
 
-      // 3.1s: CTA — glow breathing starts DURING fade-in so it feels alive
+      // 3.1s: CTA — glow breathing starts DURING fade-in
       tl.to(
         "[data-motion='cta']",
         { opacity: 1, scale: 1, duration: 0.4, ease: "power2.out" },
@@ -229,13 +263,41 @@ export function LandingMotion({ children }: { children: React.ReactNode }) {
         3.1,
       );
 
-      // 3.3s: Microcopy, consent + footer — ghost presence
-      tl.to("[data-motion='microcopy']", { opacity: 0.35, duration: 0.3, ease: "power2.out" }, 3.3);
+      // 3.3s: Socials, microcopy, consent, "the place to be" — ghost presence
+      tl.to("[data-motion='socials']", { opacity: 0.75, duration: 0.3, ease: "power2.out" }, 3.3);
+      tl.to("[data-motion='microcopy']", { opacity: 0.7, duration: 0.3, ease: "power2.out" }, 3.3);
       tl.to("[data-motion='consent']", { opacity: 1, duration: 0.3, ease: "power2.out" }, 3.3);
-      tl.to("[data-motion='footer']", { opacity: 0.35, duration: 0.3, ease: "power2.out" }, 3.3);
 
       // Spotlight fades in during Phase 2 for ambient readiness
       tl.to("[data-motion='spotlight']", { opacity: 0.05, duration: 1.5, ease: "power1.out" }, 1.2);
+
+      // Mascotte slide-in from left, synced with scritta reveal
+      tl.to(
+        "[data-motion='mascotte']",
+        {
+          opacity: 0.85,
+          x: 0,
+          duration: 0.6,
+          ease: "power2.out",
+        },
+        1.5,
+      );
+
+      // Start mascotte video playback when it appears
+      tl.call(
+        () => {
+          const video = containerRef.current?.querySelector<HTMLVideoElement>(
+            "[data-motion='mascotte']",
+          );
+          if (video) {
+            video.play().catch(() => {
+              /* autoplay policy */
+            });
+          }
+        },
+        [],
+        1.5,
+      );
     },
     { scope: containerRef },
   );

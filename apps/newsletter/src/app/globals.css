@@ -27,6 +27,7 @@
 
 html {
   background: #000000;
+  overflow-x: hidden;
 }
 
 body {
@@ -39,7 +40,7 @@ body {
   max-width: 480px;
   margin: 0 auto;
   position: relative;
-  overflow-x: hidden;
+  overflow-x: visible;
 }
 
 /* Noise grain — analog texture */
@@ -59,10 +60,14 @@ body::before {
   [data-motion] {
     opacity: 0;
   }
-  [data-motion="title"] {
+  [data-motion="scritta"] {
     opacity: 1;
     clip-path: inset(0 100% 0 0);
     filter: blur(8px);
+  }
+  [data-motion="mascotte"] {
+    opacity: 0;
+    transform: translateX(-20px);
   }
 }
 
@@ -77,7 +82,7 @@ body::before {
   [data-motion] {
     animation: motion-fallback 0s 4s forwards;
   }
-  [data-motion="title"] {
+  [data-motion="scritta"] {
     animation: motion-fallback 0s 4s forwards;
     clip-path: none;
     filter: none;
@@ -131,15 +136,15 @@ body::before {
 /* === "EVERY MONDAY" shimmer === */
 .shimmer-text {
   background: linear-gradient(
-    105deg,
+    90deg,
     rgba(255, 255, 243, 0.4) 0%,
-    rgba(255, 255, 243, 0.4) 35%,
-    rgba(255, 255, 243, 0.8) 50%,
-    rgba(255, 255, 243, 0.4) 65%,
+    rgba(255, 255, 243, 0.4) 40%,
+    rgba(255, 255, 243, 0.85) 50%,
+    rgba(255, 255, 243, 0.4) 60%,
     rgba(255, 255, 243, 0.4) 100%
   );
-  background-size: 200% 100%;
-  background-position: 200% 0;
+  background-size: 400% 100%;
+  background-position: 150% 0;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -232,17 +237,24 @@ body::before {
   }
 }
 
-/* === Responsive fluid spacing (dvh/dvw clamp) === */
-
-/* FIX 2: Main container padding — 24px on iPhone SE, 64px on desktop */
-.space-main-y {
-  padding-top: clamp(24px, 5dvh, 64px);
-  padding-bottom: clamp(16px, 3dvh, 64px);
+/* === Confirm page title glow === */
+.confirm-title-glow {
+  text-shadow:
+    0 0 40px rgba(255, 255, 243, 0.15),
+    0 0 80px rgba(255, 255, 243, 0.05);
 }
 
-/* FIX 4: Logo-to-title gap — 16px on iPhone SE, 40px on desktop */
+/* === Responsive fluid spacing (dvh/dvw clamp) === */
+
+/* FIX 2: Main container padding — compact to fit viewport */
+.space-main-y {
+  padding-top: clamp(16px, 3dvh, 40px);
+  padding-bottom: clamp(12px, 2dvh, 32px);
+}
+
+/* FIX 4: Logo-to-title gap — tighter */
 .space-logo-gap {
-  margin-top: clamp(16px, 3dvh, 40px);
+  margin-top: clamp(8px, 1.5dvh, 24px);
 }
 
 /* FIX 5: Title "BLACK SHEEP" — 48px on iPhone SE, 72px on desktop */
@@ -250,10 +262,10 @@ body::before {
   font-size: clamp(3rem, 10dvw, 4.5rem);
 }
 
-/* FIX 6: Divider margins — 12px each on iPhone SE, 32px on desktop */
+/* FIX 6: Divider margins — compressed */
 .space-divider {
-  margin-top: clamp(12px, 2dvh, 32px);
-  margin-bottom: clamp(12px, 2dvh, 32px);
+  margin-top: clamp(8px, 1.5dvh, 20px);
+  margin-bottom: clamp(8px, 1.5dvh, 20px);
 }
 
 /* FIX 7: Input padding — 10px on iPhone SE (46px total), 14px on desktop (50px) */
@@ -268,14 +280,14 @@ body::before {
   padding-bottom: clamp(12px, 2dvh, 16px);
 }
 
-/* FIX 9: Footer padding — 16px on small, 48px on desktop */
+/* FIX 9: Footer padding — compact */
 .space-footer {
-  padding-top: clamp(16px, 3dvh, 48px);
+  padding-top: clamp(8px, 1.5dvh, 24px);
 }
 
-/* FIX 10: Microcopy margin — 12px on small, 24px on desktop */
+/* FIX 10: Microcopy margin — compact */
 .space-microcopy {
-  margin-top: clamp(12px, 2dvh, 24px);
+  margin-top: clamp(6px, 1dvh, 16px);
 }
 
 /* FIX 11: Desktop — tighter proportions, luxury feel */
@@ -309,4 +321,35 @@ body::before {
 .cta-btn:active {
   transform: scale(0.98);
   box-shadow: 0 2px 20px rgba(255, 255, 243, 0.08);
+}
+
+/* === Brand hero — scritta centered, mascotte absolute left === */
+.brand-hero {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mascotte-video {
+  position: absolute;
+  right: calc(100% + clamp(4px, 1dvw, 12px));
+  top: 50%;
+  transform: translateY(-50%);
+  height: clamp(80px, 22dvh, 200px);
+  width: auto;
+  border-radius: 6px;
+  filter: drop-shadow(0 0 15px rgba(255, 255, 243, 0.06));
+}
+
+/* === Autofill override — mantieni sfondo dark su autofill === */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 1000px #000000 inset !important;
+  -webkit-text-fill-color: var(--bs-cream) !important;
+  background-color: transparent !important;
+  transition: background-color 5000s ease-in-out 0s;
+  caret-color: var(--bs-cream);
 }
