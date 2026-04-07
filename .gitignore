@@ -35,3 +35,24 @@ Thumbs.db
 # Logs
 *.log
 npm-debug.log*
+
+.vercel
+
+# Claude Code local
+.claude/settings.local.json
+
+# Playwright MCP
+.playwright-mcp/
+
+# Screenshots (dev artifacts)
+*.png
+
+# Intermediate video files
+apps/newsletter/public/BLUSALUTO0001-0120.mp4
+apps/newsletter/public/hero-video.mp4
+apps/newsletter/public/mascotte-video.webm
+apps/newsletter/public/video-poster.jpg
+apps/newsletter/public/frame95.jpg
+
+# Large files (>100MB)
+brand-assets/DOCEXTRA/

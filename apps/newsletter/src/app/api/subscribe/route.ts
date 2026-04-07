@@ -90,7 +90,24 @@ export async function POST(request: NextRequest) {
   const confirmUrl = `${siteUrl}/api/confirm?token=${subscriber.token}`;
   const unsubscribeUrl = `${siteUrl}/api/unsubscribe?token=${subscriber.token}`;
 
-  const greeting = name ? `${escapeHtml(name)}, sei dentro.` : "Sei dentro.";
+  const heading = name ? `${escapeHtml(name)}, SEI DEI NOSTRI!` : "SEI DEI NOSTRI!";
+
+  // Fetch dynamic config (tagline/venue) from site_config
+  let tagline = "EVERY MONDAY";
+  let venue = "11 Clubroom &middot; Corso Como &middot; Milano";
+  try {
+    const { data: cfg } = await supabase
+      .from("site_config")
+      .select("tagline, venue")
+      .eq("id", "main")
+      .single();
+    if (cfg) {
+      tagline = escapeHtml(cfg.tagline);
+      venue = escapeHtml(cfg.venue);
+    }
+  } catch {
+    // fallback to defaults
+  }
 
   const { error: emailError } = await getResend().emails.send({
     from: process.env.RESEND_FROM_EMAIL ?? "BLACK SHEEP <noreply@blacksheep.community>",
@@ -98,19 +115,34 @@ export async function POST(request: NextRequest) {
     subject: "Conferma la tua iscrizione — BLACK SHEEP",
     html: `
 <!DOCTYPE html>
-<html lang="it">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"></head>
-<body style="margin:0;padding:0;background:#000000;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
-  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#000000;">
+<html lang="it" style="background-color:#000000;color-scheme:dark;">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <meta name="color-scheme" content="dark">
+  <meta name="supported-color-schemes" content="dark">
+  <style>
+    :root { color-scheme: dark; }
+    body, .body-bg { background-color: #000000 !important; }
+    u + .body-bg { background-color: #000000 !important; }
+    [data-ogsc] body { background-color: #000000 !important; }
+  </style>
+</head>
+<body class="body-bg" style="margin:0;padding:0;background-color:#000000;color:#FFFFF3;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
+  <div class="body-bg" style="background-color:#000000;">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#000000;">
     <tr><td align="center" style="padding:0;">
-      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;background:#0a0a0a;">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;background-color:#0a0a0a;border:1px solid rgba(255,255,243,0.06);">
 
         <!-- Spacer top -->
         <tr><td style="height:60px;font-size:0;line-height:0;">&nbsp;</td></tr>
 
-        <!-- EVERY MONDAY -->
-        <tr><td align="center" style="padding:0 40px;">
-          <p style="margin:0;font-family:'Arial Black',Arial,Helvetica,sans-serif;font-size:10px;letter-spacing:0.45em;color:rgba(255,255,243,0.30);text-align:center;">EVERY MONDAY</p>
+        <!-- Spotlight glow -->
+        <tr><td style="height:2px;background:radial-gradient(ellipse at center, rgba(255,255,243,0.08) 0%, transparent 70%);font-size:0;line-height:0;">&nbsp;</td></tr>
+
+        <!-- Tagline -->
+        <tr><td align="center" style="padding:16px 40px 0;">
+          <p style="margin:0;font-family:'Arial Black',Arial,Helvetica,sans-serif;font-size:10px;letter-spacing:0.45em;color:rgba(255,255,243,0.30);text-align:center;">${tagline}</p>
         </td></tr>
 
         <!-- BLACK SHEEP -->
@@ -120,7 +152,7 @@ export async function POST(request: NextRequest) {
 
         <!-- Venue -->
         <tr><td align="center" style="padding:20px 40px 0;">
-          <p style="margin:0;font-family:'Arial Black',Arial,Helvetica,sans-serif;font-size:9px;letter-spacing:0.25em;color:rgba(255,255,243,0.25);text-transform:uppercase;">11 Clubroom &middot; Corso Como &middot; Milano</p>
+          <p style="margin:0;font-family:'Arial Black',Arial,Helvetica,sans-serif;font-size:9px;letter-spacing:0.25em;color:rgba(255,255,243,0.25);text-transform:uppercase;">${venue}</p>
         </td></tr>
 
         <!-- Spacer -->
@@ -138,22 +170,22 @@ export async function POST(request: NextRequest) {
 
         <!-- Main message -->
         <tr><td align="center" style="padding:0 40px;">
-          <p style="margin:0 0 12px;font-family:'Arial Black',Arial,Helvetica,sans-serif;font-size:20px;color:#FFFFF3;letter-spacing:0.02em;">${greeting}</p>
+          <p style="margin:0 0 14px;font-family:'Arial Black',Arial,Helvetica,sans-serif;font-size:22px;color:#FFFFF3;letter-spacing:0.04em;">${heading}</p>
           <p style="margin:0;font-size:14px;line-height:1.7;color:rgba(255,255,243,0.50);">Manca solo un click per entrare nella lista.<br>Lineup, date esclusive e backstage pass &mdash; prima di tutti.</p>
         </td></tr>
 
         <!-- CTA Button -->
         <tr><td align="center" style="padding:40px 40px 0;">
           <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="max-width:320px;"><tr>
-            <td align="center" style="background:#FFFFF3;border-radius:4px;">
-              <a href="${confirmUrl}" target="_blank" style="display:block;padding:18px 32px;font-family:'Arial Black',Arial,Helvetica,sans-serif;font-size:13px;letter-spacing:0.15em;color:#0a0a0a;text-decoration:none;font-weight:700;text-align:center;">THE PLACE TO BE</a>
+            <td align="center" style="background-color:#FFFFF3;border-radius:4px;">
+              <a href="${confirmUrl}" target="_blank" style="display:block;padding:18px 32px;font-family:'Arial Black',Arial,Helvetica,sans-serif;font-size:13px;letter-spacing:0.15em;color:#0a0a0a;text-decoration:none;font-weight:700;text-align:center;">ENTRA</a>
             </td>
           </tr></table>
         </td></tr>
 
         <!-- Micro copy -->
         <tr><td align="center" style="padding:16px 40px 0;">
-          <p style="margin:0;font-size:11px;color:rgba(255,255,243,0.25);line-height:1.5;">Iscriviti. Lineup e date prima di tutti.</p>
+          <p style="margin:0;font-size:11px;color:rgba(255,255,243,0.25);line-height:1.5;">Un click e sei dentro.</p>
         </td></tr>
 
         <!-- Spacer -->
@@ -184,6 +216,7 @@ export async function POST(request: NextRequest) {
       </table>
     </td></tr>
   </table>
+  </div>
 </body>
 </html>
     `,

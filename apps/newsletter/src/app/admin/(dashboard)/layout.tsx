@@ -3,11 +3,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { auth } from "@/lib/auth";
 
-export default async function DashboardLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const session = await auth();
 
   if (!session) {
@@ -24,13 +20,34 @@ export default async function DashboardLayout({
             width={28}
             height={18}
             className="opacity-30"
-            style={{ filter: "brightness(0) saturate(100%) invert(99%) sepia(3%) saturate(200%) hue-rotate(30deg)" }}
+            style={{
+              filter:
+                "brightness(0) saturate(100%) invert(99%) sepia(3%) saturate(200%) hue-rotate(30deg)",
+            }}
           />
-          <span className="font-[family-name:var(--font-brand)] text-sm tracking-wider text-bs-cream/50">ADMIN</span>
+          <span className="font-[family-name:var(--font-brand)] text-sm tracking-wider text-bs-cream/50">
+            ADMIN
+          </span>
         </div>
         <nav className="flex gap-4 font-body text-xs text-bs-cream/40">
-          <Link href="/admin" className="hover:text-bs-cream transition-colors">Iscritti</Link>
-          <Link href="/admin/compose" className="hover:text-bs-cream transition-colors">Invia</Link>
+          <Link href="/admin" className="hover:text-bs-cream transition-colors">
+            Iscritti
+          </Link>
+          <Link href="/admin/compose" className="hover:text-bs-cream transition-colors">
+            Invia
+          </Link>
+          <Link href="/admin/settings" className="hover:text-bs-cream transition-colors">
+            Impostazioni
+          </Link>
+          <span className="text-bs-cream/10">|</span>
+          <a
+            href="/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hover:text-bs-cream transition-colors"
+          >
+            Vedi sito ↗
+          </a>
         </nav>
       </header>
       <main className="flex-1 p-4">{children}</main>

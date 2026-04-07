@@ -1,0 +1,10 @@
+node_modules
+.next
+*.png
+*.jpg
+*.jpeg
+brand-assets
+smoke-test-*.png
+screenshot-*.png
+landing-*.png
+ambient-*.png

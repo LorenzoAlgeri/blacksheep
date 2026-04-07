@@ -58,7 +58,7 @@ export function SubscribeForm() {
           type="email"
           placeholder="La tua email"
           autoComplete="email"
-          className="w-full bg-white/5 border border-bs-cream/10 rounded-lg px-5 input-responsive input-field font-body text-sm text-bs-cream placeholder:text-bs-cream/30 focus:outline-none focus:border-bs-cream/30 focus:ring-1 focus:ring-bs-cream/10 transition-all duration-200"
+          className="w-full bg-transparent border-0 border-b border-bs-cream/10 rounded-none px-2 input-responsive input-field font-body text-sm text-bs-cream placeholder:text-bs-cream/30 focus:outline-none focus:border-b-bs-cream/30 focus:ring-0 transition-all duration-200"
           {...register("email")}
         />
         {errors.email && (
@@ -75,7 +75,7 @@ export function SubscribeForm() {
           type="text"
           placeholder="Nome (opzionale)"
           autoComplete="given-name"
-          className="w-full bg-white/5 border border-bs-cream/10 rounded-lg px-5 input-responsive input-field font-body text-sm text-bs-cream placeholder:text-bs-cream/30 focus:outline-none focus:border-bs-cream/30 focus:ring-1 focus:ring-bs-cream/10 transition-all duration-200"
+          className="w-full bg-transparent border-0 border-b border-bs-cream/10 rounded-none px-2 input-responsive input-field font-body text-sm text-bs-cream placeholder:text-bs-cream/30 focus:outline-none focus:border-b-bs-cream/30 focus:ring-0 transition-all duration-200"
           {...register("name")}
         />
       </div>
@@ -106,7 +106,7 @@ export function SubscribeForm() {
             ISCRIZIONE IN CORSO...
           </span>
         ) : (
-          "THE PLACE TO BE"
+          "ISCRIVITI"
         )}
       </button>
 
