@@ -113,13 +113,13 @@ export default async function Home() {
         </p>
 
         {/* 8. Social icons */}
-        <div data-motion="socials" className="flex items-center justify-center gap-3 mt-2">
+        <div data-motion="socials" className="flex items-center justify-center gap-1 mt-2">
           <a
             href="https://instagram.com/blacksheep.community_"
             target="_blank"
             rel="noopener noreferrer"
-            aria-label="Instagram"
-            className="text-bs-cream opacity-25 hover:opacity-50 transition-opacity duration-300"
+            aria-label="Seguici su Instagram"
+            className="p-3 text-bs-cream opacity-25 hover:opacity-50 transition-opacity duration-300"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -141,8 +141,8 @@ export default async function Home() {
             href="https://www.tiktok.com/@blacksheepcommunity"
             target="_blank"
             rel="noopener noreferrer"
-            aria-label="TikTok"
-            className="text-bs-cream opacity-25 hover:opacity-50 transition-opacity duration-300"
+            aria-label="Seguici su TikTok"
+            className="p-3 text-bs-cream opacity-25 hover:opacity-50 transition-opacity duration-300"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"

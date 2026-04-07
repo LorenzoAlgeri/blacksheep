@@ -202,9 +202,9 @@ export async function POST(request: NextRequest) {
         <tr><td align="center" style="padding:24px 40px;">
           <p style="margin:0 0 8px;font-size:10px;color:rgba(255,255,243,0.15);line-height:1.5;">Se non hai richiesto questa iscrizione, ignora questa email.</p>
           <p style="margin:0;font-size:10px;">
-            <a href="${unsubscribeUrl}" style="color:rgba(255,255,243,0.15);text-decoration:underline;">Disiscriviti</a>
+            <a href="${unsubscribeUrl}" style="color:rgba(255,255,243,0.5);text-decoration:underline;">Disiscriviti</a>
             &nbsp;&middot;&nbsp;
-            <a href="${siteUrl}/privacy" style="color:rgba(255,255,243,0.15);text-decoration:underline;">Privacy Policy</a>
+            <a href="${siteUrl}/privacy" style="color:rgba(255,255,243,0.5);text-decoration:underline;">Privacy Policy</a>
           </p>
         </td></tr>
 

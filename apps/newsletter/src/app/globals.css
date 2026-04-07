@@ -290,17 +290,17 @@ body::before {
   margin-top: clamp(6px, 1dvh, 16px);
 }
 
-/* FIX 11: Desktop — tighter proportions, luxury feel */
+/* Desktop — proportions >= mobile (mobile-first: base small, desktop equal or larger) */
 @media (min-width: 640px) {
   .input-field {
-    padding-top: 12px;
-    padding-bottom: 12px;
-    font-size: 13px;
-  }
-  .cta-button {
     padding-top: 14px;
     padding-bottom: 14px;
-    font-size: 15px;
+    font-size: 14px;
+  }
+  .cta-button {
+    padding-top: 16px;
+    padding-bottom: 16px;
+    font-size: 18px;
     letter-spacing: 0.15em;
   }
 }
@@ -345,7 +345,7 @@ body::before {
 /* Mobile: mascotte smaller, tighter to scritta, no blend (Safari iOS artifact) */
 @media (max-width: 640px) {
   .mascotte-video {
-    right: calc(100% - 10px);
+    right: calc(100% - 16px);
     top: 20%;
     height: clamp(60px, 16dvh, 140px);
     filter: none;

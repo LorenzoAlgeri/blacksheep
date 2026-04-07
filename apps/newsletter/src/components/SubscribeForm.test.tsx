@@ -11,7 +11,7 @@ describe("SubscribeForm", () => {
   it("renders the email input and submit button", () => {
     render(<SubscribeForm />);
     expect(screen.getByPlaceholderText("La tua email")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /THE PLACE TO BE/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /ISCRIVITI/i })).toBeInTheDocument();
   });
 
   it("shows success message after valid submission", async () => {
@@ -24,7 +24,7 @@ describe("SubscribeForm", () => {
     render(<SubscribeForm />);
 
     await user.type(screen.getByPlaceholderText("La tua email"), "test@example.com");
-    await user.click(screen.getByRole("button", { name: /THE PLACE TO BE/i }));
+    await user.click(screen.getByRole("button", { name: /ISCRIVITI/i }));
 
     await waitFor(() => {
       expect(screen.getByText("CI SEI")).toBeInTheDocument();
@@ -36,7 +36,7 @@ describe("SubscribeForm", () => {
     render(<SubscribeForm />);
 
     await user.type(screen.getByPlaceholderText("La tua email"), "bad");
-    await user.click(screen.getByRole("button", { name: /THE PLACE TO BE/i }));
+    await user.click(screen.getByRole("button", { name: /ISCRIVITI/i }));
 
     await waitFor(() => {
       expect(screen.getByText(/email valida/i)).toBeInTheDocument();
@@ -53,7 +53,7 @@ describe("SubscribeForm", () => {
     render(<SubscribeForm />);
 
     await user.type(screen.getByPlaceholderText("La tua email"), "test@example.com");
-    await user.click(screen.getByRole("button", { name: /THE PLACE TO BE/i }));
+    await user.click(screen.getByRole("button", { name: /ISCRIVITI/i }));
 
     await waitFor(() => {
       expect(screen.getByRole("alert")).toHaveTextContent("Rate limited");

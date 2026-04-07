@@ -40,49 +40,69 @@ export function LandingMotion({ children }: { children: React.ReactNode }) {
       //   2s = half (divider pulse, CTA glow)
       //   8s = double (shimmer repeat)
       //  12s = triple (spotlight drift)
+      const mm = gsap.matchMedia();
+
       function startAmbientMotion() {
-        // 0. Scritta ambient — subtle scale breathing, 8s double cycle
-        gsap.to("[data-motion='scritta']", {
-          scale: 1.025,
-          duration: 8,
-          ease: "sine.inOut",
-          yoyo: true,
-          repeat: -1,
+        // Desktop: full ambient animations
+        mm.add("(min-width: 641px)", () => {
+          // 0. Scritta ambient — subtle scale breathing, 8s double cycle
+          gsap.to("[data-motion='scritta']", {
+            scale: 1.025,
+            duration: 8,
+            ease: "sine.inOut",
+            yoyo: true,
+            repeat: -1,
+          });
+
+          // 1. Logo breathing — 4s base cycle, visible float + scale
+          gsap.to("[data-motion='logo']", {
+            scale: 1.12,
+            y: -4,
+            opacity: 0.75,
+            duration: 4,
+            ease: "sine.inOut",
+            yoyo: true,
+            repeat: -1,
+          });
+
+          // 2. Logo glow — 4s cycle, offset 1s from breathing
+          gsap.to("[data-motion='logo'] svg", {
+            filter: "drop-shadow(0 0 40px rgba(255,255,243,0.45))",
+            duration: 4,
+            delay: 1,
+            ease: "sine.inOut",
+            yoyo: true,
+            repeat: -1,
+          });
+
+          // 3. Spotlight slow drift — 12s triple cycle
+          gsap.to("[data-motion='spotlight']", {
+            x: "12%",
+            y: "-8%",
+            duration: 12,
+            ease: "sine.inOut",
+            yoyo: true,
+            repeat: -1,
+          });
         });
 
-        // 1. Logo breathing — 4s base cycle, visible float + scale
-        gsap.to("[data-motion='logo']", {
-          scale: 1.12,
-          y: -4,
-          opacity: 0.75,
-          duration: 4,
-          ease: "sine.inOut",
-          yoyo: true,
-          repeat: -1,
+        // Mobile: lightweight ambient only (divider + shimmer)
+        mm.add("(max-width: 640px)", () => {
+          // Shimmer only — lightweight, GPU-friendly
+          gsap.fromTo(
+            ".shimmer-text",
+            { backgroundPosition: "150% 0" },
+            {
+              backgroundPosition: "-50% 0",
+              duration: 3.5,
+              ease: "power2.inOut",
+              repeat: -1,
+              repeatDelay: 6,
+            },
+          );
         });
 
-        // 2. Logo glow — 4s cycle, offset 1s from breathing
-        // Glow FOLLOWS scale: when logo is at max scale, glow is still rising.
-        gsap.to("[data-motion='logo'] svg", {
-          filter: "drop-shadow(0 0 40px rgba(255,255,243,0.45))",
-          duration: 4,
-          delay: 1,
-          ease: "sine.inOut",
-          yoyo: true,
-          repeat: -1,
-        });
-
-        // 3. Spotlight slow drift — 12s triple cycle
-        gsap.to("[data-motion='spotlight']", {
-          x: "12%",
-          y: "-8%",
-          duration: 12,
-          ease: "sine.inOut",
-          yoyo: true,
-          repeat: -1,
-        });
-
-        // 4. Divider pulse — 2s half cycle (from current 0.2, no fromTo)
+        // Both: divider pulse + shimmer on desktop
         gsap.to("[data-motion='divider']", {
           opacity: 0.4,
           duration: 2,
@@ -91,19 +111,20 @@ export function LandingMotion({ children }: { children: React.ReactNode }) {
           repeat: -1,
         });
 
-        // 5. Shimmer "EVERY MONDAY" — 1.2s sweep every 4s base cycle
-        // 400% bg-size: at 150% and -50% the bright center (50% of gradient) is fully off-screen
-        gsap.fromTo(
-          ".shimmer-text",
-          { backgroundPosition: "150% 0" },
-          {
-            backgroundPosition: "-50% 0",
-            duration: 3.5,
-            ease: "power2.inOut",
-            repeat: -1,
-            repeatDelay: 4,
-          },
-        );
+        // Desktop shimmer (mobile handled above with longer delay)
+        mm.add("(min-width: 641px)", () => {
+          gsap.fromTo(
+            ".shimmer-text",
+            { backgroundPosition: "150% 0" },
+            {
+              backgroundPosition: "-50% 0",
+              duration: 3.5,
+              ease: "power2.inOut",
+              repeat: -1,
+              repeatDelay: 4,
+            },
+          );
+        });
 
         // CTA glow is CSS (2s cycle), activated via class during entrance
       }
@@ -298,6 +319,10 @@ export function LandingMotion({ children }: { children: React.ReactNode }) {
         [],
         1.5,
       );
+
+      return () => {
+        mm.revert();
+      };
     },
     { scope: containerRef },
   );

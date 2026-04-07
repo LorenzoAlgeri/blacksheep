@@ -135,14 +135,28 @@ export function buildEmailHtml(data: EmailTemplateData): string {
     : "";
 
   const unsubscribeLink = data.unsubscribeUrl
-    ? `<br><a href="${data.unsubscribeUrl}" style="color:${hexAlpha(p.text, 0.25)};text-decoration:underline;">Disiscriviti</a> &middot; <a href="${data.privacyUrl ?? "#"}" style="color:${hexAlpha(p.text, 0.25)};text-decoration:underline;">Privacy Policy</a>`
+    ? `<br><a href="${data.unsubscribeUrl}" style="color:${hexAlpha(p.text, 0.5)};text-decoration:underline;">Disiscriviti</a> &middot; <a href="${data.privacyUrl ?? "#"}" style="color:${hexAlpha(p.text, 0.5)};text-decoration:underline;">Privacy Policy</a>`
     : "{{UNSUB}}";
 
   return `<!DOCTYPE html>
-<html lang="it">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"></head>
-<body style="margin:0;padding:0;background:${p.bg};font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
-<div style="background:${p.bg};color:${p.text};padding:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;max-width:480px;margin:0 auto;">
+<html lang="it" style="background-color:${p.bg};color-scheme:light dark;">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <meta name="color-scheme" content="light dark">
+  <meta name="supported-color-schemes" content="light dark">
+  <style>
+    :root { color-scheme: light dark; }
+    body, .body-bg { background-color: ${p.bg} !important; }
+    u + .body-bg { background-color: ${p.bg} !important; }
+    [data-ogsc] body { background-color: ${p.bg} !important; color: ${p.text} !important; }
+    @media (prefers-color-scheme: dark) {
+      .email-body { background-color: ${p.bg} !important; color: ${p.text} !important; }
+    }
+  </style>
+</head>
+<body class="body-bg" style="margin:0;padding:0;background:${p.bg};color:${p.text};font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
+<div class="email-body" style="background:${p.bg};color:${p.text};padding:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;max-width:480px;margin:0 auto;">
 
   <div style="padding:40px 24px 24px;text-align:center;">
     <div style="font-family:'Arial Black',sans-serif;font-size:28px;letter-spacing:0.08em;color:${p.text};">BLACK SHEEP</div>
