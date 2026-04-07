@@ -337,7 +337,18 @@ body::before {
   top: 18%;
   height: clamp(80px, 22dvh, 200px);
   width: auto;
+  background: transparent;
   filter: drop-shadow(0 0 15px rgba(255, 255, 243, 0.06));
+}
+
+/* Mobile: mascotte smaller, tighter to scritta, no glow (MP4 fallback on Safari) */
+@media (max-width: 640px) {
+  .mascotte-video {
+    right: calc(100% - 10px);
+    top: 20%;
+    height: clamp(60px, 16dvh, 140px);
+    filter: none;
+  }
 }
 
 /* === Autofill override — mantieni sfondo dark su autofill === */
