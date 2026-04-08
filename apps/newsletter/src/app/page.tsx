@@ -25,18 +25,25 @@ export default async function Home() {
       <main className="relative z-10 flex flex-1 flex-col items-center justify-center px-6 space-main-y">
         {/* 1. Scritta SVG — brand hero, inline for transparent bg + glow */}
         <div className="brand-hero" role="heading" aria-level={1} aria-label="BLACK SHEEP">
-          {/* Mascotte video — desktop only, hidden on mobile */}
+          {/* Mascotte — desktop: video + screen blend, mobile: static transparent img */}
           <video
             data-motion="mascotte"
             poster="/mascotte.png"
             muted
             playsInline
             preload="auto"
-            className="mascotte-video"
+            className="mascotte-video mascotte-desktop"
           >
             <source src="/mascotte-video.webm" type="video/webm" />
             <source src="/mascotte-video.mp4" type="video/mp4" />
           </video>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            data-motion="mascotte-img"
+            src="/mascotte-static.webp"
+            alt=""
+            className="mascotte-video mascotte-mobile"
+          />
           {/* Scritta SVG */}
           <div data-motion="scritta">
             <svg

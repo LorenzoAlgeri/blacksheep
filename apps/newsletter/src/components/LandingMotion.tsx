@@ -32,7 +32,7 @@ export function LandingMotion({ children }: { children: React.ReactNode }) {
         gsap.set("[data-motion='microcopy']", { opacity: 1 });
         gsap.set("[data-motion='consent']", { opacity: 1 });
         gsap.set("[data-motion='socials']", { opacity: 1 });
-        gsap.set("[data-motion='mascotte']", { opacity: mascotteOpacity, x: 0 });
+        gsap.set("[data-motion^='mascotte']", { opacity: mascotteOpacity, x: 0 });
         return;
       }
 
@@ -142,10 +142,10 @@ export function LandingMotion({ children }: { children: React.ReactNode }) {
 
       if (hasSeenEntrance) {
         // Set everything to final visible state immediately
-        gsap.set("[data-motion='mascotte']", { opacity: mascotteOpacity, x: 0 });
+        gsap.set("[data-motion^='mascotte']", { opacity: mascotteOpacity, x: 0 });
         // On revisit: seek video to end (frozen at last frame)
         const revisitVideo = containerRef.current?.querySelector<HTMLVideoElement>(
-          "[data-motion='mascotte']",
+          "video[data-motion^='mascotte']",
         );
         if (revisitVideo) {
           revisitVideo
@@ -184,7 +184,7 @@ export function LandingMotion({ children }: { children: React.ReactNode }) {
       }
 
       // --- Initial hidden states (before paint via useLayoutEffect timing) ---
-      gsap.set("[data-motion='mascotte']", { opacity: 0, x: -20 });
+      gsap.set("[data-motion^='mascotte']", { opacity: 0, x: -20 });
       gsap.set("[data-motion='gradient']", { opacity: 0 });
       gsap.set("[data-motion='scritta']", {
         clipPath: "inset(0 100% 0 0)",
@@ -296,7 +296,7 @@ export function LandingMotion({ children }: { children: React.ReactNode }) {
 
       // Mascotte slide-in from left, synced with scritta reveal
       tl.to(
-        "[data-motion='mascotte']",
+        "[data-motion^='mascotte']",
         {
           opacity: mascotteOpacity,
           x: 0,
@@ -310,7 +310,7 @@ export function LandingMotion({ children }: { children: React.ReactNode }) {
       tl.call(
         () => {
           const video = containerRef.current?.querySelector<HTMLVideoElement>(
-            "[data-motion='mascotte']",
+            "video[data-motion^='mascotte']",
           );
           if (video) {
             video.play().catch(() => {

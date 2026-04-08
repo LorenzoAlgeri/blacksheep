@@ -65,7 +65,8 @@ body::before {
     clip-path: inset(0 100% 0 0);
     filter: blur(8px);
   }
-  [data-motion="mascotte"] {
+  [data-motion="mascotte"],
+  [data-motion="mascotte-img"] {
     opacity: 0;
     transform: translateX(-20px);
   }
@@ -331,6 +332,7 @@ body::before {
   justify-content: center;
 }
 
+/* Mascotte — shared positioning for both video (desktop) and img (mobile) */
 .mascotte-video {
   position: absolute;
   right: calc(100% - clamp(16px, 3dvw, 40px));
@@ -338,17 +340,31 @@ body::before {
   height: clamp(80px, 22dvh, 200px);
   width: auto;
   background: transparent;
+}
+
+/* Desktop: video with screen blend (black bg → transparent via GPU) */
+.mascotte-desktop {
   mix-blend-mode: screen;
   filter: drop-shadow(0 0 15px rgba(255, 255, 243, 0.06));
 }
 
-/* Mobile: smaller mascotte, screen blend makes pure black transparent (no halo with opaque video) */
+/* Mobile img hidden on desktop */
+.mascotte-mobile {
+  display: none;
+}
+
+/* Mobile: hide video (blend mode broken on mobile GPU), show transparent img */
 @media (max-width: 640px) {
   .mascotte-video {
     right: calc(100% - 16px);
     top: 20%;
     height: clamp(60px, 16dvh, 140px);
-    filter: none;
+  }
+  .mascotte-desktop {
+    display: none;
+  }
+  .mascotte-mobile {
+    display: block;
   }
 }
 
