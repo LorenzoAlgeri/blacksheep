@@ -21,10 +21,18 @@ export const metadata: Metadata = {
     apple: "/apple-icon.png",
   },
   openGraph: {
-    title: "BLACK SHEEP — Every Monday",
+    title: "BLACK SHEEP",
     description: "Lineup e date prima di tutti. Zero spam.",
     siteName: "BLACK SHEEP",
     type: "website",
+    images: [
+      {
+        url: "/og-image.jpg",
+        width: 1200,
+        height: 630,
+        alt: "BLACK SHEEP",
+      },
+    ],
   },
   robots: { index: true, follow: true },
 };
