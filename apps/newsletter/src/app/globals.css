@@ -342,14 +342,13 @@ body::before {
   filter: drop-shadow(0 0 15px rgba(255, 255, 243, 0.06));
 }
 
-/* Mobile: smaller mascotte, no blend mode needed (video is opaque on black bg) */
+/* Mobile: smaller mascotte, screen blend makes pure black transparent (no halo with opaque video) */
 @media (max-width: 640px) {
   .mascotte-video {
     right: calc(100% - 16px);
     top: 20%;
     height: clamp(60px, 16dvh, 140px);
     filter: none;
-    mix-blend-mode: normal;
   }
 }
 
