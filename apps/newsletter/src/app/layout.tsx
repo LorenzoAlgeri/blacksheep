@@ -13,6 +13,13 @@ export const metadata: Metadata = {
   title: "BLACK SHEEP — Every Monday",
   description:
     "Iscriviti alla newsletter di BLACK SHEEP. Lineup e date prima di tutti. Ogni lunedì al 11 Clubroom, Corso Como, Milano.",
+  icons: {
+    icon: [
+      { url: "/favicon.ico", sizes: "any" },
+      { url: "/icon.png", type: "image/png", sizes: "192x192" },
+    ],
+    apple: "/apple-icon.png",
+  },
   openGraph: {
     title: "BLACK SHEEP — Every Monday",
     description: "Lineup e date prima di tutti. Zero spam.",
