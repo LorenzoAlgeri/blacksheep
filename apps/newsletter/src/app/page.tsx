@@ -38,7 +38,7 @@ export default async function Home() {
               <source src="/mascotte-video.mp4" type="video/mp4" />
             </video>
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/mascotte.png" alt="" className="mascotte-mobile" />
+            <img src="/mascotte-mobile.png" alt="" className="mascotte-mobile" />
           </div>
           {/* Scritta SVG */}
           <div data-motion="scritta">

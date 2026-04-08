@@ -46,6 +46,7 @@ npm-debug.log*
 
 # Screenshots (dev artifacts)
 *.png
+!apps/newsletter/public/*.png
 
 # Intermediate video files
 apps/newsletter/public/BLUSALUTO0001-0120.mp4
