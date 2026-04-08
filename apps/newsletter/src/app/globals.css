@@ -365,6 +365,7 @@ body::before {
   }
   .mascotte-mobile {
     display: block;
+    mix-blend-mode: screen;
   }
 }
 
