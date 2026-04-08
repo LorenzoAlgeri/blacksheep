@@ -145,7 +145,7 @@ export function LandingMotion({ children }: { children: React.ReactNode }) {
         gsap.set("[data-motion='mascotte']", { opacity: mascotteOpacity, x: 0 });
         // On revisit: seek video to end (frozen at last frame)
         const revisitVideo = containerRef.current?.querySelector<HTMLVideoElement>(
-          "[data-motion='mascotte'] video",
+          "[data-motion='mascotte']",
         );
         if (revisitVideo) {
           revisitVideo
@@ -310,7 +310,7 @@ export function LandingMotion({ children }: { children: React.ReactNode }) {
       tl.call(
         () => {
           const video = containerRef.current?.querySelector<HTMLVideoElement>(
-            "[data-motion='mascotte'] video",
+            "[data-motion='mascotte']",
           );
           if (video) {
             video.play().catch(() => {
