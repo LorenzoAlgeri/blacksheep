@@ -1,0 +1,39 @@
+@import "tailwindcss";
+
+/* === Brand Design System === */
+:root {
+  --bs-navy: #031240;
+  --bs-cream: #fffff3;
+  --bs-gold: #be8305;
+  --bs-black: #1f1f1f;
+  --bs-green: #334b31;
+  --bs-purple: #65305c;
+  --bs-burgundy: #731022;
+  --font-brand: "Arial Black", "Arial Bold", sans-serif;
+  --font-body: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+@theme inline {
+  --color-bs-navy: var(--bs-navy);
+  --color-bs-cream: var(--bs-cream);
+  --color-bs-gold: var(--bs-gold);
+  --color-bs-black: var(--bs-black);
+  --color-bs-green: var(--bs-green);
+  --color-bs-purple: var(--bs-purple);
+  --color-bs-burgundy: var(--bs-burgundy);
+  --font-brand: var(--font-brand);
+  --font-body: var(--font-body);
+}
+
+html {
+  background: var(--bs-navy);
+}
+
+body {
+  background: var(--bs-navy);
+  color: var(--bs-cream);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  min-height: 100dvh;
+}
