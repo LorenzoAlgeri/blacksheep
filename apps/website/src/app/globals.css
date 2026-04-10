@@ -37,3 +37,63 @@ body {
   -moz-osx-font-smoothing: grayscale;
   min-height: 100dvh;
 }
+
+/* === Noise grain overlay (0.04 — lighter than newsletter's 0.06) === */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+  opacity: 0.04;
+  mix-blend-mode: overlay;
+  pointer-events: none;
+  z-index: 50;
+}
+
+/* === Animation initial states (prevents FOUC) === */
+@media (prefers-reduced-motion: no-preference) {
+  [data-motion] {
+    opacity: 0;
+  }
+  [data-motion="draw"] {
+    opacity: 1;
+    stroke-dashoffset: var(--path-length, 1000);
+  }
+}
+
+/* Fallback: if GSAP doesn't run within 4s, make everything visible */
+@keyframes motion-fallback {
+  to {
+    opacity: 1;
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  [data-motion] {
+    animation: motion-fallback 0s 4s forwards;
+  }
+}
+
+/* === Section spacing === */
+.section-padding {
+  padding-top: clamp(4rem, 10dvh, 8rem);
+  padding-bottom: clamp(4rem, 10dvh, 8rem);
+  padding-left: clamp(1rem, 5vw, 2rem);
+  padding-right: clamp(1rem, 5vw, 2rem);
+}
+
+/* === Alternating section background === */
+.bg-section-dark {
+  background: #0a0e1a;
+}
+
+/* === Autofill override — dark background === */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 1000px var(--bs-navy) inset !important;
+  -webkit-text-fill-color: var(--bs-cream) !important;
+  background-color: transparent !important;
+  transition: background-color 5000s ease-in-out 0s;
+  caret-color: var(--bs-cream);
+}

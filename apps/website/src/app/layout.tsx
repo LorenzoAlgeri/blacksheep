@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
+import { LenisProvider } from "@/providers/LenisProvider";
 import "./globals.css";
 
 const arialBlack = localFont({
@@ -24,7 +25,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="it" className={`${arialBlack.variable} h-full antialiased`}>
-      <body className="min-h-dvh flex flex-col">{children}</body>
+      <body className="min-h-dvh flex flex-col">
+        <LenisProvider>{children}</LenisProvider>
+      </body>
     </html>
   );
 }
