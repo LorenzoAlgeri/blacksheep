@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useGSAP } from "@gsap/react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
@@ -78,15 +78,12 @@ export function NextEvent() {
   /* Countdown state */
   const [timeLeft, setTimeLeft] = useState<TimeLeft | null>(() => getTimeLeft(TARGET_DATE));
 
-  const tick = useCallback(() => {
-    setTimeLeft(getTimeLeft(TARGET_DATE));
-  }, []);
-
   useEffect(() => {
-    tick();
-    const id = setInterval(tick, 1000);
+    const id = setInterval(() => {
+      setTimeLeft(getTimeLeft(TARGET_DATE));
+    }, 1000);
     return () => clearInterval(id);
-  }, [tick]);
+  }, []);
 
   /* GSAP entrance */
   useGSAP(

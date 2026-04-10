@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { Music } from "lucide-react";
 
 /* Inline SVG icons for brands not available in lucide-react */
@@ -64,7 +65,13 @@ export function Footer() {
     <footer className="border-t border-bs-cream/5 px-6 py-12">
       <div className="mx-auto flex max-w-5xl flex-col items-center gap-6">
         {/* Logo */}
-        <img src="/bs-logo.svg" alt="BLACK SHEEP" className="h-8 w-auto opacity-30" />
+        <Image
+          src="/bs-logo.svg"
+          alt="BLACK SHEEP"
+          width={50}
+          height={32}
+          className="h-8 w-auto opacity-30"
+        />
 
         {/* Social links */}
         <div className="flex gap-6">
