@@ -93,7 +93,7 @@ export default async function Home() {
         {/* 4. Location — spatial context */}
         <p
           data-motion="location"
-          className="font-body text-[10px] text-bs-cream/25 mt-2 tracking-[0.15em] uppercase"
+          className="font-body text-[10px] text-bs-cream/25 mt-2 tracking-[0.15em] uppercase text-center max-w-[320px]"
         >
           {config.venue}
         </p>
