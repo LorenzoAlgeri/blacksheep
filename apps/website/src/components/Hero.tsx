@@ -1,0 +1,215 @@
+"use client";
+
+import { useRef } from "react";
+import { useGSAP } from "@gsap/react";
+import gsap from "gsap";
+import { EASE, DURATION, STAGGER } from "@/lib/animations";
+import { useReducedMotion } from "@/hooks/useReducedMotion";
+
+const TITLE = "BLACK SHEEP";
+const SUBTITLE = "THE PLACE TO BE";
+
+const LOGO_OUTER =
+  "M1033.1,0l31.36,3.14c160.09,20.33,291.17,145.92,319.33,304.33l5.31,38.14v22.97c-2.17,11.15-5.26,21.69-10.83,31.64-4.97,8.88-11.57,16.11-19.43,22.55-28.54,4.39-58.71,4.43-87.1,8.89-11.89,1.87-31.82,8.89-7.86,14.56,27.61,6.54,62.1,4.8,90.61,9.38,6.63,1.07,11.36,6.39,15.58,11.41,10.59,12.57,15.86,27.44,19.03,43.42v22.97l-3.17,25.31c-25.4,176.17-174.06,311.64-352.29,320.34H356.56C177.79,870.83,25.91,732.23,3.24,554.73l-3.14-31.32v-17.98l98.01-1c-.04,61.86,20.52,122.28,58.6,170.71,49.55,63.01,124.22,101.93,204.86,106.02h666.09c52.84-2.86,103.65-19.8,146.77-50.17,64.31-45.3,108.29-118.72,115.61-197.52l-115.72-34.74c-59.75-23.78-58.3-97.92,4.02-119.42,36.67-12.65,74.8-21.77,111.69-33.77-8.09-84.48-57.21-161.61-129.01-206.11-41.33-25.62-87.59-39.23-136.37-41.58H365.56c-49.39,2.23-96.7,16.29-138.37,42.58-79.61,50.22-129.66,139.32-129.08,234.15H.1c.22-6.3-.31-12.7,0-18.98C9.42,164.14,165.64,9.1,357.1,0h676Z";
+
+const LOGO_INNER =
+  "M257.74,544.74c3.72,3.85,6.11,11.86,9.54,16.94,33.08,48.88,144.91,68.45,200.27,70.65,107,4.25,216.8-3.32,324.09,0,37.57-2.84,75.15-7.77,111.23-18.75,30.68-9.34,83.68-31.53,94.29-64.64,2.66-8.3,3.34-44.89,1.51-53.55-2.02-9.49-13.12-15.49-22.05-16.93l-748.05.05c-11.05-.5-22.63-5.48-26.77-16.21.76-30.71-3.38-65.81-.67-96.19,4.5-50.41,68.58-86.42,110.74-102.15,141.82-52.9,312.76-21.31,461.79-30.26,75.72-.97,248.35,30.55,277.65,112.23,9.39,26.18-28.74,36.92-47.12,24.1-7.55-5.27-8.75-13.15-13.66-20.32-29.26-42.77-120.2-62.74-169.03-67.89-109.69-11.58-228.21,2.26-338.93-3.16-48.74,2.45-98.03,8.12-143.97,25-27.02,9.93-76.24,33.91-79.47,66.45-.84,8.47-1.32,39.26.22,46.71,1.96,9.48,15.4,16.07,24.29,16.69l747.03-.03c11.83.6,25.29,7.7,26.5,20.48-3.71,38.2,9.03,87.1-10.62,121.32-41.65,72.54-177.82,99.09-254.88,102.01h-326.08c-74.34-2.92-192.08-26.5-242.43-85.47-5.35-6.27-15.94-21.61-17.58-29.38-5.47-25.86,36.61-33.83,52.2-17.68Z";
+
+export function Hero() {
+  const sectionRef = useRef<HTMLElement>(null);
+  const logoRef = useRef<SVGSVGElement>(null);
+  const outerPathRef = useRef<SVGPathElement>(null);
+  const innerPathRef = useRef<SVGPathElement>(null);
+  const titleRef = useRef<HTMLHeadingElement>(null);
+  const subtitleRef = useRef<HTMLParagraphElement>(null);
+  const scrollIndicatorRef = useRef<HTMLDivElement>(null);
+  const prefersReduced = useReducedMotion();
+
+  useGSAP(
+    () => {
+      if (prefersReduced) return;
+
+      const outerPath = outerPathRef.current;
+      const innerPath = innerPathRef.current;
+      const titleEl = titleRef.current;
+      const subtitleEl = subtitleRef.current;
+      const scrollEl = scrollIndicatorRef.current;
+
+      if (!outerPath || !innerPath || !titleEl || !subtitleEl || !scrollEl) return;
+
+      // Get path lengths for stroke draw animation
+      const outerLen = outerPath.getTotalLength();
+      const innerLen = innerPath.getTotalLength();
+
+      // Set initial stroke-dasharray/offset for draw effect
+      gsap.set([outerPath, innerPath], {
+        fill: "none",
+        stroke: "var(--bs-cream)",
+        strokeWidth: 2,
+      });
+      gsap.set(outerPath, {
+        strokeDasharray: outerLen,
+        strokeDashoffset: outerLen,
+      });
+      gsap.set(innerPath, {
+        strokeDasharray: innerLen,
+        strokeDashoffset: innerLen,
+      });
+
+      // Letter spans
+      const letters = titleEl.querySelectorAll<HTMLSpanElement>(".hero-letter");
+
+      // Master timeline
+      const tl = gsap.timeline({ delay: 0.3 });
+
+      // 1. Stroke draw (0.3s → 1.5s) — 1.2s duration
+      tl.to(
+        outerPath,
+        {
+          strokeDashoffset: 0,
+          duration: 1.2,
+          ease: EASE.move,
+        },
+        0,
+      );
+      tl.to(
+        innerPath,
+        {
+          strokeDashoffset: 0,
+          duration: 1.2,
+          ease: EASE.move,
+        },
+        0,
+      );
+
+      // 2. At 60% through stroke draw (0.72s), fill fades in + stroke fades out
+      tl.to(
+        [outerPath, innerPath],
+        {
+          fill: "var(--bs-cream)",
+          duration: 0.4,
+          ease: EASE.enter,
+        },
+        0.72,
+      );
+      tl.to(
+        [outerPath, innerPath],
+        {
+          stroke: "transparent",
+          duration: 0.4,
+          ease: EASE.exit,
+        },
+        0.72,
+      );
+
+      // 3. Title letters stagger in (at 1.2s from timeline start)
+      tl.from(
+        letters,
+        {
+          y: 30,
+          opacity: 0,
+          filter: "blur(4px)",
+          duration: DURATION.standard,
+          ease: EASE.enter,
+          stagger: STAGGER.tight,
+        },
+        1.2,
+      );
+
+      // 4. Subtitle fades in with tracking expansion (at 1.7s)
+      tl.from(
+        subtitleEl,
+        {
+          y: 15,
+          opacity: 0,
+          letterSpacing: "0.2em",
+          duration: DURATION.standard,
+          ease: EASE.enter,
+        },
+        1.7,
+      );
+
+      // 5. Scroll indicator fades in (at 2.2s), then breathing loop
+      tl.from(
+        scrollEl,
+        {
+          opacity: 0,
+          duration: DURATION.standard,
+          ease: EASE.enter,
+          onComplete: () => {
+            gsap.to(scrollEl, {
+              opacity: 0.3,
+              duration: 1.5,
+              ease: "sine.inOut",
+              repeat: -1,
+              yoyo: true,
+            });
+          },
+        },
+        2.2,
+      );
+    },
+    { scope: sectionRef, dependencies: [prefersReduced] },
+  );
+
+  return (
+    <section
+      ref={sectionRef}
+      id="hero"
+      className="relative flex min-h-dvh flex-col items-center justify-center px-4"
+    >
+      {/* Logo SVG with stroke draw animation */}
+      <svg
+        ref={logoRef}
+        viewBox="0 0 1389.1 879.04"
+        xmlns="http://www.w3.org/2000/svg"
+        className="mb-8 w-[120px] md:w-[160px] h-auto"
+        aria-label="BLACK SHEEP logo"
+        data-motion="draw"
+      >
+        <path ref={outerPathRef} d={LOGO_OUTER} />
+        <path ref={innerPathRef} d={LOGO_INNER} />
+      </svg>
+
+      {/* Title — per-letter stagger reveal */}
+      <h1
+        ref={titleRef}
+        data-motion
+        className="font-brand text-bs-cream text-center leading-none tracking-wider"
+        style={{ fontSize: "clamp(2.5rem, 8vw, 5rem)" }}
+      >
+        {TITLE.split("").map((char, i) => (
+          <span
+            key={i}
+            className="hero-letter inline-block"
+            style={char === " " ? { width: "0.3em" } : undefined}
+          >
+            {char === " " ? "\u00A0" : char}
+          </span>
+        ))}
+      </h1>
+
+      {/* Subtitle — tracking expansion */}
+      <p
+        ref={subtitleRef}
+        data-motion
+        className="mt-4 font-brand text-bs-cream/70 text-xs sm:text-sm tracking-[0.4em] uppercase"
+      >
+        {SUBTITLE}
+      </p>
+
+      {/* Scroll indicator — breathing opacity loop */}
+      <div
+        ref={scrollIndicatorRef}
+        data-motion
+        className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2"
+        aria-hidden="true"
+      >
+        <span className="text-bs-cream/50 text-[10px] tracking-[0.3em] uppercase font-body">
+          Scroll
+        </span>
+        <div className="w-px h-8 bg-gradient-to-b from-bs-cream/60 to-transparent" />
+      </div>
+    </section>
+  );
+}
