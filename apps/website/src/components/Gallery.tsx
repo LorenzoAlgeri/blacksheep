@@ -16,12 +16,12 @@ gsap.registerPlugin(ScrollTrigger);
 /* ─── Gallery data ────────────────────────────────────────────────── */
 
 const GALLERY_ITEMS = [
-  { eventName: "BLACK SHEEP #47", eventDate: "7 Apr 2026" },
-  { eventName: "BLACK SHEEP #46", eventDate: "31 Mar 2026" },
-  { eventName: "BLACK SHEEP #45", eventDate: "24 Mar 2026" },
-  { eventName: "BLACK SHEEP #44", eventDate: "17 Mar 2026" },
-  { eventName: "BLACK SHEEP #43", eventDate: "10 Mar 2026" },
-  { eventName: "BLACK SHEEP #42", eventDate: "3 Mar 2026" },
+  { eventName: "BLACK SHEEP #47", eventDate: "7 Apr 2026", genre: "Afro Night" },
+  { eventName: "BLACK SHEEP #46", eventDate: "31 Mar 2026", genre: "Hip-Hop Classics" },
+  { eventName: "BLACK SHEEP #45", eventDate: "24 Mar 2026", genre: "R&B Vibes" },
+  { eventName: "BLACK SHEEP #44", eventDate: "17 Mar 2026", genre: "Amapiano Session" },
+  { eventName: "BLACK SHEEP #43", eventDate: "10 Mar 2026", genre: "Trap & Drill" },
+  { eventName: "BLACK SHEEP #42", eventDate: "3 Mar 2026", genre: "Latin Fusion" },
 ] as const;
 
 /* ─── Component ───────────────────────────────────────────────────── */
@@ -85,7 +85,12 @@ export function Gallery() {
         <div ref={gridRef} className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {GALLERY_ITEMS.map((item, i) => (
             <div key={item.eventName} data-gallery-card data-motion>
-              <GalleryCard eventName={item.eventName} eventDate={item.eventDate} index={i} />
+              <GalleryCard
+                eventName={item.eventName}
+                eventDate={item.eventDate}
+                genre={item.genre}
+                index={i}
+              />
             </div>
           ))}
         </div>

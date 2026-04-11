@@ -17,9 +17,9 @@ gsap.registerPlugin(ScrollTrigger);
 const TARGET_DATE = new Date("2026-04-14T23:00:00+02:00"); // Monday 14 April 2026, 23:00 CEST
 
 const DJ_LINEUP = [
-  { name: "DJ NOOR", role: "Main Set" },
-  { name: "EMME", role: "Opening" },
-  { name: "KAIROS", role: "Closing" },
+  { name: "DEEJVADO", role: "Main Set" },
+  { name: "ANUBIS", role: "Opening" },
+  { name: "RAFWORLD", role: "Closing" },
 ] as const;
 
 const WHATSAPP_LINK =
@@ -163,13 +163,27 @@ export function NextEvent() {
         <SectionHeading>PROSSIMO EVENTO</SectionHeading>
         <GoldDivider className="my-8" />
 
-        {/* Date — enters from left */}
+        {/* Event info — enters from left */}
         <p
           data-animate="title"
           data-motion
-          className="font-brand text-lg tracking-wide text-bs-cream sm:text-2xl md:text-3xl"
+          className="font-brand text-sm tracking-[0.3em] text-bs-cream/60 uppercase"
+        >
+          EVERY MONDAY — 11 CLUBROOM
+        </p>
+        <p
+          data-animate="title"
+          data-motion
+          className="mt-3 font-brand text-lg tracking-wide text-bs-cream sm:text-2xl md:text-3xl"
         >
           LUNEDI 14 APRILE 2026
+        </p>
+        <p
+          data-animate="title"
+          data-motion
+          className="mt-2 text-xs tracking-widest text-bs-cream/50"
+        >
+          Hip-Hop &bull; R&amp;B &bull; Afrobeats &bull; Amapiano
         </p>
 
         {/* Countdown or expired message — enters from right */}

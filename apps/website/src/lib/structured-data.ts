@@ -17,9 +17,9 @@ export function getEventStructuredData() {
       },
     },
     performer: [
-      { "@type": "MusicGroup", name: "DJ NOOR" },
-      { "@type": "MusicGroup", name: "EMME" },
-      { "@type": "MusicGroup", name: "KAIROS" },
+      { "@type": "MusicGroup", name: "DEEJVADO" },
+      { "@type": "MusicGroup", name: "ANUBIS" },
+      { "@type": "MusicGroup", name: "RAFWORLD" },
     ],
     organizer: {
       "@type": "Organization",
@@ -38,10 +38,12 @@ export function getOrganizationStructuredData() {
     name: "Black Sheep Community",
     url: "https://www.blacksheep-community.com",
     logo: "https://www.blacksheep-community.com/bs-logo.svg",
+    foundingDate: "2019",
+    award: "Red Bull Turn It Up Milano 2025 Winner",
     sameAs: [
       "https://www.instagram.com/blacksheep.community_",
-      "https://www.tiktok.com/@blacksheep",
-      "https://www.facebook.com/blacksheep",
+      "https://www.tiktok.com/@blacksheepcommunity",
+      "https://www.facebook.com/blacksheepnight",
     ],
   };
 }

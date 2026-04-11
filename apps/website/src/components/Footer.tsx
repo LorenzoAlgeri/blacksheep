@@ -50,12 +50,12 @@ const SOCIALS = [
   },
   {
     label: "TikTok",
-    href: "https://www.tiktok.com/@blacksheep",
+    href: "https://www.tiktok.com/@blacksheepcommunity",
     icon: <Music size={20} />,
   },
   {
     label: "Facebook",
-    href: "https://www.facebook.com/blacksheep",
+    href: "https://www.facebook.com/blacksheepnight",
     icon: <FacebookIcon size={20} />,
   },
 ];

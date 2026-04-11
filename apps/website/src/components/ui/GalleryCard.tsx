@@ -6,10 +6,11 @@ interface GalleryCardProps {
   imageSrc?: string;
   eventName: string;
   eventDate: string;
+  genre?: string;
   index: number;
 }
 
-export function GalleryCard({ imageSrc, eventName, eventDate, index }: GalleryCardProps) {
+export function GalleryCard({ imageSrc, eventName, eventDate, genre, index }: GalleryCardProps) {
   return (
     <div
       role="img"
@@ -41,7 +42,10 @@ export function GalleryCard({ imageSrc, eventName, eventDate, index }: GalleryCa
         <p className="text-bs-cream text-xs font-brand uppercase tracking-wider motion-safe:transition-transform motion-safe:duration-300 translate-y-2 group-hover:translate-y-0">
           {eventName}
         </p>
-        <p className="text-bs-cream/50 text-[10px] mt-0.5">{eventDate}</p>
+        <p className="text-bs-cream/50 text-[10px] mt-0.5">
+          {eventDate}
+          {genre ? ` — ${genre}` : ""}
+        </p>
       </div>
     </div>
   );

@@ -43,4 +43,10 @@ describe("getOrganizationStructuredData", () => {
     expect(data.sameAs.length).toBeGreaterThan(0);
     expect(data.sameAs.some((url: string) => url.includes("instagram"))).toBe(true);
   });
+
+  it("should include foundingDate and award", () => {
+    const data = getOrganizationStructuredData();
+    expect(data.foundingDate).toBe("2019");
+    expect(data.award).toContain("Red Bull");
+  });
 });

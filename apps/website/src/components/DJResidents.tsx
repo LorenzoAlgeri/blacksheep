@@ -18,11 +18,14 @@ interface DJ {
 }
 
 const DJS: DJ[] = [
-  { name: "DJ NOOR", initials: "DN", genre: "Hip-Hop / Trap" },
-  { name: "EMME", initials: "EM", genre: "R&B / Neo Soul" },
-  { name: "KAIROS", initials: "KS", genre: "Afrobeats / Dancehall" },
-  { name: "VEGA", initials: "VG", genre: "House / UK Garage" },
-  { name: "ZERO", initials: "ZR", genre: "Old School / Boom Bap" },
+  { name: "DEEJVADO", initials: "DV", genre: "Hip-Hop / Trap" },
+  { name: "ANUBIS", initials: "AN", genre: "Afrobeats / Amapiano" },
+  { name: "RAFWORLD", initials: "RW", genre: "R&B / Neo Soul" },
+  { name: "MALONEY", initials: "ML", genre: "Dancehall / Dembow" },
+  { name: "STUNNA", initials: "ST", genre: "Drill / UK Rap" },
+  { name: "SEIF", initials: "SF", genre: "Arabic / Afro" },
+  { name: "VEEZY", initials: "VZ", genre: "Brazilian Funk / Baile" },
+  { name: "CUBANFLOW", initials: "CF", genre: "Reggaeton / Latin" },
 ];
 
 export function DJResidents() {
