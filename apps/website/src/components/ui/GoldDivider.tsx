@@ -30,7 +30,7 @@ export function GoldDivider({ className = "" }: { className?: string }) {
     <div
       ref={ref}
       data-motion
-      className={`h-px w-24 mx-auto bg-gradient-to-r from-transparent via-bs-gold/40 to-transparent ${className}`}
+      className={`h-px w-24 mx-auto bg-gradient-to-r from-transparent via-bs-cream/20 to-transparent ${className}`}
     />
   );
 }

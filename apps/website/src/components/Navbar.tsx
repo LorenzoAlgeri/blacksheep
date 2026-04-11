@@ -49,6 +49,16 @@ export function Navbar() {
     };
   }, [mobileOpen]);
 
+  // Close mobile menu on Escape
+  useEffect(() => {
+    if (!mobileOpen) return;
+    function onKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") setMobileOpen(false);
+    }
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [mobileOpen]);
+
   const handleNavClick = useCallback((sectionId: string) => {
     scrollToSection(sectionId);
     setMobileOpen(false);
@@ -57,15 +67,15 @@ export function Navbar() {
   return (
     <>
       <header
-        className={`fixed top-0 left-0 right-0 z-50 h-14 md:h-16 flex items-center px-4 md:px-6 transition-colors duration-300 ${
-          scrolled ? "bg-bs-navy/90 backdrop-blur-md" : "bg-transparent"
+        className={`fixed top-0 left-0 right-0 z-50 h-14 md:h-16 flex items-center px-4 md:px-6 motion-safe:transition-colors motion-safe:duration-300 ${
+          scrolled ? "bg-black/90 backdrop-blur-md" : "bg-transparent"
         }`}
       >
         {/* Left — Logo */}
         <button
           onClick={() => scrollToSection("hero")}
-          className="flex-shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-bs-gold rounded-sm"
-          aria-label="Torna in cima"
+          className="flex-shrink-0 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-sm"
+          aria-label="Black Sheep — Home"
         >
           <svg
             viewBox="0 0 1389.1 879.04"
@@ -88,25 +98,29 @@ export function Navbar() {
             <button
               key={sectionId}
               onClick={() => handleNavClick(sectionId)}
-              className={`relative font-brand text-xs tracking-widest uppercase text-bs-cream/80 hover:text-bs-cream transition-colors duration-200 pb-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-bs-gold rounded-sm ${
-                activeSection === sectionId ? "text-bs-cream" : ""
+              className={`relative font-brand text-xs uppercase text-bs-cream/80 hover:text-bs-cream motion-safe:transition-all motion-safe:duration-200 pb-1 rounded-sm ${
+                activeSection === sectionId
+                  ? "text-bs-cream tracking-[0.08em]"
+                  : "tracking-[0.05em] hover:tracking-[0.08em]"
               }`}
             >
               {label}
               {/* Active underline indicator */}
               <span
-                className={`absolute bottom-0 left-0 right-0 h-0.5 bg-bs-burgundy transition-transform duration-300 origin-left ${
-                  activeSection === sectionId ? "scale-x-100" : "scale-x-0"
+                className={`absolute bottom-0 left-0 right-0 h-0.5 bg-bs-cream motion-safe:transition-all motion-safe:duration-300 origin-left ${
+                  activeSection === sectionId
+                    ? "scale-x-100 shadow-[0_2px_8px_rgba(255,255,243,0.15)]"
+                    : "scale-x-0"
                 }`}
               />
             </button>
           ))}
         </nav>
 
-        {/* Right — Mobile hamburger */}
+        {/* Right — Mobile hamburger (44px min touch target) */}
         <button
           onClick={() => setMobileOpen((prev) => !prev)}
-          className="ml-auto md:hidden p-2 text-bs-cream focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-bs-gold rounded-sm"
+          className="ml-auto md:hidden min-w-[44px] min-h-[44px] flex items-center justify-center text-bs-cream rounded-sm"
           aria-label={mobileOpen ? "Chiudi menu" : "Apri menu"}
           aria-expanded={mobileOpen}
         >
@@ -114,39 +128,52 @@ export function Navbar() {
         </button>
       </header>
 
-      {/* Mobile slide-in menu */}
+      {/* Mobile fullscreen menu */}
       <div
-        className={`fixed inset-y-0 right-0 z-[55] w-72 bg-bs-navy flex flex-col pt-20 px-6 transition-transform duration-300 ease-out md:hidden ${
-          mobileOpen ? "translate-x-0" : "translate-x-full"
+        role={mobileOpen ? "dialog" : undefined}
+        aria-modal={mobileOpen ? true : undefined}
+        aria-label={mobileOpen ? "Menu di navigazione" : undefined}
+        className={`fixed inset-0 z-[55] bg-black/95 backdrop-blur-md flex flex-col items-center justify-center motion-safe:transition-opacity motion-safe:duration-300 md:hidden ${
+          mobileOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
         }`}
         aria-hidden={!mobileOpen}
       >
-        <nav className="flex flex-col gap-6" aria-label="Menu mobile">
+        {/* Close button top-right */}
+        <button
+          onClick={() => setMobileOpen(false)}
+          className="absolute top-4 right-4 min-w-[44px] min-h-[44px] flex items-center justify-center text-bs-cream rounded-sm"
+          aria-label="Chiudi menu"
+          tabIndex={mobileOpen ? 0 : -1}
+        >
+          <X size={24} />
+        </button>
+
+        <nav className="flex flex-col items-center gap-8" aria-label="Menu mobile">
           {NAV_LINKS.map(({ label, sectionId }) => (
             <button
               key={sectionId}
               onClick={() => handleNavClick(sectionId)}
               tabIndex={mobileOpen ? 0 : -1}
-              className={`font-brand text-sm tracking-widest uppercase text-left transition-colors duration-200 pb-1 border-b border-transparent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-bs-gold rounded-sm ${
+              className={`font-brand text-lg tracking-widest uppercase text-center min-h-[44px] min-w-[44px] flex items-center justify-center motion-safe:transition-colors motion-safe:duration-200 rounded-sm ${
                 activeSection === sectionId
-                  ? "text-bs-cream border-bs-burgundy"
-                  : "text-bs-cream/70 hover:text-bs-cream"
+                  ? "text-bs-cream"
+                  : "text-bs-cream/60 hover:text-bs-cream"
               }`}
             >
               {label}
             </button>
           ))}
         </nav>
-      </div>
 
-      {/* Mobile backdrop overlay */}
-      {mobileOpen && (
-        <div
-          className="fixed inset-0 z-[54] bg-black/50 md:hidden"
-          onClick={() => setMobileOpen(false)}
-          aria-hidden="true"
-        />
-      )}
+        {/* CTA in mobile menu */}
+        <button
+          onClick={() => handleNavClick("contact")}
+          tabIndex={mobileOpen ? 0 : -1}
+          className="mt-10 bg-bs-cream px-8 py-4 font-brand text-sm uppercase tracking-widest text-black min-h-[48px]"
+        >
+          PRENOTA
+        </button>
+      </div>
     </>
   );
 }

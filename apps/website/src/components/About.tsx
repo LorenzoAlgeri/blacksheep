@@ -35,11 +35,11 @@ export function About() {
     () => {
       if (prefersReduced || !sectionRef.current) return;
 
-      // Animate left column paragraphs
+      // Left column — enters from left
       if (leftColRef.current) {
         const paragraphs = leftColRef.current.querySelectorAll("[data-motion]");
         gsap.from(paragraphs, {
-          ...ENTRANCE.text,
+          ...ENTRANCE.fromLeft,
           duration: DURATION.major,
           ease: EASE.enter,
           stagger: STAGGER.normal,
@@ -50,19 +50,37 @@ export function About() {
         });
       }
 
-      // Animate right column stat cards + badge
+      // Right column — stat cards enter from right, badge enters with spring
       if (rightColRef.current) {
-        const items = rightColRef.current.querySelectorAll("[data-motion]");
-        gsap.from(items, {
-          ...ENTRANCE.card,
-          duration: DURATION.major,
-          ease: EASE.enter,
-          stagger: STAGGER.normal,
-          scrollTrigger: {
-            trigger: rightColRef.current,
-            ...SCROLL_TRIGGER_DEFAULTS,
-          },
-        });
+        const statCards = rightColRef.current.querySelectorAll("[data-animate='stat']");
+        const badge = rightColRef.current.querySelector("[data-animate='badge']");
+
+        if (statCards.length > 0) {
+          gsap.from(statCards, {
+            ...ENTRANCE.fromRight,
+            duration: DURATION.major,
+            ease: EASE.enter,
+            stagger: STAGGER.normal,
+            delay: 0.3,
+            scrollTrigger: {
+              trigger: rightColRef.current,
+              ...SCROLL_TRIGGER_DEFAULTS,
+            },
+          });
+        }
+
+        if (badge) {
+          gsap.from(badge, {
+            ...ENTRANCE.spring,
+            duration: DURATION.major,
+            ease: EASE.spring,
+            delay: 0.6,
+            scrollTrigger: {
+              trigger: rightColRef.current,
+              ...SCROLL_TRIGGER_DEFAULTS,
+            },
+          });
+        }
       }
     },
     { dependencies: [prefersReduced] },
@@ -92,13 +110,13 @@ export function About() {
         <div ref={rightColRef}>
           <div className="grid grid-cols-2 gap-6">
             {STATS.map((stat) => (
-              <div key={stat.label} data-motion className="text-center">
+              <div key={stat.label} data-motion data-animate="stat" className="text-center">
                 <AnimatedCounter
                   end={stat.end}
                   suffix={stat.suffix}
-                  className="font-brand text-3xl md:text-4xl text-bs-gold"
+                  className="font-brand text-3xl md:text-4xl text-bs-cream"
                 />
-                <p className="text-xs uppercase tracking-widest text-bs-cream/40 mt-2">
+                <p className="text-xs uppercase tracking-widest text-bs-cream/60 mt-2">
                   {stat.label}
                 </p>
               </div>
@@ -107,7 +125,8 @@ export function About() {
 
           <div
             data-motion
-            className="border border-bs-gold/30 rounded-sm px-4 py-3 text-center mt-8"
+            data-animate="badge"
+            className="border border-bs-cream/10 rounded-sm px-4 py-3 text-center mt-8"
           >
             <p className="font-brand text-xs tracking-widest text-bs-cream">
               RED BULL TURN IT UP 2025

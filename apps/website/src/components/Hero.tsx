@@ -3,7 +3,10 @@
 import { useRef } from "react";
 import { useGSAP } from "@gsap/react";
 import gsap from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { EASE, DURATION, STAGGER } from "@/lib/animations";
+
+gsap.registerPlugin(ScrollTrigger);
 import { useReducedMotion } from "@/hooks/useReducedMotion";
 
 const TITLE = "BLACK SHEEP";
@@ -15,7 +18,7 @@ const LOGO_OUTER =
 const LOGO_INNER =
   "M257.74,544.74c3.72,3.85,6.11,11.86,9.54,16.94,33.08,48.88,144.91,68.45,200.27,70.65,107,4.25,216.8-3.32,324.09,0,37.57-2.84,75.15-7.77,111.23-18.75,30.68-9.34,83.68-31.53,94.29-64.64,2.66-8.3,3.34-44.89,1.51-53.55-2.02-9.49-13.12-15.49-22.05-16.93l-748.05.05c-11.05-.5-22.63-5.48-26.77-16.21.76-30.71-3.38-65.81-.67-96.19,4.5-50.41,68.58-86.42,110.74-102.15,141.82-52.9,312.76-21.31,461.79-30.26,75.72-.97,248.35,30.55,277.65,112.23,9.39,26.18-28.74,36.92-47.12,24.1-7.55-5.27-8.75-13.15-13.66-20.32-29.26-42.77-120.2-62.74-169.03-67.89-109.69-11.58-228.21,2.26-338.93-3.16-48.74,2.45-98.03,8.12-143.97,25-27.02,9.93-76.24,33.91-79.47,66.45-.84,8.47-1.32,39.26.22,46.71,1.96,9.48,15.4,16.07,24.29,16.69l747.03-.03c11.83.6,25.29,7.7,26.5,20.48-3.71,38.2,9.03,87.1-10.62,121.32-41.65,72.54-177.82,99.09-254.88,102.01h-326.08c-74.34-2.92-192.08-26.5-242.43-85.47-5.35-6.27-15.94-21.61-17.58-29.38-5.47-25.86,36.61-33.83,52.2-17.68Z";
 
-export function Hero() {
+export function Hero({ ready = true }: { ready?: boolean }) {
   const sectionRef = useRef<HTMLElement>(null);
   const logoRef = useRef<SVGSVGElement>(null);
   const outerPathRef = useRef<SVGPathElement>(null);
@@ -27,15 +30,31 @@ export function Hero() {
 
   useGSAP(
     () => {
-      if (prefersReduced) return;
+      if (prefersReduced || !ready) return;
 
       const outerPath = outerPathRef.current;
       const innerPath = innerPathRef.current;
       const titleEl = titleRef.current;
       const subtitleEl = subtitleRef.current;
       const scrollEl = scrollIndicatorRef.current;
+      const logoEl = logoRef.current;
 
       if (!outerPath || !innerPath || !titleEl || !subtitleEl || !scrollEl) return;
+
+      // Parallax — logo moves at 0.95x scroll speed (desktop only)
+      const isDesktop = window.matchMedia("(pointer: fine)").matches;
+      if (isDesktop && logoEl) {
+        gsap.to(logoEl, {
+          yPercent: -5,
+          ease: "none",
+          scrollTrigger: {
+            trigger: sectionRef.current,
+            start: "top top",
+            end: "bottom top",
+            scrub: true,
+          },
+        });
+      }
 
       // Get path lengths for stroke draw animation
       const outerLen = outerPath.getTotalLength();
@@ -149,7 +168,7 @@ export function Hero() {
         2.2,
       );
     },
-    { scope: sectionRef, dependencies: [prefersReduced] },
+    { scope: sectionRef, dependencies: [prefersReduced, ready] },
   );
 
   return (
@@ -174,7 +193,6 @@ export function Hero() {
       {/* Title — per-letter stagger reveal */}
       <h1
         ref={titleRef}
-        data-motion
         className="font-brand text-bs-cream text-center leading-none tracking-wider"
         style={{ fontSize: "clamp(2.5rem, 8vw, 5rem)" }}
       >
@@ -192,7 +210,6 @@ export function Hero() {
       {/* Subtitle — tracking expansion */}
       <p
         ref={subtitleRef}
-        data-motion
         className="mt-4 font-brand text-bs-cream/70 text-xs sm:text-sm tracking-[0.4em] uppercase"
       >
         {SUBTITLE}
@@ -201,7 +218,6 @@ export function Hero() {
       {/* Scroll indicator — breathing opacity loop */}
       <div
         ref={scrollIndicatorRef}
-        data-motion
         className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2"
         aria-hidden="true"
       >
