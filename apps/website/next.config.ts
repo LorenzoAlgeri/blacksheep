@@ -38,7 +38,21 @@ const securityHeaders = [
   },
 ];
 
+const NEWSLETTER_ORIGIN = process.env.NEWSLETTER_ORIGIN ?? "http://localhost:3001";
+
 const nextConfig: NextConfig = {
+  async rewrites() {
+    return [
+      {
+        source: "/newsletter",
+        destination: `${NEWSLETTER_ORIGIN}/newsletter`,
+      },
+      {
+        source: "/newsletter/:path*",
+        destination: `${NEWSLETTER_ORIGIN}/newsletter/:path*`,
+      },
+    ];
+  },
   async headers() {
     return [
       {
