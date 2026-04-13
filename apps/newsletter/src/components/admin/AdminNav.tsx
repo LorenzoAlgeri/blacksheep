@@ -32,7 +32,7 @@ export function AdminNav() {
         ))}
         <span className="text-bs-cream/10">|</span>
         <a
-          href="/"
+          href="/newsletter"
           target="_blank"
           rel="noopener noreferrer"
           className="hover:text-bs-cream transition-colors"
@@ -67,7 +67,7 @@ export function AdminNav() {
           ))}
           <div className="mx-4 my-1 h-px bg-bs-cream/10" />
           <a
-            href="/"
+            href="/newsletter"
             target="_blank"
             rel="noopener noreferrer"
             onClick={() => setIsOpen(false)}
