@@ -11,7 +11,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
   }
 
   return (
-    <div className="flex flex-col min-h-dvh">
+    <div className="admin-layout flex flex-col min-h-dvh">
       <header className="relative flex items-center justify-between px-4 py-3 border-b border-bs-cream/10">
         <div className="flex items-center gap-3">
           <Image

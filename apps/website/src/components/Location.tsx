@@ -5,7 +5,7 @@ import { useGSAP } from "@gsap/react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { Train, Car } from "lucide-react";
-import { EASE, DURATION, STAGGER, SCROLL_TRIGGER_DEFAULTS, ENTRANCE } from "@/lib/animations";
+import { EASE, DURATION, SCROLL_TRIGGER_DEFAULTS } from "@/lib/animations";
 import { useReducedMotion } from "@/hooks/useReducedMotion";
 import { SectionHeading } from "@/components/ui/SectionHeading";
 import { GoldDivider } from "@/components/ui/GoldDivider";
@@ -27,14 +27,11 @@ export function Location() {
     () => {
       if (prefersReduced || !containerRef.current) return;
 
-      const items = containerRef.current.querySelectorAll("[data-animate='text']");
-      if (items.length === 0) return;
-
-      gsap.from(items, {
-        ...ENTRANCE.text,
-        duration: DURATION.standard,
-        ease: EASE.enter,
-        stagger: STAGGER.normal,
+      // Clip-path reveal — curtain opening from left to right
+      gsap.from(containerRef.current, {
+        clipPath: "inset(0 100% 0 0)",
+        duration: DURATION.cinematic,
+        ease: EASE.cinematic,
         scrollTrigger: {
           trigger: containerRef.current,
           ...SCROLL_TRIGGER_DEFAULTS,
@@ -88,7 +85,7 @@ export function Location() {
             href={MAPS_URL}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-block border border-bs-cream/20 px-6 py-3 font-brand text-xs uppercase tracking-widest text-bs-cream transition-colors hover:bg-bs-cream/5"
+            className="inline-flex items-center justify-center border border-bs-cream/20 px-6 min-h-[48px] font-brand text-xs uppercase tracking-widest text-bs-cream motion-safe:transition-colors hover:bg-bs-cream/5"
           >
             APRI IN GOOGLE MAPS
           </a>

@@ -19,10 +19,10 @@ interface Stat {
 }
 
 const STATS: Stat[] = [
-  { end: 150, suffix: "+", label: "SERATE" },
-  { end: 10, suffix: "K+", label: "FOLLOWER" },
+  { end: 2019, suffix: "", label: "ANNO DI NASCITA" },
+  { end: 11, suffix: "K+", label: "COMMUNITY" },
   { end: 50, suffix: "+", label: "DJ OSPITI" },
-  { end: 1, suffix: "", label: "LOCATION" },
+  { end: 1, suffix: "", label: "RED BULL WINNER" },
 ];
 
 export function About() {
@@ -35,11 +35,11 @@ export function About() {
     () => {
       if (prefersReduced || !sectionRef.current) return;
 
-      // Animate left column paragraphs
+      // Left column — enters from left
       if (leftColRef.current) {
         const paragraphs = leftColRef.current.querySelectorAll("[data-motion]");
         gsap.from(paragraphs, {
-          ...ENTRANCE.text,
+          ...ENTRANCE.fromLeft,
           duration: DURATION.major,
           ease: EASE.enter,
           stagger: STAGGER.normal,
@@ -50,19 +50,37 @@ export function About() {
         });
       }
 
-      // Animate right column stat cards + badge
+      // Right column — stat cards enter from right, badge enters with spring
       if (rightColRef.current) {
-        const items = rightColRef.current.querySelectorAll("[data-motion]");
-        gsap.from(items, {
-          ...ENTRANCE.card,
-          duration: DURATION.major,
-          ease: EASE.enter,
-          stagger: STAGGER.normal,
-          scrollTrigger: {
-            trigger: rightColRef.current,
-            ...SCROLL_TRIGGER_DEFAULTS,
-          },
-        });
+        const statCards = rightColRef.current.querySelectorAll("[data-animate='stat']");
+        const badge = rightColRef.current.querySelector("[data-animate='badge']");
+
+        if (statCards.length > 0) {
+          gsap.from(statCards, {
+            ...ENTRANCE.fromRight,
+            duration: DURATION.major,
+            ease: EASE.enter,
+            stagger: STAGGER.normal,
+            delay: 0.3,
+            scrollTrigger: {
+              trigger: rightColRef.current,
+              ...SCROLL_TRIGGER_DEFAULTS,
+            },
+          });
+        }
+
+        if (badge) {
+          gsap.from(badge, {
+            ...ENTRANCE.spring,
+            duration: DURATION.major,
+            ease: EASE.spring,
+            delay: 0.6,
+            scrollTrigger: {
+              trigger: rightColRef.current,
+              ...SCROLL_TRIGGER_DEFAULTS,
+            },
+          });
+        }
       }
     },
     { dependencies: [prefersReduced] },
@@ -70,21 +88,29 @@ export function About() {
 
   return (
     <section id="about" className="section-padding bg-section-dark" ref={sectionRef}>
-      <SectionHeading>ABOUT</SectionHeading>
+      <SectionHeading>CHI SIAMO</SectionHeading>
       <GoldDivider className="mt-4 mb-10" />
 
       <div className="grid md:grid-cols-2 gap-12 md:gap-16 max-w-5xl mx-auto">
         {/* Left column — brand story */}
         <div ref={leftColRef}>
           <p data-motion className="font-body text-bs-cream/70 text-base leading-relaxed">
-            BLACK SHEEP nasce nel 2024 da un&apos;idea semplice: creare il lunedì sera che Milano
-            meritava. Non l&apos;ennesima serata hip-hop, ma un rituale settimanale dove la musica è
-            sacra e il dress code è la tua personalità.
+            BLACK SHEEP nasce nel 2019 da due ragazzi di seconda generazione con un&apos;idea
+            semplice: dare spazio e visibilità a chi si sente diverso. La pecora nera che non sta
+            nel gregge.
           </p>
           <p data-motion className="font-body text-bs-cream/70 text-base leading-relaxed mt-6">
-            Ogni lunedì al 11 Clubroom di Corso Como, i nostri DJ resident trasformano la notte in
-            un viaggio sonoro tra hip-hop, R&amp;B, afrobeats e dancehall. Nel 2025 abbiamo vinto il
-            Red Bull Turn It Up Milan — ma la vera vittoria è la community che torna ogni settimana.
+            Ogni lunedì al 11 Clubroom, Corso Como — Milano diventa casa nostra. Hip-Hop, R&amp;B,
+            Afrobeats, Amapiano, Dembow, Brazilian Funk, Arabic. Non un genere, una cultura.
+          </p>
+          <p data-motion className="font-body text-bs-cream/70 text-base leading-relaxed mt-6">
+            Dal 2019 siamo cresciuti da serata underground a community. Nel 2025 abbiamo vinto il
+            Red Bull Turn It Up Milano, portando le nostre vibes anche a Londra, all&apos;Oslo
+            Hackney.
+          </p>
+          <p data-motion className="font-body text-bs-cream/70 text-base leading-relaxed mt-6">
+            Attraverso musica, danza, moda e cultura, Black Sheep è il posto dove essere te stesso
+            non è un&apos;opzione — è l&apos;unica regola.
           </p>
         </div>
 
@@ -92,13 +118,13 @@ export function About() {
         <div ref={rightColRef}>
           <div className="grid grid-cols-2 gap-6">
             {STATS.map((stat) => (
-              <div key={stat.label} data-motion className="text-center">
+              <div key={stat.label} data-motion data-animate="stat" className="text-center">
                 <AnimatedCounter
                   end={stat.end}
                   suffix={stat.suffix}
-                  className="font-brand text-3xl md:text-4xl text-bs-gold"
+                  className="font-brand text-3xl md:text-4xl text-bs-cream"
                 />
-                <p className="text-xs uppercase tracking-widest text-bs-cream/40 mt-2">
+                <p className="text-xs uppercase tracking-widest text-bs-cream/60 mt-2">
                   {stat.label}
                 </p>
               </div>
@@ -107,7 +133,8 @@ export function About() {
 
           <div
             data-motion
-            className="border border-bs-gold/30 rounded-sm px-4 py-3 text-center mt-8"
+            data-animate="badge"
+            className="border border-bs-cream/10 rounded-sm px-4 py-3 text-center mt-8"
           >
             <p className="font-brand text-xs tracking-widest text-bs-cream">
               RED BULL TURN IT UP 2025

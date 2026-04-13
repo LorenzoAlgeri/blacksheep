@@ -50,12 +50,12 @@ const SOCIALS = [
   },
   {
     label: "TikTok",
-    href: "https://www.tiktok.com/@blacksheep",
+    href: "https://www.tiktok.com/@blacksheepcommunity",
     icon: <Music size={20} />,
   },
   {
     label: "Facebook",
-    href: "https://www.facebook.com/blacksheep",
+    href: "https://www.facebook.com/blacksheepnight",
     icon: <FacebookIcon size={20} />,
   },
 ];
@@ -73,8 +73,8 @@ export function Footer() {
           className="h-8 w-auto opacity-30"
         />
 
-        {/* Social links */}
-        <div className="flex gap-6">
+        {/* Social links — 44px min touch targets */}
+        <div className="flex gap-2">
           {SOCIALS.map(({ label, href, icon }) => (
             <a
               key={label}
@@ -82,7 +82,7 @@ export function Footer() {
               target="_blank"
               rel="noopener noreferrer"
               aria-label={label}
-              className="text-bs-cream/30 transition-colors hover:text-bs-cream/60"
+              className="min-w-[44px] min-h-[44px] flex items-center justify-center text-bs-cream/50 motion-safe:transition-colors hover:text-bs-cream/70"
             >
               {icon}
             </a>
@@ -90,14 +90,20 @@ export function Footer() {
         </div>
 
         {/* Bottom text */}
-        <div className="text-center text-[10px] uppercase tracking-wider text-bs-cream/20">
+        <div className="text-center text-[11px] uppercase tracking-wider text-bs-cream/40">
           <p>BLACK SHEEP &copy; 2026 &mdash; DESIGNED IN MILANO</p>
-          <p className="mt-1">
-            <a href="#" className="transition-colors hover:text-bs-cream/40">
+          <p className="mt-2 flex items-center justify-center gap-1">
+            <a
+              href="#"
+              className="min-h-[44px] flex items-center px-2 motion-safe:transition-colors hover:text-bs-cream/60"
+            >
               PRIVACY POLICY
             </a>
-            {" · "}
-            <a href="#" className="transition-colors hover:text-bs-cream/40">
+            <span aria-hidden="true">&middot;</span>
+            <a
+              href="#"
+              className="min-h-[44px] flex items-center px-2 motion-safe:transition-colors hover:text-bs-cream/60"
+            >
               COOKIE POLICY
             </a>
           </p>

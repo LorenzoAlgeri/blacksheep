@@ -26,16 +26,18 @@
 }
 
 html {
-  background: var(--bs-navy);
+  background: #000000;
+  overflow-x: hidden;
 }
 
 body {
-  background: var(--bs-navy);
+  background: #000000;
   color: var(--bs-cream);
   font-family: var(--font-body);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   min-height: 100dvh;
+  overflow-x: hidden;
 }
 
 /* === Noise grain overlay (0.04 — lighter than newsletter's 0.06) === */
@@ -69,7 +71,7 @@ body::before {
 }
 @media (prefers-reduced-motion: no-preference) {
   [data-motion] {
-    animation: motion-fallback 0s 4s forwards;
+    animation: motion-fallback 0s 1.5s forwards;
   }
 }
 
@@ -83,7 +85,23 @@ body::before {
 
 /* === Alternating section background === */
 .bg-section-dark {
-  background: #0a0e1a;
+  background: #0a0a0a;
+}
+
+/* === Reduced motion: kill CSS transitions & transforms === */
+@media (prefers-reduced-motion: reduce) {
+  .gallery-card img,
+  .gallery-card .overlay,
+  .gallery-card .number-placeholder {
+    transition: none !important;
+    transform: none !important;
+  }
+}
+
+/* === Global focus-visible ring (WCAG 2.4.7) === */
+*:focus-visible {
+  outline: 2px solid rgba(255, 255, 243, 0.6);
+  outline-offset: 2px;
 }
 
 /* === Autofill override — dark background === */
@@ -91,7 +109,7 @@ input:-webkit-autofill,
 input:-webkit-autofill:hover,
 input:-webkit-autofill:focus,
 input:-webkit-autofill:active {
-  -webkit-box-shadow: 0 0 0 1000px var(--bs-navy) inset !important;
+  -webkit-box-shadow: 0 0 0 1000px #000000 inset !important;
   -webkit-text-fill-color: var(--bs-cream) !important;
   background-color: transparent !important;
   transition: background-color 5000s ease-in-out 0s;

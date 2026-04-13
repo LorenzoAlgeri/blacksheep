@@ -53,6 +53,11 @@ export async function POST(request: NextRequest) {
     .eq("email", email)
     .single();
 
+  // If blocked by admin, silently reject (don't reveal blocked state)
+  if (existing?.status === "blocked") {
+    return Response.json({ success: true });
+  }
+
   // If already confirmed, return success silently (no-op)
   if (existing?.status === "confirmed") {
     return Response.json({ success: true });
@@ -111,6 +116,7 @@ export async function POST(request: NextRequest) {
 
   const { error: emailError } = await getResend().emails.send({
     from: process.env.RESEND_FROM_EMAIL ?? "BLACK SHEEP <noreply@blacksheep.community>",
+    replyTo: process.env.REPLY_TO_EMAIL ?? undefined,
     to: email,
     subject: "Conferma la tua iscrizione — BLACK SHEEP",
     html: `
@@ -152,7 +158,7 @@ export async function POST(request: NextRequest) {
 
         <!-- Venue -->
         <tr><td align="center" style="padding:20px 40px 0;">
-          <p style="margin:0;font-family:'Arial Black',Arial,Helvetica,sans-serif;font-size:9px;letter-spacing:0.25em;color:rgba(255,255,243,0.25);text-transform:uppercase;">${venue}</p>
+          <p style="margin:0;font-family:'Arial Black',Arial,Helvetica,sans-serif;font-size:8px;letter-spacing:0.15em;color:rgba(255,255,243,0.25);text-transform:uppercase;white-space:nowrap;">${venue}</p>
         </td></tr>
 
         <!-- Spacer -->

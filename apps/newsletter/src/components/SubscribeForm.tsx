@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { subscribeSchema, type SubscribeInput } from "@/lib/validations";
+import { basePath } from "@/lib/base-path";
 import { SuccessMessage } from "./SuccessMessage";
 
 export function SubscribeForm() {
@@ -21,7 +22,7 @@ export function SubscribeForm() {
   async function onSubmit(data: SubscribeInput) {
     setServerError(null);
     try {
-      const res = await fetch("/api/subscribe", {
+      const res = await fetch(`${basePath}/api/subscribe`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),

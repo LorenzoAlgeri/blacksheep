@@ -14,12 +14,17 @@ export const sendNewsletterSchema = z.object({
 export const scheduleNewsletterSchema = z.object({
   subject: z.string().min(1, "Oggetto obbligatorio").max(200),
   html: z.string().min(1, "Contenuto obbligatorio").max(200000),
-  scheduledAt: z.string().min(1, "Data obbligatoria").refine(
-    (val) => !isNaN(Date.parse(val)),
-    { message: "Data non valida. Usa formato ISO." },
-  ),
+  scheduledAt: z
+    .string()
+    .min(1, "Data obbligatoria")
+    .refine((val) => !isNaN(Date.parse(val)), { message: "Data non valida. Usa formato ISO." }),
+});
+
+export const subscriberActionSchema = z.object({
+  action: z.enum(["block", "unblock"]),
 });
 
 export type SubscribeInput = z.infer<typeof subscribeSchema>;
 export type SendNewsletterInput = z.infer<typeof sendNewsletterSchema>;
 export type ScheduleNewsletterInput = z.infer<typeof scheduleNewsletterSchema>;
+export type SubscriberActionInput = z.infer<typeof subscriberActionSchema>;

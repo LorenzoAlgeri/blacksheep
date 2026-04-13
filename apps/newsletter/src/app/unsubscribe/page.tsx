@@ -3,6 +3,7 @@
 import { Suspense, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import Image from "next/image";
+import { basePath } from "@/lib/base-path";
 
 function UnsubscribeContent() {
   const searchParams = useSearchParams();
@@ -16,7 +17,7 @@ function UnsubscribeContent() {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch("/api/unsubscribe", {
+      const res = await fetch(`${basePath}/api/unsubscribe`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ token }),

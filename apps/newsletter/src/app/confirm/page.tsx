@@ -1,5 +1,4 @@
 import Image from "next/image";
-import Link from "next/link";
 import { ConfirmMotion } from "@/components/ConfirmMotion";
 
 export default async function ConfirmPage({
@@ -8,6 +7,8 @@ export default async function ConfirmPage({
   searchParams: Promise<{ already?: string }>;
 }) {
   const { already } = await searchParams;
+
+  const mainSiteUrl = process.env.NEXT_PUBLIC_MAIN_SITE_URL ?? "/";
 
   return (
     <ConfirmMotion>
@@ -52,13 +53,13 @@ export default async function ConfirmPage({
         </p>
 
         {/* Back link */}
-        <Link
-          href="/"
+        <a
+          href={mainSiteUrl}
           data-confirm="back"
           className="font-body text-[10px] text-bs-cream/20 uppercase tracking-[0.2em] mt-10 hover:text-bs-cream/50 transition-colors duration-300"
         >
           Torna al sito
-        </Link>
+        </a>
       </main>
     </ConfirmMotion>
   );

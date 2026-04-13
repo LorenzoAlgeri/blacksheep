@@ -22,7 +22,14 @@ export function ScrollProgress() {
 
   return (
     <div className="fixed top-0 left-0 right-0 h-0.5 z-[60]">
-      <div className="h-full bg-bs-gold" style={{ width: `${progress}%` }} />
+      <div
+        className="h-full"
+        style={{
+          width: `${progress}%`,
+          background: "linear-gradient(to right, rgba(255,255,243,0.5), var(--bs-cream))",
+          boxShadow: "0 0 8px rgba(255,255,243,0.3)",
+        }}
+      />
     </div>
   );
 }

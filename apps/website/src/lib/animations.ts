@@ -1,6 +1,15 @@
 /**
  * GSAP Animation Presets — BLACK SHEEP Website
  * Consistent easing, duration, and entrance configs across all sections.
+ *
+ * Easing rules:
+ * - Entrances (scroll-triggered): "power3.out" — ALWAYS
+ * - Hover effects: "power2.out" — fast in, smooth out
+ * - Hover leave: "power2.inOut" — softer
+ * - Spring/bounce (badges, CTAs): "back.out(1.4)"
+ * - Parallax: "none" — linear, ALWAYS
+ * - Exit/close (mobile menu, lightbox): "power2.in" — fast
+ * - Cinematic (preloader, clip-path reveals): "power3.inOut"
  */
 
 export const EASE = {
@@ -8,6 +17,9 @@ export const EASE = {
   exit: "power2.in",
   move: "power2.inOut",
   spring: "back.out(1.4)",
+  hover: "power2.out",
+  cinematic: "power3.inOut",
+  none: "none",
 } as const;
 
 export const DURATION = {
@@ -33,4 +45,9 @@ export const ENTRANCE = {
   text: { y: 20, opacity: 0 },
   card: { y: 30, opacity: 0 },
   divider: { scaleX: 0 },
+  fromLeft: { x: -40, opacity: 0 },
+  fromRight: { x: 40, opacity: 0 },
+  fromRightWide: { x: 60, opacity: 0 },
+  blurUp: { y: 15, opacity: 0, filter: "blur(2px)" },
+  spring: { scale: 0.8, opacity: 0 },
 } as const;
