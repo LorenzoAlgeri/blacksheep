@@ -1,10 +1,6 @@
 import type { NextConfig } from "next";
 
-const basePath = "/newsletter";
-
 const nextConfig: NextConfig = {
-  basePath,
-  env: { NEXT_PUBLIC_BASE_PATH: basePath },
   output: "standalone",
   poweredByHeader: false,
   async headers() {
