@@ -12,8 +12,10 @@ export function proxy(request: NextRequest) {
       request.cookies.get("authjs.session-token");
 
     if (!token) {
-      const loginUrl = new URL("/admin/login", request.url);
-      loginUrl.searchParams.set("callbackUrl", pathname);
+      const loginUrl = request.nextUrl.clone();
+      loginUrl.pathname = "/admin/login";
+      loginUrl.search = "";
+      loginUrl.searchParams.set("callbackUrl", `/newsletter${pathname}`);
       return NextResponse.redirect(loginUrl);
     }
   }
