@@ -119,7 +119,10 @@ export function SubscribeForm() {
 
       <p data-motion="consent" className="font-body text-[10px] text-bs-cream/20 text-center mt-2">
         Iscrivendoti accetti la nostra{" "}
-        <a href="/privacy" className="underline hover:text-bs-cream/40 transition-colors">
+        <a
+          href="/newsletter/privacy"
+          className="underline hover:text-bs-cream/40 transition-colors"
+        >
           Privacy Policy
         </a>
       </p>

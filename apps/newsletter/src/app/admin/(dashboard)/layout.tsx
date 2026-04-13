@@ -7,7 +7,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
   const session = await auth();
 
   if (!session) {
-    redirect("/admin/login");
+    redirect("/newsletter/admin/login");
   }
 
   return (
