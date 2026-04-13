@@ -9,7 +9,7 @@ export async function GET(request: NextRequest) {
   const token = request.nextUrl.searchParams.get("token");
 
   if (!token || !UUID_RE.test(token)) {
-    return Response.redirect(new URL("/?error=invalid", request.url));
+    return Response.redirect(new URL("/newsletter/?error=invalid", request.url));
   }
 
   const { data: subscriber } = await supabase
@@ -19,7 +19,7 @@ export async function GET(request: NextRequest) {
     .single();
 
   if (!subscriber) {
-    return Response.redirect(new URL("/?error=invalid", request.url));
+    return Response.redirect(new URL("/newsletter/?error=invalid", request.url));
   }
 
   const { error: updateError } = await supabase
@@ -29,11 +29,11 @@ export async function GET(request: NextRequest) {
 
   if (updateError) {
     console.error("[SUBSCRIBE] Unsubscribe update error:", updateError.message);
-    return Response.redirect(new URL("/?error=server", request.url));
+    return Response.redirect(new URL("/newsletter/?error=server", request.url));
   }
 
   // Redirect to unsubscribe page with token so user can request full deletion
-  return Response.redirect(new URL(`/unsubscribe?token=${token}`, request.url));
+  return Response.redirect(new URL(`/newsletter/unsubscribe?token=${token}`, request.url));
 }
 
 // POST: GDPR Art. 17 — full data erasure

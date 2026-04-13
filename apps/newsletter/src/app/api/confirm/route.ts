@@ -7,7 +7,7 @@ export async function GET(request: NextRequest) {
   const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
   if (!token || !UUID_RE.test(token)) {
-    return Response.redirect(new URL("/?error=invalid", request.url));
+    return Response.redirect(new URL("/newsletter/?error=invalid", request.url));
   }
 
   const { data: subscriber } = await supabase
@@ -17,11 +17,11 @@ export async function GET(request: NextRequest) {
     .single();
 
   if (!subscriber) {
-    return Response.redirect(new URL("/?error=invalid", request.url));
+    return Response.redirect(new URL("/newsletter/?error=invalid", request.url));
   }
 
   if (subscriber.status === "confirmed") {
-    return Response.redirect(new URL("/confirm?already=true", request.url));
+    return Response.redirect(new URL("/newsletter/confirm?already=true", request.url));
   }
 
   const { error: updateError } = await supabase
@@ -31,8 +31,8 @@ export async function GET(request: NextRequest) {
 
   if (updateError) {
     console.error("[SUBSCRIBE] Confirm update error:", updateError.message);
-    return Response.redirect(new URL("/?error=server", request.url));
+    return Response.redirect(new URL("/newsletter/?error=server", request.url));
   }
 
-  return Response.redirect(new URL("/confirm", request.url));
+  return Response.redirect(new URL("/newsletter/confirm", request.url));
 }
