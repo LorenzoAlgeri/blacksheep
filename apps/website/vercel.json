@@ -1,0 +1,12 @@
+{
+  "rewrites": [
+    {
+      "source": "/newsletter",
+      "destination": "https://newsletter.blacksheep-community.com/newsletter"
+    },
+    {
+      "source": "/newsletter/:path*",
+      "destination": "https://newsletter.blacksheep-community.com/newsletter/:path*"
+    }
+  ]
+}
