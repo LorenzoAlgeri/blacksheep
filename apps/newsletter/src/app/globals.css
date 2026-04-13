@@ -43,6 +43,11 @@ body {
   overflow-x: visible;
 }
 
+/* Admin panel — full-width override */
+body:has(.admin-layout) {
+  max-width: 100%;
+}
+
 /* Noise grain — analog texture */
 body::before {
   content: "";
@@ -322,6 +327,26 @@ body::before {
 .cta-btn:active {
   transform: scale(0.98);
   box-shadow: 0 2px 20px rgba(255, 255, 243, 0.08);
+}
+
+/* === Intro Overlay — fullscreen canvas, frame = viewport === */
+.intro-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: #000;
+}
+
+.intro-canvas-wrapper {
+  width: 100vw;
+  height: 100vh;
+}
+
+/* GSAP entrance — hide intro overlay initially (GSAP controls visibility) */
+@media (prefers-reduced-motion: no-preference) {
+  [data-motion="intro-overlay"] {
+    visibility: hidden;
+  }
 }
 
 /* === Brand hero — scritta centered, mascotte absolute left === */

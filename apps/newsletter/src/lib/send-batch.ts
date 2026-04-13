@@ -20,6 +20,7 @@ export async function sendBatchEmails(
   siteUrl: string,
 ): Promise<BatchSendResult> {
   const fromEmail = process.env.RESEND_FROM_EMAIL ?? "BLACK SHEEP <noreply@blacksheep.community>";
+  const replyTo = process.env.REPLY_TO_EMAIL ?? undefined;
 
   let sentCount = 0;
 
@@ -32,6 +33,7 @@ export async function sendBatchEmails(
 
       return getResend().emails.send({
         from: fromEmail,
+        replyTo,
         to: sub.email,
         subject,
         html: personalizedHtml,
