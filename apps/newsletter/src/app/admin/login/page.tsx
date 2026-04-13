@@ -7,9 +7,11 @@ import Image from "next/image";
 
 function LoginForm() {
   const searchParams = useSearchParams();
-  const rawCallbackUrl = searchParams.get("callbackUrl") ?? "/admin";
-  // Only allow callbacks starting with /admin to prevent open redirect
-  const callbackUrl = rawCallbackUrl.startsWith("/admin") ? rawCallbackUrl : "/admin";
+  const rawCallbackUrl = searchParams.get("callbackUrl") ?? "/newsletter/admin";
+  // Only allow callbacks starting with /newsletter/admin to prevent open redirect
+  const callbackUrl = rawCallbackUrl.startsWith("/newsletter/admin")
+    ? rawCallbackUrl
+    : "/newsletter/admin";
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -41,7 +43,9 @@ function LoginForm() {
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-3 w-full max-w-[300px]">
-      <label htmlFor="admin-email" className="sr-only">Email</label>
+      <label htmlFor="admin-email" className="sr-only">
+        Email
+      </label>
       <input
         id="admin-email"
         name="email"
@@ -50,7 +54,9 @@ function LoginForm() {
         required
         className="w-full bg-transparent border border-bs-cream/20 rounded-md px-4 py-3 font-body text-bs-cream placeholder:text-bs-cream/30"
       />
-      <label htmlFor="admin-password" className="sr-only">Password</label>
+      <label htmlFor="admin-password" className="sr-only">
+        Password
+      </label>
       <input
         id="admin-password"
         name="password"
@@ -80,9 +86,14 @@ export default function AdminLoginPage() {
         width={60}
         height={39}
         className="mb-8 opacity-20"
-        style={{ filter: "brightness(0) saturate(100%) invert(99%) sepia(3%) saturate(200%) hue-rotate(30deg)" }}
+        style={{
+          filter:
+            "brightness(0) saturate(100%) invert(99%) sepia(3%) saturate(200%) hue-rotate(30deg)",
+        }}
       />
-      <h1 className="font-[family-name:var(--font-brand)] text-2xl tracking-wider text-bs-cream mb-6">ADMIN</h1>
+      <h1 className="font-[family-name:var(--font-brand)] text-2xl tracking-wider text-bs-cream mb-6">
+        ADMIN
+      </h1>
       <Suspense fallback={<p className="font-body text-bs-cream/30">Caricamento...</p>}>
         <LoginForm />
       </Suspense>
