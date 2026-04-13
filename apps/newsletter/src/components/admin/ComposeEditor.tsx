@@ -5,6 +5,7 @@ import { useEmailComposer } from "@/hooks/useEmailComposer";
 import { useEventEditor } from "@/hooks/useEventEditor";
 import { useEmailPreview } from "@/hooks/useEmailPreview";
 import { useEmailSender } from "@/hooks/useEmailSender";
+import { basePath } from "@/lib/base-path";
 import { EditorTab } from "./compose/EditorTab";
 import { TemplatesTab } from "./compose/TemplatesTab";
 import { formatTime } from "./compose/shared";
@@ -29,7 +30,7 @@ export function ComposeEditor() {
     try {
       const formData = new FormData();
       formData.append("file", file);
-      const res = await fetch("/api/admin/upload", { method: "POST", body: formData });
+      const res = await fetch(`${basePath}/api/admin/upload`, { method: "POST", body: formData });
       const data = await res.json();
       if (!res.ok) {
         sender.setResult(`Errore: ${data.error}`);

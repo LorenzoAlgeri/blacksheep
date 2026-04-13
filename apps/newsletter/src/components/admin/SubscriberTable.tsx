@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { Users, CheckCircle, Clock, Ban, Unlock, Trash2, ShieldX } from "lucide-react";
+import { basePath } from "@/lib/base-path";
 
 type Subscriber = {
   id: string;
@@ -25,7 +26,7 @@ export function SubscriberTable() {
   const fetchSubscribers = useCallback(() => {
     setLoading(true);
     setError(null);
-    fetch("/api/admin/subscribers")
+    fetch(`${basePath}/api/admin/subscribers`)
       .then((res) => res.json())
       .then((data) => {
         setSubscribers(data.subscribers ?? []);
@@ -44,7 +45,7 @@ export function SubscriberTable() {
   const handleAction = async (id: string, action: "block" | "unblock") => {
     setActionLoading(id);
     try {
-      const res = await fetch(`/api/admin/subscribers/${id}`, {
+      const res = await fetch(`${basePath}/api/admin/subscribers/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action }),
@@ -58,7 +59,7 @@ export function SubscriberTable() {
   const handleDelete = async (id: string) => {
     setActionLoading(id);
     try {
-      const res = await fetch(`/api/admin/subscribers/${id}`, {
+      const res = await fetch(`${basePath}/api/admin/subscribers/${id}`, {
         method: "DELETE",
       });
       if (res.ok) {

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { basePath } from "@/lib/base-path";
 
 export default function SettingsPage() {
   const [tagline, setTagline] = useState("");
@@ -10,7 +11,7 @@ export default function SettingsPage() {
   const [feedback, setFeedback] = useState<string | null>(null);
 
   useEffect(() => {
-    fetch("/api/admin/config")
+    fetch(`${basePath}/api/admin/config`)
       .then((r) => r.json())
       .then((data) => {
         setTagline(data.tagline ?? "");
@@ -24,7 +25,7 @@ export default function SettingsPage() {
     setSaving(true);
     setFeedback(null);
 
-    const res = await fetch("/api/admin/config", {
+    const res = await fetch(`${basePath}/api/admin/config`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ tagline, venue }),

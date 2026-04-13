@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { basePath } from "@/lib/base-path";
 
 export function useEmailSender() {
   const [sending, setSending] = useState(false);
@@ -10,7 +11,7 @@ export function useEmailSender() {
 
   // Load subscriber count
   useEffect(() => {
-    fetch("/api/admin/subscribers")
+    fetch(`${basePath}/api/admin/subscribers`)
       .then((r) => r.json())
       .then((data) => {
         if (data.subscribers) {
@@ -43,7 +44,7 @@ export function useEmailSender() {
       setResult(null);
 
       try {
-        const res = await fetch("/api/admin/send", {
+        const res = await fetch(`${basePath}/api/admin/send`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ subject, html }),
@@ -83,7 +84,7 @@ export function useEmailSender() {
       setResult(null);
 
       try {
-        const res = await fetch("/api/admin/schedule", {
+        const res = await fetch(`${basePath}/api/admin/schedule`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ subject, html, scheduledAt }),
