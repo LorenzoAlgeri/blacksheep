@@ -31,7 +31,9 @@ export async function GET(request: NextRequest) {
 
   const { data: subscribers, error } = await supabase
     .from("subscribers")
-    .select("id, email, name, status, created_at, confirmed_at")
+    .select(
+      "id, email, name, status, created_at, subscribed_at, confirmed_at, follow_up_count, follow_up_last_sent_at",
+    )
     .order("created_at", { ascending: false })
     .range(offset, offset + limit - 1);
 

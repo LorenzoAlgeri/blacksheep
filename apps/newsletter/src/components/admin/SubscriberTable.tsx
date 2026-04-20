@@ -9,11 +9,73 @@ type Subscriber = {
   email: string;
   name: string | null;
   status: string;
-  created_at: string;
+  created_at: string | null;
+  subscribed_at: string | null;
   confirmed_at: string | null;
+  follow_up_count: number | null;
+  follow_up_last_sent_at: string | null;
 };
 
 type Tab = "confirmed" | "pending" | "blocked";
+type FollowUpMode = "all" | "selected" | "oldest";
+
+const FOLLOW_UP_INTERVAL_HOURS = 48;
+const FOLLOW_UP_MAX_ATTEMPTS = 3;
+
+function getSignupDate(subscriber: Subscriber): string | null {
+  return subscriber.subscribed_at ?? subscriber.created_at;
+}
+
+function formatDate(value: string | null): string {
+  if (!value) return "\u2014";
+  return new Date(value).toLocaleDateString("it-IT");
+}
+
+function getPendingDays(subscriber: Subscriber): number {
+  const signup = getSignupDate(subscriber);
+  if (!signup) return 0;
+  const diffMs = Date.now() - new Date(signup).getTime();
+  return Math.max(0, Math.floor(diffMs / (1000 * 60 * 60 * 24)));
+}
+
+function getFollowUpCount(subscriber: Subscriber): number {
+  const count = subscriber.follow_up_count ?? 0;
+  return Math.max(0, count);
+}
+
+function getNextDueAt(subscriber: Subscriber): string | null {
+  const count = getFollowUpCount(subscriber);
+  if (count >= FOLLOW_UP_MAX_ATTEMPTS) return null;
+
+  const baseDate = subscriber.follow_up_last_sent_at ?? getSignupDate(subscriber);
+  if (!baseDate) return null;
+
+  const nextDue = new Date(baseDate);
+  nextDue.setHours(nextDue.getHours() + FOLLOW_UP_INTERVAL_HOURS);
+  return nextDue.toISOString();
+}
+
+function isEligibleForFollowUp(subscriber: Subscriber): boolean {
+  if (subscriber.status !== "pending") return false;
+  const count = getFollowUpCount(subscriber);
+  if (count >= FOLLOW_UP_MAX_ATTEMPTS) return false;
+
+  const nextDue = getNextDueAt(subscriber);
+  if (!nextDue) return true;
+
+  return new Date(nextDue).getTime() <= Date.now();
+}
+
+function getFollowUpStatus(subscriber: Subscriber) {
+  const count = getFollowUpCount(subscriber);
+  if (count >= FOLLOW_UP_MAX_ATTEMPTS) {
+    return { symbol: "\u26d4", label: "Limite raggiunto", color: "text-bs-burgundy" };
+  }
+  if (isEligibleForFollowUp(subscriber)) {
+    return { symbol: "\u26a1", label: "Invio disponibile", color: "text-bs-green" };
+  }
+  return { symbol: "\ud83d\udd52", label: "In attesa finestra", color: "text-bs-cream/60" };
+}
 
 export function SubscriberTable() {
   const [subscribers, setSubscribers] = useState<Subscriber[]>([]);
@@ -23,13 +85,24 @@ export function SubscriberTable() {
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
 
+  const [selectedPendingIds, setSelectedPendingIds] = useState<string[]>([]);
+  const [followUpLoading, setFollowUpLoading] = useState(false);
+  const [followUpMessage, setFollowUpMessage] = useState<string | null>(null);
+
   const fetchSubscribers = useCallback(() => {
     setLoading(true);
     setError(null);
     fetch(`${basePath}/api/admin/subscribers`)
       .then((res) => res.json())
       .then((data) => {
-        setSubscribers(data.subscribers ?? []);
+        const allSubs: Subscriber[] = data.subscribers ?? [];
+        setSubscribers(allSubs);
+
+        const pendingIds = allSubs
+          .filter((subscriber) => subscriber.status === "pending")
+          .map((subscriber) => subscriber.id);
+        setSelectedPendingIds(pendingIds);
+
         setLoading(false);
       })
       .catch(() => {
@@ -71,10 +144,69 @@ export function SubscriberTable() {
     }
   };
 
-  const confirmed = subscribers.filter((s) => s.status === "confirmed").length;
-  const pending = subscribers.filter((s) => s.status === "pending").length;
-  const blocked = subscribers.filter((s) => s.status === "blocked").length;
-  const filtered = subscribers.filter((s) => s.status === activeTab);
+  const pendingSubscribers = subscribers.filter((subscriber) => subscriber.status === "pending");
+
+  const sendFollowUp = async (mode: FollowUpMode) => {
+    setFollowUpLoading(true);
+    setFollowUpMessage(null);
+
+    const body: { mode: FollowUpMode; subscriberIds?: string[]; oldestCount?: number } = { mode };
+
+    if (mode === "selected") {
+      body.subscriberIds = selectedPendingIds;
+    }
+
+    if (mode === "oldest") {
+      body.oldestCount = 1;
+    }
+
+    try {
+      const response = await fetch(`${basePath}/api/admin/follow-up`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+
+      const payload = await response.json();
+      if (!response.ok) {
+        setFollowUpMessage(payload.error ?? "Errore invio follow-up.");
+        return;
+      }
+
+      setFollowUpMessage(
+        `Follow-up inviati: ${payload.sent}. Saltati: ${payload.skipped}. Errori: ${payload.errors}.`,
+      );
+      fetchSubscribers();
+    } catch {
+      setFollowUpMessage("Errore di rete durante l'invio follow-up.");
+    } finally {
+      setFollowUpLoading(false);
+    }
+  };
+
+  const togglePendingSelection = (id: string) => {
+    setSelectedPendingIds((current) =>
+      current.includes(id) ? current.filter((item) => item !== id) : [...current, id],
+    );
+  };
+
+  const selectAllPending = () => {
+    setSelectedPendingIds(pendingSubscribers.map((subscriber) => subscriber.id));
+  };
+
+  const clearPendingSelection = () => {
+    setSelectedPendingIds([]);
+  };
+
+  const confirmed = subscribers.filter((subscriber) => subscriber.status === "confirmed").length;
+  const pending = pendingSubscribers.length;
+  const blocked = subscribers.filter((subscriber) => subscriber.status === "blocked").length;
+  const eligiblePending = pendingSubscribers.filter(isEligibleForFollowUp).length;
+  const exhaustedPending = pendingSubscribers.filter(
+    (subscriber) => getFollowUpCount(subscriber) >= FOLLOW_UP_MAX_ATTEMPTS,
+  ).length;
+
+  const filtered = subscribers.filter((subscriber) => subscriber.status === activeTab);
 
   const tabs: { key: Tab; label: string }[] = [
     { key: "confirmed", label: "Confermati" },
@@ -102,8 +234,7 @@ export function SubscriberTable() {
 
   return (
     <div>
-      {/* Stats */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+      <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-6">
         <div className="bg-bs-cream/5 rounded-lg p-4 text-center">
           <Users size={20} className="text-bs-cream mx-auto mb-1" />
           <p className="font-[family-name:var(--font-brand)] text-2xl text-bs-cream">
@@ -122,13 +253,19 @@ export function SubscriberTable() {
           <p className="font-body text-xs text-bs-cream/40">In attesa</p>
         </div>
         <div className="bg-bs-cream/5 rounded-lg p-4 text-center">
+          <p className="text-bs-green mx-auto mb-1 text-lg">{"\u26a1"}</p>
+          <p className="font-[family-name:var(--font-brand)] text-2xl text-bs-cream">
+            {eligiblePending}
+          </p>
+          <p className="font-body text-xs text-bs-cream/40">Follow-up pronti</p>
+        </div>
+        <div className="bg-bs-cream/5 rounded-lg p-4 text-center">
           <ShieldX size={20} className="text-bs-burgundy mx-auto mb-1" />
           <p className="font-[family-name:var(--font-brand)] text-2xl text-bs-cream">{blocked}</p>
           <p className="font-body text-xs text-bs-cream/40">Bloccati</p>
         </div>
       </div>
 
-      {/* Tabs */}
       <div className="flex gap-1 border-b border-bs-cream/10 mb-4">
         {tabs.map((tab) => (
           <button
@@ -145,69 +282,191 @@ export function SubscriberTable() {
         ))}
       </div>
 
-      {/* Mobile cards (visible below sm) */}
-      <div className="flex flex-col gap-3 sm:hidden">
-        {filtered.map((sub) => (
-          <div key={sub.id} className="bg-bs-cream/5 rounded-lg p-4 space-y-2">
-            <div className="flex items-center justify-between">
-              <p className="font-body text-sm text-bs-cream truncate pr-2">{sub.email}</p>
-              <StatusBadge status={sub.status} />
-            </div>
-            <div className="flex items-center justify-between font-body text-xs text-bs-cream/40">
-              <span>{sub.name ?? "\u2014"}</span>
-              <span>{new Date(sub.created_at).toLocaleDateString("it-IT")}</span>
-            </div>
-            <div className="flex gap-2 pt-1">
-              <ActionButtons
-                subscriber={sub}
-                activeTab={activeTab}
-                actionLoading={actionLoading}
-                confirmDelete={confirmDelete}
-                onAction={handleAction}
-                onConfirmDelete={setConfirmDelete}
-              />
-            </div>
+      {activeTab === "pending" && (
+        <div className="mb-5 space-y-3">
+          <div className="flex flex-wrap gap-2">
+            <button
+              onClick={() => sendFollowUp("all")}
+              disabled={followUpLoading}
+              className="font-body text-xs px-3 py-2 rounded border border-bs-cream/20 text-bs-cream hover:bg-bs-cream/10 transition-colors disabled:opacity-50 cursor-pointer"
+            >
+              Invia follow-up a tutti
+            </button>
+            <button
+              onClick={() => sendFollowUp("selected")}
+              disabled={followUpLoading || selectedPendingIds.length === 0}
+              className="font-body text-xs px-3 py-2 rounded border border-bs-cream/20 text-bs-cream hover:bg-bs-cream/10 transition-colors disabled:opacity-50 cursor-pointer"
+            >
+              Invia ai selezionati ({selectedPendingIds.length})
+            </button>
+            <button
+              onClick={() => sendFollowUp("oldest")}
+              disabled={followUpLoading}
+              className="font-body text-xs px-3 py-2 rounded border border-bs-cream/20 text-bs-cream hover:bg-bs-cream/10 transition-colors disabled:opacity-50 cursor-pointer"
+            >
+              Invia al piu vecchio
+            </button>
+            <button
+              onClick={selectAllPending}
+              disabled={followUpLoading}
+              className="font-body text-xs px-3 py-2 rounded border border-bs-cream/10 text-bs-cream/70 hover:text-bs-cream transition-colors disabled:opacity-50 cursor-pointer"
+            >
+              Seleziona tutti
+            </button>
+            <button
+              onClick={clearPendingSelection}
+              disabled={followUpLoading}
+              className="font-body text-xs px-3 py-2 rounded border border-bs-cream/10 text-bs-cream/70 hover:text-bs-cream transition-colors disabled:opacity-50 cursor-pointer"
+            >
+              Deseleziona
+            </button>
           </div>
-        ))}
+
+          <div className="bg-bs-cream/5 rounded-lg p-3 border border-bs-cream/10">
+            <p className="font-body text-xs text-bs-cream/70 mb-2">
+              Legenda: {"\u23f3"} giorni in attesa, {"\u21bb"} tentativi follow-up, {"\u26a1"}{" "}
+              pronto ora, {"\u23f2"} in raffreddamento 48h, {"\u26d4"} limite massimo raggiunto (
+              {FOLLOW_UP_MAX_ATTEMPTS}/{FOLLOW_UP_MAX_ATTEMPTS}).
+            </p>
+            <p className="font-body text-xs text-bs-cream/45">
+              Follow-up automatico: max {FOLLOW_UP_MAX_ATTEMPTS} invii ogni{" "}
+              {FOLLOW_UP_INTERVAL_HOURS}
+              ore, da BLACK SHEEP &lt;the.blacksheep.night@gmail.com&gt;.
+            </p>
+            <p className="font-body text-xs text-bs-cream/45 mt-1">
+              Pending con limite esaurito: {exhaustedPending}
+            </p>
+          </div>
+
+          {followUpMessage && (
+            <p className="font-body text-xs text-bs-cream/70">{followUpMessage}</p>
+          )}
+        </div>
+      )}
+
+      <div className="flex flex-col gap-3 sm:hidden">
+        {filtered.map((subscriber) => {
+          const status = getFollowUpStatus(subscriber);
+          const pendingDays = getPendingDays(subscriber);
+          const followUpCount = getFollowUpCount(subscriber);
+
+          return (
+            <div key={subscriber.id} className="bg-bs-cream/5 rounded-lg p-4 space-y-2">
+              <div className="flex items-center justify-between gap-2">
+                <p className="font-body text-sm text-bs-cream truncate pr-2">{subscriber.email}</p>
+                <StatusBadge status={subscriber.status} />
+              </div>
+
+              {activeTab === "pending" && (
+                <label className="flex items-center gap-2 font-body text-xs text-bs-cream/70">
+                  <input
+                    type="checkbox"
+                    checked={selectedPendingIds.includes(subscriber.id)}
+                    onChange={() => togglePendingSelection(subscriber.id)}
+                    className="accent-bs-cream"
+                  />
+                  Seleziona per follow-up
+                </label>
+              )}
+
+              <div className="flex items-center justify-between font-body text-xs text-bs-cream/40">
+                <span>{subscriber.name ?? "\u2014"}</span>
+                <span>{formatDate(getSignupDate(subscriber))}</span>
+              </div>
+
+              {subscriber.status === "pending" && (
+                <p className={`font-body text-xs ${status.color}`}>
+                  {status.symbol} {status.label} | {"\u23f3"} {pendingDays}g | {"\u21bb"}{" "}
+                  {followUpCount}/{FOLLOW_UP_MAX_ATTEMPTS}
+                </p>
+              )}
+
+              <div className="flex gap-2 pt-1">
+                <ActionButtons
+                  subscriber={subscriber}
+                  activeTab={activeTab}
+                  actionLoading={actionLoading}
+                  confirmDelete={confirmDelete}
+                  onAction={handleAction}
+                  onConfirmDelete={setConfirmDelete}
+                />
+              </div>
+            </div>
+          );
+        })}
       </div>
 
-      {/* Desktop table (visible at sm and above) */}
       <div className="hidden sm:block">
         <table className="w-full font-body text-xs">
           <thead>
             <tr className="text-bs-cream/50 text-left border-b border-bs-cream/10">
+              {activeTab === "pending" && <th className="pb-2 pr-3">Sel</th>}
               <th className="pb-2 pr-4">Email</th>
               <th className="pb-2 pr-4">Nome</th>
               <th className="pb-2 pr-4">Stato</th>
               <th className="pb-2 pr-4">Data</th>
+              <th className="pb-2 pr-4">Follow-up</th>
               <th className="pb-2 text-right">Azioni</th>
             </tr>
           </thead>
           <tbody>
-            {filtered.map((sub) => (
-              <tr key={sub.id} className="border-b border-bs-cream/5">
-                <td className="py-2 pr-4 text-bs-cream">{sub.email}</td>
-                <td className="py-2 pr-4 text-bs-cream/60">{sub.name ?? "\u2014"}</td>
-                <td className="py-2 pr-4">
-                  <StatusBadge status={sub.status} />
-                </td>
-                <td className="py-2 pr-4 text-bs-cream/40 whitespace-nowrap">
-                  {new Date(sub.created_at).toLocaleDateString("it-IT")}
-                </td>
-                <td className="py-2 text-right">
-                  <div className="flex items-center justify-end gap-1">
-                    <ActionButtons
-                      subscriber={sub}
-                      activeTab={activeTab}
-                      actionLoading={actionLoading}
-                      confirmDelete={confirmDelete}
-                      onAction={handleAction}
-                      onConfirmDelete={setConfirmDelete}
-                    />
-                  </div>
-                </td>
-              </tr>
-            ))}
+            {filtered.map((subscriber) => {
+              const status = getFollowUpStatus(subscriber);
+              const pendingDays = getPendingDays(subscriber);
+              const followUpCount = getFollowUpCount(subscriber);
+              const nextDueAt = getNextDueAt(subscriber);
+
+              return (
+                <tr key={subscriber.id} className="border-b border-bs-cream/5">
+                  {activeTab === "pending" && (
+                    <td className="py-2 pr-3">
+                      <input
+                        type="checkbox"
+                        checked={selectedPendingIds.includes(subscriber.id)}
+                        onChange={() => togglePendingSelection(subscriber.id)}
+                        className="accent-bs-cream"
+                      />
+                    </td>
+                  )}
+                  <td className="py-2 pr-4 text-bs-cream">{subscriber.email}</td>
+                  <td className="py-2 pr-4 text-bs-cream/60">{subscriber.name ?? "\u2014"}</td>
+                  <td className="py-2 pr-4">
+                    <StatusBadge status={subscriber.status} />
+                  </td>
+                  <td className="py-2 pr-4 text-bs-cream/40 whitespace-nowrap">
+                    {formatDate(getSignupDate(subscriber))}
+                  </td>
+                  <td className="py-2 pr-4 text-bs-cream/50">
+                    {subscriber.status === "pending" ? (
+                      <div className="space-y-0.5">
+                        <p className={`whitespace-nowrap ${status.color}`}>
+                          {status.symbol} {"\u23f3"} {pendingDays}g | {"\u21bb"} {followUpCount}/
+                          {FOLLOW_UP_MAX_ATTEMPTS}
+                        </p>
+                        <p className="text-[11px] text-bs-cream/35 whitespace-nowrap">
+                          Ultimo: {formatDate(subscriber.follow_up_last_sent_at)} | Prossimo:{" "}
+                          {formatDate(nextDueAt)}
+                        </p>
+                      </div>
+                    ) : (
+                      <span className="text-bs-cream/20">{"\u2014"}</span>
+                    )}
+                  </td>
+                  <td className="py-2 text-right">
+                    <div className="flex items-center justify-end gap-1">
+                      <ActionButtons
+                        subscriber={subscriber}
+                        activeTab={activeTab}
+                        actionLoading={actionLoading}
+                        confirmDelete={confirmDelete}
+                        onAction={handleAction}
+                        onConfirmDelete={setConfirmDelete}
+                      />
+                    </div>
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>
@@ -218,13 +477,11 @@ export function SubscriberTable() {
         </p>
       )}
 
-      {/* Delete confirmation overlay */}
       {confirmDelete && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70">
           <div className="bg-[#0a0a0a] border border-bs-cream/10 rounded-lg p-6 max-w-sm mx-4">
             <p className="font-body text-sm text-bs-cream mb-4">
-              Eliminare definitivamente questo iscritto? L&apos;azione non pu&ograve; essere
-              annullata.
+              Eliminare definitivamente questo iscritto? L&apos;azione non puo essere annullata.
             </p>
             <div className="flex gap-3 justify-end">
               <button

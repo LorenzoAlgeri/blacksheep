@@ -56,12 +56,47 @@ export async function GET(request: Request) {
 
     if (!subscribers || subscribers.length === 0) continue;
 
+    const { data: campaign, error: campaignError } = await supabase
+      .from("newsletter_campaigns")
+      .insert({
+        subject: nl.subject as string,
+        source: "scheduled",
+        recipient_count: subscribers.length,
+      })
+      .select("id")
+      .single();
+
+    if (campaignError || !campaign) {
+      console.error("[CRON] Campaign creation error:", campaignError?.message);
+      continue;
+    }
+
+    const recipientsPayload = subscribers.map((subscriber) => ({
+      campaign_id: campaign.id,
+      subscriber_token: subscriber.token,
+    }));
+
+    const { error: recipientsError } = await supabase
+      .from("newsletter_campaign_recipients")
+      .insert(recipientsPayload);
+
+    if (recipientsError) {
+      console.error("[CRON] Campaign recipients insert error:", recipientsError.message);
+      continue;
+    }
+
     const result = await sendBatchEmails(
       subscribers,
       nl.subject as string,
       nl.html as string,
       siteUrl,
+      { campaignId: campaign.id },
     );
+
+    await supabase
+      .from("newsletter_campaigns")
+      .update({ sent_count: result.sent, sent_at: new Date().toISOString() })
+      .eq("id", campaign.id);
 
     results.push({ id: nl.id as string, ...result });
   }

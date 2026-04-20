@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { ComposeEditor } from "@/components/admin/ComposeEditor";
+import { NewsletterHistory } from "@/components/admin/NewsletterHistory";
 
 export const metadata: Metadata = {
   title: "Invia Newsletter — BLACK SHEEP Admin",
@@ -13,6 +14,7 @@ export default function ComposePage() {
         INVIA NEWSLETTER
       </h1>
       <ComposeEditor />
+      <NewsletterHistory />
     </div>
   );
 }

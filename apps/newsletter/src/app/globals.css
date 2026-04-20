@@ -65,15 +65,10 @@ body::before {
   [data-motion] {
     opacity: 0;
   }
-  [data-motion="scritta"] {
+  [data-motion="logo"] {
     opacity: 1;
     clip-path: inset(0 100% 0 0);
     filter: blur(8px);
-  }
-  [data-motion="mascotte"],
-  [data-motion="mascotte-img"] {
-    opacity: 0;
-    transform: translateX(-20px);
   }
 }
 
@@ -88,7 +83,7 @@ body::before {
   [data-motion] {
     animation: motion-fallback 0s 4s forwards;
   }
-  [data-motion="scritta"] {
+  [data-motion="logo"] {
     animation: motion-fallback 0s 4s forwards;
     clip-path: none;
     filter: none;
@@ -252,10 +247,10 @@ body::before {
 
 /* === Responsive fluid spacing (dvh/dvw clamp) === */
 
-/* FIX 2: Main container padding — compact to fit viewport */
+/* FIX 2: Main container padding — logo higher on mobile */
 .space-main-y {
-  padding-top: clamp(16px, 3dvh, 40px);
-  padding-bottom: clamp(12px, 2dvh, 32px);
+  padding-top: clamp(12px, 2dvh, 40px);
+  padding-bottom: clamp(16px, 3dvh, 40px);
 }
 
 /* FIX 4: Logo-to-title gap — tighter */
@@ -268,10 +263,10 @@ body::before {
   font-size: clamp(3rem, 10dvw, 4.5rem);
 }
 
-/* FIX 6: Divider margins — compressed */
+/* FIX 6: Divider margins — generous */
 .space-divider {
-  margin-top: clamp(8px, 1.5dvh, 20px);
-  margin-bottom: clamp(8px, 1.5dvh, 20px);
+  margin-top: clamp(20px, 3.5dvh, 48px);
+  margin-bottom: clamp(20px, 3.5dvh, 48px);
 }
 
 /* FIX 7: Input padding — 10px on iPhone SE (46px total), 14px on desktop (50px) */
@@ -291,9 +286,9 @@ body::before {
   padding-top: clamp(8px, 1.5dvh, 24px);
 }
 
-/* FIX 10: Microcopy margin — compact */
+/* FIX 10: Microcopy margin — generous */
 .space-microcopy {
-  margin-top: clamp(6px, 1dvh, 16px);
+  margin-top: clamp(16px, 3dvh, 32px);
 }
 
 /* Desktop — proportions >= mobile (mobile-first: base small, desktop equal or larger) */
@@ -329,69 +324,11 @@ body::before {
   box-shadow: 0 2px 20px rgba(255, 255, 243, 0.08);
 }
 
-/* === Intro Overlay — fullscreen canvas, frame = viewport === */
-.intro-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 100;
-  background: #000;
-}
-
-.intro-canvas-wrapper {
-  width: 100vw;
-  height: 100vh;
-}
-
-/* GSAP entrance — hide intro overlay initially (GSAP controls visibility) */
-@media (prefers-reduced-motion: no-preference) {
-  [data-motion="intro-overlay"] {
-    visibility: hidden;
-  }
-}
-
-/* === Brand hero — scritta centered, mascotte absolute left === */
+/* === Brand hero — logo centered === */
 .brand-hero {
-  position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
-}
-
-/* Mascotte — shared positioning for both video (desktop) and img (mobile) */
-.mascotte-video {
-  position: absolute;
-  right: calc(100% - clamp(16px, 3dvw, 40px));
-  top: 18%;
-  height: clamp(80px, 22dvh, 200px);
-  width: auto;
-  background: transparent;
-}
-
-/* Desktop: video with screen blend (black bg → transparent via GPU) */
-.mascotte-desktop {
-  mix-blend-mode: screen;
-  filter: drop-shadow(0 0 15px rgba(255, 255, 243, 0.06));
-}
-
-/* Mobile img hidden on desktop */
-.mascotte-mobile {
-  display: none;
-}
-
-/* Mobile: hide video (blend mode broken on mobile GPU), show transparent img */
-@media (max-width: 640px) {
-  .mascotte-video {
-    right: calc(100% - 16px);
-    top: 20%;
-    height: clamp(60px, 16dvh, 140px);
-  }
-  .mascotte-desktop {
-    display: none;
-  }
-  .mascotte-mobile {
-    display: block;
-    mix-blend-mode: screen;
-  }
 }
 
 /* === Autofill override — mantieni sfondo dark su autofill === */

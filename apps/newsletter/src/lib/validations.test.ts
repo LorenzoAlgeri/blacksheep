@@ -87,6 +87,35 @@ describe("sendNewsletterSchema", () => {
     });
     expect(result.success).toBe(false);
   });
+
+  it("accepts single-recipient mode with valid email", () => {
+    const result = sendNewsletterSchema.safeParse({
+      subject: "Newsletter #1",
+      html: "<p>Content</p>",
+      deliveryMode: "single",
+      targetEmail: "the.blacksheep.night@gmail.com",
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it("rejects single-recipient mode without targetEmail", () => {
+    const result = sendNewsletterSchema.safeParse({
+      subject: "Newsletter #1",
+      html: "<p>Content</p>",
+      deliveryMode: "single",
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects single-recipient mode with invalid targetEmail", () => {
+    const result = sendNewsletterSchema.safeParse({
+      subject: "Newsletter #1",
+      html: "<p>Content</p>",
+      deliveryMode: "single",
+      targetEmail: "not-an-email",
+    });
+    expect(result.success).toBe(false);
+  });
 });
 
 describe("scheduleNewsletterSchema", () => {

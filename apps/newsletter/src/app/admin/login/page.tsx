@@ -4,6 +4,7 @@ import { Suspense, useState } from "react";
 import { signIn } from "next-auth/react";
 import { useSearchParams } from "next/navigation";
 import Image from "next/image";
+import { basePath } from "@/lib/base-path";
 
 function LoginForm() {
   const searchParams = useSearchParams();
@@ -81,7 +82,7 @@ export default function AdminLoginPage() {
   return (
     <main className="flex flex-1 flex-col items-center justify-center px-6">
       <Image
-        src="/bs-logo.svg"
+        src={`${basePath}/bs-logo.svg`}
         alt="BLACK SHEEP"
         width={60}
         height={39}

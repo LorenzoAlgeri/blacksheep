@@ -143,7 +143,7 @@ export function EditorTab({
                 >
                   <Upload size={14} className="text-bs-cream/40" />
                   <span className="font-body text-xs text-bs-cream/40">
-                    {uploading ? "Caricamento..." : "JPG, PNG, WebP, GIF — max 5MB"}
+                    {uploading ? "Caricamento..." : "JPG, PNG, WebP, GIF - max 5MB"}
                   </span>
                   <input
                     type="file"
@@ -272,8 +272,64 @@ export function EditorTab({
 
       <Divider />
 
+      {/* Delivery target */}
+      <div className="flex flex-col gap-3">
+        <span className={labelClass + " mb-0"}>Destinatari invio</span>
+
+        <label className="flex items-center gap-2 font-body text-sm text-bs-cream/70 cursor-pointer">
+          <input
+            type="radio"
+            name="delivery-target"
+            checked={sender.deliveryTarget === "all"}
+            onChange={() => sender.setDeliveryTarget("all")}
+            className="accent-bs-cream"
+          />
+          Tutti gli iscritti confermati
+        </label>
+
+        <label className="flex items-center gap-2 font-body text-sm text-bs-cream/70 cursor-pointer">
+          <input
+            type="radio"
+            name="delivery-target"
+            checked={sender.deliveryTarget === "fixed"}
+            onChange={() => sender.setDeliveryTarget("fixed")}
+            className="accent-bs-cream"
+          />
+          Solo {sender.fixedTestEmail}
+        </label>
+
+        <label className="flex items-center gap-2 font-body text-sm text-bs-cream/70 cursor-pointer">
+          <input
+            type="radio"
+            name="delivery-target"
+            checked={sender.deliveryTarget === "custom"}
+            onChange={() => sender.setDeliveryTarget("custom")}
+            className="accent-bs-cream"
+          />
+          Solo email personalizzata
+        </label>
+
+        {sender.deliveryTarget === "custom" && (
+          <div className="pl-6">
+            <label htmlFor="custom-target-email" className={labelClass}>
+              Email destinatario
+            </label>
+            <input
+              id="custom-target-email"
+              type="email"
+              value={sender.customTargetEmail}
+              onChange={(e) => sender.setCustomTargetEmail(e.target.value)}
+              placeholder="nome@dominio.it"
+              className={inputClass}
+            />
+          </div>
+        )}
+      </div>
+
+      <Divider />
+
       {/* Subscriber count */}
-      {sender.subscriberCount !== null && (
+      {sender.subscriberCount !== null && sender.deliveryTarget === "all" && (
         <p className="font-body text-xs text-bs-cream/30 text-center py-1">
           Questa newsletter verr&agrave; inviata a{" "}
           <span className="text-bs-cream/50 font-medium">{sender.subscriberCount}</span> iscritti
@@ -281,39 +337,53 @@ export function EditorTab({
         </p>
       )}
 
+      {sender.deliveryTarget !== "all" && (
+        <p className="font-body text-xs text-bs-cream/35 text-center py-1">
+          Modalit&agrave; test: invio a un solo destinatario.
+        </p>
+      )}
+
       {/* Schedule toggle */}
       <div className="flex flex-col gap-3">
-        <label className="flex items-center gap-3 cursor-pointer">
-          <Toggle checked={sender.showSchedule} onChange={sender.setShowSchedule} />
-          <span className={labelClass + " mb-0"}>Programma invio</span>
-        </label>
-        {sender.showSchedule && (
-          <div className="flex gap-3 pl-1 border-l-2 border-bs-cream/10 ml-2">
-            <div className="pl-3 flex-1">
-              <label htmlFor="nl-sched-date" className={labelClass}>
-                Data
-              </label>
-              <input
-                id="nl-sched-date"
-                type="date"
-                value={sender.scheduleDate}
-                onChange={(e) => sender.setScheduleDate(e.target.value)}
-                className={inputClass}
-              />
-            </div>
-            <div className="flex-1">
-              <label htmlFor="nl-sched-time" className={labelClass}>
-                Ora
-              </label>
-              <input
-                id="nl-sched-time"
-                type="time"
-                value={sender.scheduleTime}
-                onChange={(e) => sender.setScheduleTime(e.target.value)}
-                className={inputClass}
-              />
-            </div>
-          </div>
+        {sender.deliveryTarget === "all" ? (
+          <>
+            <label className="flex items-center gap-3 cursor-pointer">
+              <Toggle checked={sender.showSchedule} onChange={sender.setShowSchedule} />
+              <span className={labelClass + " mb-0"}>Programma invio</span>
+            </label>
+            {sender.showSchedule && (
+              <div className="flex gap-3 pl-1 border-l-2 border-bs-cream/10 ml-2">
+                <div className="pl-3 flex-1">
+                  <label htmlFor="nl-sched-date" className={labelClass}>
+                    Data
+                  </label>
+                  <input
+                    id="nl-sched-date"
+                    type="date"
+                    value={sender.scheduleDate}
+                    onChange={(e) => sender.setScheduleDate(e.target.value)}
+                    className={inputClass}
+                  />
+                </div>
+                <div className="flex-1">
+                  <label htmlFor="nl-sched-time" className={labelClass}>
+                    Ora
+                  </label>
+                  <input
+                    id="nl-sched-time"
+                    type="time"
+                    value={sender.scheduleTime}
+                    onChange={(e) => sender.setScheduleTime(e.target.value)}
+                    className={inputClass}
+                  />
+                </div>
+              </div>
+            )}
+          </>
+        ) : (
+          <p className="font-body text-xs text-bs-cream/30">
+            Programmazione disponibile solo per l&apos;invio a tutti gli iscritti.
+          </p>
         )}
       </div>
 
@@ -380,11 +450,20 @@ export function EditorTab({
       ) : (
         <button
           onClick={onSend}
-          disabled={sender.sending || !state.subject.trim() || !state.title.trim()}
+          disabled={
+            sender.sending ||
+            !state.subject.trim() ||
+            !state.title.trim() ||
+            !sender.canSendToCurrentTarget
+          }
           className="w-full flex items-center justify-center gap-2 bg-bs-cream text-black font-[family-name:var(--font-brand)] text-sm tracking-[0.15em] py-3.5 rounded hover:bg-bs-cream/90 transition-colors disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer"
         >
           <Send size={16} />
-          {sender.sending ? "INVIO IN CORSO..." : "INVIA NEWSLETTER"}
+          {sender.sending
+            ? "INVIO IN CORSO..."
+            : sender.deliveryTarget === "all"
+              ? "INVIA NEWSLETTER"
+              : "INVIA TEST NEWSLETTER"}
         </button>
       )}
 

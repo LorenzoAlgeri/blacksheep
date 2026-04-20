@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import Image from "next/image";
 import { auth } from "@/lib/auth";
+import { basePath } from "@/lib/base-path";
 import { AdminNav } from "@/components/admin/AdminNav";
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -15,7 +16,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
       <header className="relative flex items-center justify-between px-4 py-3 border-b border-bs-cream/10">
         <div className="flex items-center gap-3">
           <Image
-            src="/bs-logo.svg"
+            src={`${basePath}/bs-logo.svg`}
             alt="BS"
             width={28}
             height={18}

@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback } from "react";
 import { basePath } from "@/lib/base-path";
 
+const FIXED_TEST_EMAIL = "the.blacksheep.night@gmail.com";
+
 export function useEmailSender() {
   const [sending, setSending] = useState(false);
   const [result, setResult] = useState<string | null>(null);
@@ -8,6 +10,17 @@ export function useEmailSender() {
   const [showSchedule, setShowSchedule] = useState(false);
   const [scheduleDate, setScheduleDate] = useState("");
   const [scheduleTime, setScheduleTime] = useState("18:00");
+  const [deliveryTarget, setDeliveryTarget] = useState<"all" | "fixed" | "custom">("all");
+  const [customTargetEmail, setCustomTargetEmail] = useState("");
+
+  const resolvedSingleTargetEmail =
+    deliveryTarget === "fixed"
+      ? FIXED_TEST_EMAIL
+      : deliveryTarget === "custom"
+        ? customTargetEmail.trim()
+        : "";
+  const isCustomTargetEmailValid =
+    deliveryTarget !== "custom" || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customTargetEmail.trim());
 
   // Load subscriber count
   useEffect(() => {
@@ -24,6 +37,12 @@ export function useEmailSender() {
       .catch(() => {});
   }, []);
 
+  useEffect(() => {
+    if (deliveryTarget !== "all" && showSchedule) {
+      setShowSchedule(false);
+    }
+  }, [deliveryTarget, showSchedule]);
+
   const clearResult = useCallback(() => setResult(null), []);
 
   const flashResult = useCallback((msg: string, duration = 2000) => {
@@ -35,26 +54,45 @@ export function useEmailSender() {
     async (subject: string, html: string, onSuccess: () => void) => {
       if (!subject.trim()) return;
 
-      const confirmed = window.confirm(
-        `Stai per inviare la newsletter "${subject}" a ${subscriberCount ?? "tutti gli"} iscritti confermati. Confermi?`,
-      );
+      if (deliveryTarget === "custom" && !isCustomTargetEmailValid) {
+        setResult("Errore: inserisci un indirizzo email valido.");
+        return;
+      }
+
+      const confirmationMessage =
+        deliveryTarget === "all"
+          ? `Stai per inviare la newsletter "${subject}" a ${subscriberCount ?? "tutti gli"} iscritti confermati. Confermi?`
+          : `Stai per inviare la newsletter "${subject}" solo a ${resolvedSingleTargetEmail}. Confermi?`;
+
+      const confirmed = window.confirm(confirmationMessage);
       if (!confirmed) return;
 
       setSending(true);
       setResult(null);
 
+      const payload = {
+        subject,
+        html,
+        deliveryMode: deliveryTarget === "all" ? "all" : "single",
+        targetEmail: deliveryTarget === "all" ? undefined : resolvedSingleTargetEmail,
+      };
+
       try {
         const res = await fetch(`${basePath}/api/admin/send`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ subject, html }),
+          body: JSON.stringify(payload),
         });
         const data = await res.json();
 
         if (!res.ok) {
           setResult(`Errore: ${data.error}`);
         } else {
-          setResult(`Inviata a ${data.sent}/${data.total} iscritti.`);
+          if (payload.deliveryMode === "single") {
+            setResult(`Inviata a ${resolvedSingleTargetEmail}.`);
+          } else {
+            setResult(`Inviata a ${data.sent}/${data.total} iscritti.`);
+          }
           onSuccess();
         }
       } catch {
@@ -63,7 +101,7 @@ export function useEmailSender() {
         setSending(false);
       }
     },
-    [subscriberCount],
+    [deliveryTarget, isCustomTargetEmailValid, resolvedSingleTargetEmail, subscriberCount],
   );
 
   const handleSchedule = useCallback(
@@ -119,6 +157,12 @@ export function useEmailSender() {
     setScheduleDate,
     scheduleTime,
     setScheduleTime,
+    deliveryTarget,
+    setDeliveryTarget,
+    customTargetEmail,
+    setCustomTargetEmail,
+    fixedTestEmail: FIXED_TEST_EMAIL,
+    canSendToCurrentTarget: isCustomTargetEmailValid,
     handleSend,
     handleSchedule,
   };
