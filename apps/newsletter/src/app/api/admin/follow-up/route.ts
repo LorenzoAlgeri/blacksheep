@@ -53,9 +53,7 @@ export async function POST(request: Request) {
 
   const { data: pendingSubscribers, error: fetchError } = await supabase
     .from("subscribers")
-    .select(
-      "id, email, name, token, status, created_at, subscribed_at, follow_up_count, follow_up_last_sent_at",
-    )
+    .select("id, email, name, token, status, created_at, follow_up_count, follow_up_last_sent_at")
     .eq("status", "pending")
     .order("created_at", { ascending: true });
 
