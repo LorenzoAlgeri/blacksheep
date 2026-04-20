@@ -82,61 +82,67 @@ export function SubscriberTable() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<Tab>("confirmed");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalSubscribers, setTotalSubscribers] = useState(0);
+  const [filteredTotal, setFilteredTotal] = useState(0);
+  const [statusCounts, setStatusCounts] = useState<Record<Tab, number>>({
+    confirmed: 0,
+    pending: 0,
+    blocked: 0,
+  });
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
 
   const [selectedPendingIds, setSelectedPendingIds] = useState<string[]>([]);
   const [followUpLoading, setFollowUpLoading] = useState(false);
   const [followUpMessage, setFollowUpMessage] = useState<string | null>(null);
-  const pageSize = 500;
+  const pageSize = 100;
 
   const fetchSubscribers = useCallback(() => {
     setLoading(true);
     setError(null);
-    const loadAllSubscribers = async () => {
-      const allSubscribers: Subscriber[] = [];
-      let offset = 0;
-      let total = Number.POSITIVE_INFINITY;
+    const offset = (currentPage - 1) * pageSize;
 
-      while (allSubscribers.length < total) {
-        const response = await fetch(
-          `${basePath}/api/admin/subscribers?limit=${pageSize}&offset=${offset}`,
-        );
-
+    fetch(
+      `${basePath}/api/admin/subscribers?status=${activeTab}&limit=${pageSize}&offset=${offset}`,
+    )
+      .then((response) => {
         if (!response.ok) {
           throw new Error("Failed to fetch subscribers");
         }
 
-        const data = await response.json();
-        const batch: Subscriber[] = data.subscribers ?? [];
-        total = typeof data.total === "number" ? data.total : batch.length;
-        allSubscribers.push(...batch);
+        return response.json();
+      })
+      .then((data) => {
+        const currentSubscribers: Subscriber[] = data.subscribers ?? [];
+        setSubscribers(currentSubscribers);
+        setTotalSubscribers(typeof data.total === "number" ? data.total : 0);
+        setFilteredTotal(typeof data.filteredTotal === "number" ? data.filteredTotal : 0);
+        setStatusCounts({
+          confirmed: Number(data.statusCounts?.confirmed ?? 0),
+          pending: Number(data.statusCounts?.pending ?? 0),
+          blocked: Number(data.statusCounts?.blocked ?? 0),
+        });
 
-        if (batch.length === 0) {
-          break;
-        }
-
-        offset += batch.length;
-      }
-
-      setSubscribers(allSubscribers);
-
-      const pendingIds = allSubscribers
-        .filter((subscriber) => subscriber.status === "pending")
-        .map((subscriber) => subscriber.id);
-      setSelectedPendingIds(pendingIds);
-      setLoading(false);
-    };
-
-    loadAllSubscribers().catch(() => {
-      setError("Errore nel caricamento degli iscritti.");
-      setLoading(false);
-    });
-  }, []);
+        const pendingIds = currentSubscribers
+          .filter((subscriber) => subscriber.status === "pending")
+          .map((subscriber) => subscriber.id);
+        setSelectedPendingIds(pendingIds);
+        setLoading(false);
+      })
+      .catch(() => {
+        setError("Errore nel caricamento degli iscritti.");
+        setLoading(false);
+      });
+  }, [activeTab, currentPage]);
 
   useEffect(() => {
     fetchSubscribers();
   }, [fetchSubscribers]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [activeTab]);
 
   const handleAction = async (id: string, action: "block" | "unblock") => {
     setActionLoading(id);
@@ -221,15 +227,14 @@ export function SubscriberTable() {
     setSelectedPendingIds([]);
   };
 
-  const confirmed = subscribers.filter((subscriber) => subscriber.status === "confirmed").length;
-  const pending = pendingSubscribers.length;
-  const blocked = subscribers.filter((subscriber) => subscriber.status === "blocked").length;
+  const confirmed = statusCounts.confirmed;
+  const pending = statusCounts.pending;
+  const blocked = statusCounts.blocked;
   const eligiblePending = pendingSubscribers.filter(isEligibleForFollowUp).length;
   const exhaustedPending = pendingSubscribers.filter(
     (subscriber) => getFollowUpCount(subscriber) >= FOLLOW_UP_MAX_ATTEMPTS,
   ).length;
-
-  const filtered = subscribers.filter((subscriber) => subscriber.status === activeTab);
+  const totalPages = Math.max(1, Math.ceil(filteredTotal / pageSize));
 
   const tabs: { key: Tab; label: string }[] = [
     { key: "confirmed", label: "Confermati" },
@@ -261,7 +266,7 @@ export function SubscriberTable() {
         <div className="bg-bs-cream/5 rounded-lg p-4 text-center">
           <Users size={20} className="text-bs-cream mx-auto mb-1" />
           <p className="font-[family-name:var(--font-brand)] text-2xl text-bs-cream">
-            {subscribers.length}
+            {totalSubscribers}
           </p>
           <p className="font-body text-xs text-bs-cream/40">Totali</p>
         </div>
@@ -357,7 +362,7 @@ export function SubscriberTable() {
               ore, da BLACK SHEEP &lt;the.blacksheep.night@gmail.com&gt;.
             </p>
             <p className="font-body text-xs text-bs-cream/45 mt-1">
-              Pending con limite esaurito: {exhaustedPending}
+              Pending con limite esaurito in pagina: {exhaustedPending}
             </p>
           </div>
 
@@ -368,7 +373,7 @@ export function SubscriberTable() {
       )}
 
       <div className="flex flex-col gap-3 sm:hidden">
-        {filtered.map((subscriber) => {
+        {subscribers.map((subscriber) => {
           const status = getFollowUpStatus(subscriber);
           const pendingDays = getPendingDays(subscriber);
           const followUpCount = getFollowUpCount(subscriber);
@@ -433,7 +438,7 @@ export function SubscriberTable() {
             </tr>
           </thead>
           <tbody>
-            {filtered.map((subscriber) => {
+            {subscribers.map((subscriber) => {
               const status = getFollowUpStatus(subscriber);
               const pendingDays = getPendingDays(subscriber);
               const followUpCount = getFollowUpCount(subscriber);
@@ -494,7 +499,31 @@ export function SubscriberTable() {
         </table>
       </div>
 
-      {filtered.length === 0 && (
+      {filteredTotal > pageSize && (
+        <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <p className="font-body text-xs text-bs-cream/40">
+            Pagina {currentPage} di {totalPages} · {filteredTotal} iscritti in questa sezione
+          </p>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}
+              disabled={currentPage === 1}
+              className="font-body text-xs px-3 py-2 rounded border border-bs-cream/10 text-bs-cream/70 hover:text-bs-cream transition-colors disabled:opacity-40 cursor-pointer"
+            >
+              Precedente
+            </button>
+            <button
+              onClick={() => setCurrentPage((page) => Math.min(totalPages, page + 1))}
+              disabled={currentPage >= totalPages}
+              className="font-body text-xs px-3 py-2 rounded border border-bs-cream/10 text-bs-cream/70 hover:text-bs-cream transition-colors disabled:opacity-40 cursor-pointer"
+            >
+              Successiva
+            </button>
+          </div>
+        </div>
+      )}
+
+      {subscribers.length === 0 && (
         <p className="font-body text-bs-cream/30 text-center py-8">
           Nessun iscritto in questa sezione.
         </p>
