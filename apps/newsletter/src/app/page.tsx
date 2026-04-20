@@ -131,7 +131,7 @@ export default async function Home() {
       {/* Footer — powered by, ultra-subtle */}
       <footer className="relative z-10 pb-4 flex justify-center">
         <a
-          href="https://instagram.com/lorenzo_algerii"
+          href="https://instagram.com/lorenzo.algerii"
           target="_blank"
           rel="noopener noreferrer"
           aria-label="Lorenzo Algeri su Instagram"
