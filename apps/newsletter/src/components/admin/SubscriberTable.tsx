@@ -88,27 +88,50 @@ export function SubscriberTable() {
   const [selectedPendingIds, setSelectedPendingIds] = useState<string[]>([]);
   const [followUpLoading, setFollowUpLoading] = useState(false);
   const [followUpMessage, setFollowUpMessage] = useState<string | null>(null);
+  const pageSize = 500;
 
   const fetchSubscribers = useCallback(() => {
     setLoading(true);
     setError(null);
-    fetch(`${basePath}/api/admin/subscribers`)
-      .then((res) => res.json())
-      .then((data) => {
-        const allSubs: Subscriber[] = data.subscribers ?? [];
-        setSubscribers(allSubs);
+    const loadAllSubscribers = async () => {
+      const allSubscribers: Subscriber[] = [];
+      let offset = 0;
+      let total = Number.POSITIVE_INFINITY;
 
-        const pendingIds = allSubs
-          .filter((subscriber) => subscriber.status === "pending")
-          .map((subscriber) => subscriber.id);
-        setSelectedPendingIds(pendingIds);
+      while (allSubscribers.length < total) {
+        const response = await fetch(
+          `${basePath}/api/admin/subscribers?limit=${pageSize}&offset=${offset}`,
+        );
 
-        setLoading(false);
-      })
-      .catch(() => {
-        setError("Errore nel caricamento degli iscritti.");
-        setLoading(false);
-      });
+        if (!response.ok) {
+          throw new Error("Failed to fetch subscribers");
+        }
+
+        const data = await response.json();
+        const batch: Subscriber[] = data.subscribers ?? [];
+        total = typeof data.total === "number" ? data.total : batch.length;
+        allSubscribers.push(...batch);
+
+        if (batch.length === 0) {
+          break;
+        }
+
+        offset += batch.length;
+      }
+
+      setSubscribers(allSubscribers);
+
+      const pendingIds = allSubscribers
+        .filter((subscriber) => subscriber.status === "pending")
+        .map((subscriber) => subscriber.id);
+      setSelectedPendingIds(pendingIds);
+      setLoading(false);
+    };
+
+    loadAllSubscribers().catch(() => {
+      setError("Errore nel caricamento degli iscritti.");
+      setLoading(false);
+    });
   }, []);
 
   useEffect(() => {
