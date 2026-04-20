@@ -30,119 +30,165 @@ function isInvalidStatusValueError(message?: string) {
   return normalized.includes("invalid input value for enum") && normalized.includes("status");
 }
 
-export async function GET(request: NextRequest) {
-  const supabase = getSupabase();
-  const session = await auth();
-  if (!session) {
-    console.warn("[AUTH] Unauthorized access to /api/admin/subscribers");
-    return Response.json({ error: "Non autorizzato", code: "UNAUTHORIZED" }, { status: 401 });
-  }
-
-  const url = request.nextUrl;
-  const limit = Math.min(
-    Math.max(1, Number(url.searchParams.get("limit")) || DEFAULT_LIMIT),
-    MAX_LIMIT,
-  );
-  const offset = Math.max(0, Number(url.searchParams.get("offset")) || 0);
-  const statusParam = url.searchParams.get("status");
-  const status = statusParam && VALID_STATUSES.has(statusParam) ? statusParam : null;
-
-  const { count, error: countError } = await supabase
-    .from("subscribers")
-    .select("*", { count: "exact", head: true });
-
-  if (countError) {
-    console.error("[SUBSCRIBE] Count error:", countError.message);
-    return Response.json({ error: "Errore database", code: "DB_ERROR" }, { status: 500 });
-  }
-
-  const statusCounts: Record<string, number> = {
-    confirmed: 0,
-    pending: 0,
-    blocked: 0,
+function normalizeSubscriberRow(subscriber: Record<string, unknown>): SubscriberRow {
+  return {
+    id: String(subscriber.id ?? ""),
+    email: String(subscriber.email ?? ""),
+    name: typeof subscriber.name === "string" ? subscriber.name : null,
+    status: typeof subscriber.status === "string" ? subscriber.status : "pending",
+    created_at: typeof subscriber.created_at === "string" ? subscriber.created_at : null,
+    subscribed_at: typeof subscriber.subscribed_at === "string" ? subscriber.subscribed_at : null,
+    confirmed_at: typeof subscriber.confirmed_at === "string" ? subscriber.confirmed_at : null,
+    follow_up_count:
+      typeof subscriber.follow_up_count === "number" ? subscriber.follow_up_count : null,
+    follow_up_last_sent_at:
+      typeof subscriber.follow_up_last_sent_at === "string"
+        ? subscriber.follow_up_last_sent_at
+        : null,
   };
+}
 
-  for (const entryStatus of ["confirmed", "pending", "blocked"]) {
-    const { count: entryCount, error: entryError } = await supabase
+export async function GET(request: NextRequest) {
+  try {
+    const supabase = getSupabase();
+    const session = await auth();
+    if (!session) {
+      console.warn("[AUTH] Unauthorized access to /api/admin/subscribers");
+      return Response.json({ error: "Non autorizzato", code: "UNAUTHORIZED" }, { status: 401 });
+    }
+
+    const url = request.nextUrl;
+    const limit = Math.min(
+      Math.max(1, Number(url.searchParams.get("limit")) || DEFAULT_LIMIT),
+      MAX_LIMIT,
+    );
+    const offset = Math.max(0, Number(url.searchParams.get("offset")) || 0);
+    const statusParam = url.searchParams.get("status");
+    const status = statusParam && VALID_STATUSES.has(statusParam) ? statusParam : null;
+
+    const { count, error: countError } = await supabase
       .from("subscribers")
-      .select("id", { count: "exact", head: true })
-      .eq("status", entryStatus);
+      .select("id", { count: "exact", head: true });
 
-    if (entryError) {
-      // Older schemas may not support all status values (e.g. blocked).
-      if (isInvalidStatusValueError(entryError.message) && entryStatus === "blocked") {
-        statusCounts.blocked = 0;
-        continue;
-      }
-
-      console.error("[SUBSCRIBE] Status count error:", entryError.message);
+    if (countError) {
+      console.error("[SUBSCRIBE] Count error:", countError.message);
       return Response.json({ error: "Errore database", code: "DB_ERROR" }, { status: 500 });
     }
 
-    statusCounts[entryStatus] = entryCount ?? 0;
-  }
+    const statusCounts: Record<string, number> = {
+      confirmed: 0,
+      pending: 0,
+      blocked: 0,
+    };
 
-  let subscribersQuery = supabase
-    .from("subscribers")
-    .select(FOLLOW_UP_SELECT, { count: "exact" })
-    .order("created_at", { ascending: false });
+    for (const entryStatus of ["confirmed", "pending", "blocked"]) {
+      const { count: entryCount, error: entryError } = await supabase
+        .from("subscribers")
+        .select("id", { count: "exact", head: true })
+        .eq("status", entryStatus);
 
-  if (status) {
-    subscribersQuery = subscribersQuery.eq("status", status);
-  }
+      if (entryError) {
+        // Older schemas may not support all status values (e.g. blocked).
+        if (isInvalidStatusValueError(entryError.message) && entryStatus === "blocked") {
+          statusCounts.blocked = 0;
+          continue;
+        }
 
-  let {
-    data: subscribers,
-    error,
-    count: filteredTotal,
-  } = await subscribersQuery.range(offset, offset + limit - 1);
+        console.error("[SUBSCRIBE] Status count error:", entryError.message);
+        return Response.json({ error: "Errore database", code: "DB_ERROR" }, { status: 500 });
+      }
 
-  let followUpAvailable = true;
+      statusCounts[entryStatus] = entryCount ?? 0;
+    }
 
-  if (error && isMissingFollowUpColumnsError(error.message)) {
-    followUpAvailable = false;
+    let followUpAvailable = true;
+    let subscribers: SubscriberRow[] = [];
+    let filteredTotal = 0;
+    let fetchErrorMessage: string | null = null;
 
-    let fallbackQuery = supabase
+    let subscribersQuery = supabase
       .from("subscribers")
-      .select(BASE_SELECT, { count: "exact" })
+      .select(FOLLOW_UP_SELECT, { count: "exact" })
       .order("created_at", { ascending: false });
 
     if (status) {
-      fallbackQuery = fallbackQuery.eq("status", status);
+      subscribersQuery = subscribersQuery.eq("status", status);
     }
 
-    const fallbackResult = await fallbackQuery.range(offset, offset + limit - 1);
-    subscribers = (fallbackResult.data ?? []).map(
-      (subscriber): SubscriberRow => ({
-        ...subscriber,
-        follow_up_count: null,
-        follow_up_last_sent_at: null,
-      }),
-    );
-    error = fallbackResult.error;
-    filteredTotal = fallbackResult.count;
-  }
+    const primaryResult = await subscribersQuery.range(offset, offset + limit - 1);
 
-  if (error && isInvalidStatusValueError(error.message) && status === "blocked") {
-    // If blocked is not a valid status in this schema, return an empty blocked page.
-    subscribers = [];
-    filteredTotal = 0;
-    error = null;
-  }
+    if (!primaryResult.error) {
+      subscribers = (primaryResult.data ?? []).map((row) => normalizeSubscriberRow(row));
+      filteredTotal = primaryResult.count ?? 0;
+    } else {
+      fetchErrorMessage = primaryResult.error.message;
+      if (isMissingFollowUpColumnsError(primaryResult.error.message)) {
+        followUpAvailable = false;
+      }
 
-  if (error) {
-    console.error("[SUBSCRIBE] Fetch error:", error.message);
-    return Response.json({ error: "Errore database", code: "DB_ERROR" }, { status: 500 });
-  }
+      let fallbackQuery = supabase
+        .from("subscribers")
+        .select(BASE_SELECT, { count: "exact" })
+        .order("created_at", { ascending: false });
 
-  return Response.json({
-    subscribers,
-    total: count ?? 0,
-    filteredTotal: filteredTotal ?? 0,
-    statusCounts,
-    followUpAvailable,
-    limit,
-    offset,
-    status,
-  });
+      if (status) {
+        fallbackQuery = fallbackQuery.eq("status", status);
+      }
+
+      const fallbackResult = await fallbackQuery.range(offset, offset + limit - 1);
+
+      if (!fallbackResult.error) {
+        subscribers = (fallbackResult.data ?? []).map((row) => normalizeSubscriberRow(row));
+        filteredTotal = fallbackResult.count ?? 0;
+        fetchErrorMessage = null;
+      } else {
+        // Last-resort fallback for very old schemas with different columns.
+        let wildcardQuery = supabase
+          .from("subscribers")
+          .select("*", { count: "exact" })
+          .order("created_at", { ascending: false });
+
+        if (status) {
+          wildcardQuery = wildcardQuery.eq("status", status);
+        }
+
+        const wildcardResult = await wildcardQuery.range(offset, offset + limit - 1);
+
+        if (!wildcardResult.error) {
+          subscribers = (wildcardResult.data ?? []).map((row) => normalizeSubscriberRow(row));
+          filteredTotal = wildcardResult.count ?? 0;
+          fetchErrorMessage = null;
+        } else {
+          fetchErrorMessage = wildcardResult.error.message;
+        }
+      }
+    }
+
+    if (fetchErrorMessage && isInvalidStatusValueError(fetchErrorMessage) && status === "blocked") {
+      // If blocked is not a valid status in this schema, return an empty blocked page.
+      subscribers = [];
+      filteredTotal = 0;
+      fetchErrorMessage = null;
+    }
+
+    if (fetchErrorMessage) {
+      console.error("[SUBSCRIBE] Fetch error:", fetchErrorMessage);
+      return Response.json({ error: "Errore database", code: "DB_ERROR" }, { status: 500 });
+    }
+
+    return Response.json({
+      subscribers,
+      total: count ?? 0,
+      filteredTotal: filteredTotal ?? 0,
+      statusCounts,
+      followUpAvailable,
+      limit,
+      offset,
+      status,
+    });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Unknown error";
+    console.error("[SUBSCRIBE] Unexpected error:", message);
+    return Response.json({ error: "Errore server", code: "SERVER_ERROR" }, { status: 500 });
+  }
 }
