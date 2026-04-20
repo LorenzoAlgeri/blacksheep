@@ -5,6 +5,25 @@ import { getSupabase } from "@/lib/supabase";
 const DEFAULT_LIMIT = 100;
 const MAX_LIMIT = 500;
 const VALID_STATUSES = new Set(["confirmed", "pending", "blocked"]);
+const BASE_SELECT = "id, email, name, status, created_at, subscribed_at, confirmed_at";
+const FOLLOW_UP_SELECT = `${BASE_SELECT}, follow_up_count, follow_up_last_sent_at`;
+
+type SubscriberRow = {
+  id: string;
+  email: string;
+  name: string | null;
+  status: string;
+  created_at: string | null;
+  subscribed_at: string | null;
+  confirmed_at: string | null;
+  follow_up_count: number | null;
+  follow_up_last_sent_at: string | null;
+};
+
+function isMissingFollowUpColumnsError(message?: string) {
+  const normalized = message?.toLowerCase() ?? "";
+  return normalized.includes("follow_up_count") || normalized.includes("follow_up_last_sent_at");
+}
 
 export async function GET(request: NextRequest) {
   const supabase = getSupabase();
@@ -51,21 +70,44 @@ export async function GET(request: NextRequest) {
 
   let subscribersQuery = supabase
     .from("subscribers")
-    .select(
-      "id, email, name, status, created_at, subscribed_at, confirmed_at, follow_up_count, follow_up_last_sent_at",
-      { count: "exact" },
-    )
+    .select(FOLLOW_UP_SELECT, { count: "exact" })
     .order("created_at", { ascending: false });
 
   if (status) {
     subscribersQuery = subscribersQuery.eq("status", status);
   }
 
-  const {
+  let {
     data: subscribers,
     error,
     count: filteredTotal,
   } = await subscribersQuery.range(offset, offset + limit - 1);
+
+  let followUpAvailable = true;
+
+  if (error && isMissingFollowUpColumnsError(error.message)) {
+    followUpAvailable = false;
+
+    let fallbackQuery = supabase
+      .from("subscribers")
+      .select(BASE_SELECT, { count: "exact" })
+      .order("created_at", { ascending: false });
+
+    if (status) {
+      fallbackQuery = fallbackQuery.eq("status", status);
+    }
+
+    const fallbackResult = await fallbackQuery.range(offset, offset + limit - 1);
+    subscribers = (fallbackResult.data ?? []).map(
+      (subscriber): SubscriberRow => ({
+        ...subscriber,
+        follow_up_count: null,
+        follow_up_last_sent_at: null,
+      }),
+    );
+    error = fallbackResult.error;
+    filteredTotal = fallbackResult.count;
+  }
 
   if (error) {
     console.error("[SUBSCRIBE] Fetch error:", error.message);
@@ -77,6 +119,7 @@ export async function GET(request: NextRequest) {
     total: count ?? 0,
     filteredTotal: filteredTotal ?? 0,
     statusCounts,
+    followUpAvailable,
     limit,
     offset,
     status,

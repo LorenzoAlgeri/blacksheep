@@ -85,6 +85,7 @@ export function SubscriberTable() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalSubscribers, setTotalSubscribers] = useState(0);
   const [filteredTotal, setFilteredTotal] = useState(0);
+  const [followUpAvailable, setFollowUpAvailable] = useState(true);
   const [statusCounts, setStatusCounts] = useState<Record<Tab, number>>({
     confirmed: 0,
     pending: 0,
@@ -118,6 +119,7 @@ export function SubscriberTable() {
         setSubscribers(currentSubscribers);
         setTotalSubscribers(typeof data.total === "number" ? data.total : 0);
         setFilteredTotal(typeof data.filteredTotal === "number" ? data.filteredTotal : 0);
+        setFollowUpAvailable(data.followUpAvailable !== false);
         setStatusCounts({
           confirmed: Number(data.statusCounts?.confirmed ?? 0),
           pending: Number(data.statusCounts?.pending ?? 0),
@@ -283,7 +285,7 @@ export function SubscriberTable() {
         <div className="bg-bs-cream/5 rounded-lg p-4 text-center">
           <p className="text-bs-green mx-auto mb-1 text-lg">{"\u26a1"}</p>
           <p className="font-[family-name:var(--font-brand)] text-2xl text-bs-cream">
-            {eligiblePending}
+            {followUpAvailable ? eligiblePending : "-"}
           </p>
           <p className="font-body text-xs text-bs-cream/40">Follow-up pronti</p>
         </div>
@@ -312,43 +314,52 @@ export function SubscriberTable() {
 
       {activeTab === "pending" && (
         <div className="mb-5 space-y-3">
-          <div className="flex flex-wrap gap-2">
-            <button
-              onClick={() => sendFollowUp("all")}
-              disabled={followUpLoading}
-              className="font-body text-xs px-3 py-2 rounded border border-bs-cream/20 text-bs-cream hover:bg-bs-cream/10 transition-colors disabled:opacity-50 cursor-pointer"
-            >
-              Invia follow-up a tutti
-            </button>
-            <button
-              onClick={() => sendFollowUp("selected")}
-              disabled={followUpLoading || selectedPendingIds.length === 0}
-              className="font-body text-xs px-3 py-2 rounded border border-bs-cream/20 text-bs-cream hover:bg-bs-cream/10 transition-colors disabled:opacity-50 cursor-pointer"
-            >
-              Invia ai selezionati ({selectedPendingIds.length})
-            </button>
-            <button
-              onClick={() => sendFollowUp("oldest")}
-              disabled={followUpLoading}
-              className="font-body text-xs px-3 py-2 rounded border border-bs-cream/20 text-bs-cream hover:bg-bs-cream/10 transition-colors disabled:opacity-50 cursor-pointer"
-            >
-              Invia al piu vecchio
-            </button>
-            <button
-              onClick={selectAllPending}
-              disabled={followUpLoading}
-              className="font-body text-xs px-3 py-2 rounded border border-bs-cream/10 text-bs-cream/70 hover:text-bs-cream transition-colors disabled:opacity-50 cursor-pointer"
-            >
-              Seleziona tutti
-            </button>
-            <button
-              onClick={clearPendingSelection}
-              disabled={followUpLoading}
-              className="font-body text-xs px-3 py-2 rounded border border-bs-cream/10 text-bs-cream/70 hover:text-bs-cream transition-colors disabled:opacity-50 cursor-pointer"
-            >
-              Deseleziona
-            </button>
-          </div>
+          {followUpAvailable ? (
+            <div className="flex flex-wrap gap-2">
+              <button
+                onClick={() => sendFollowUp("all")}
+                disabled={followUpLoading}
+                className="font-body text-xs px-3 py-2 rounded border border-bs-cream/20 text-bs-cream hover:bg-bs-cream/10 transition-colors disabled:opacity-50 cursor-pointer"
+              >
+                Invia follow-up a tutti
+              </button>
+              <button
+                onClick={() => sendFollowUp("selected")}
+                disabled={followUpLoading || selectedPendingIds.length === 0}
+                className="font-body text-xs px-3 py-2 rounded border border-bs-cream/20 text-bs-cream hover:bg-bs-cream/10 transition-colors disabled:opacity-50 cursor-pointer"
+              >
+                Invia ai selezionati ({selectedPendingIds.length})
+              </button>
+              <button
+                onClick={() => sendFollowUp("oldest")}
+                disabled={followUpLoading}
+                className="font-body text-xs px-3 py-2 rounded border border-bs-cream/20 text-bs-cream hover:bg-bs-cream/10 transition-colors disabled:opacity-50 cursor-pointer"
+              >
+                Invia al piu vecchio
+              </button>
+              <button
+                onClick={selectAllPending}
+                disabled={followUpLoading}
+                className="font-body text-xs px-3 py-2 rounded border border-bs-cream/10 text-bs-cream/70 hover:text-bs-cream transition-colors disabled:opacity-50 cursor-pointer"
+              >
+                Seleziona tutti
+              </button>
+              <button
+                onClick={clearPendingSelection}
+                disabled={followUpLoading}
+                className="font-body text-xs px-3 py-2 rounded border border-bs-cream/10 text-bs-cream/70 hover:text-bs-cream transition-colors disabled:opacity-50 cursor-pointer"
+              >
+                Deseleziona
+              </button>
+            </div>
+          ) : (
+            <div className="bg-bs-cream/5 rounded-lg p-3 border border-bs-cream/10">
+              <p className="font-body text-xs text-bs-cream/70">
+                Il tracciamento follow-up non e ancora attivo su questo database. Gli iscritti non
+                sono persi: per usare i follow-up devi applicare la migrazione dedicata.
+              </p>
+            </div>
+          )}
 
           <div className="bg-bs-cream/5 rounded-lg p-3 border border-bs-cream/10">
             <p className="font-body text-xs text-bs-cream/70 mb-2">
@@ -362,7 +373,7 @@ export function SubscriberTable() {
               ore, da BLACK SHEEP &lt;the.blacksheep.night@gmail.com&gt;.
             </p>
             <p className="font-body text-xs text-bs-cream/45 mt-1">
-              Pending con limite esaurito in pagina: {exhaustedPending}
+              Pending con limite esaurito in pagina: {followUpAvailable ? exhaustedPending : "-"}
             </p>
           </div>
 
@@ -389,6 +400,7 @@ export function SubscriberTable() {
                 <label className="flex items-center gap-2 font-body text-xs text-bs-cream/70">
                   <input
                     type="checkbox"
+                    disabled={!followUpAvailable}
                     checked={selectedPendingIds.includes(subscriber.id)}
                     onChange={() => togglePendingSelection(subscriber.id)}
                     className="accent-bs-cream"
@@ -404,8 +416,9 @@ export function SubscriberTable() {
 
               {subscriber.status === "pending" && (
                 <p className={`font-body text-xs ${status.color}`}>
-                  {status.symbol} {status.label} | {"\u23f3"} {pendingDays}g | {"\u21bb"}{" "}
-                  {followUpCount}/{FOLLOW_UP_MAX_ATTEMPTS}
+                  {followUpAvailable
+                    ? `${status.symbol} ${status.label} | \u23f3 ${pendingDays}g | \u21bb ${followUpCount}/${FOLLOW_UP_MAX_ATTEMPTS}`
+                    : `\u23f3 ${pendingDays}g | Follow-up non attivo`}
                 </p>
               )}
 
@@ -450,6 +463,7 @@ export function SubscriberTable() {
                     <td className="py-2 pr-3">
                       <input
                         type="checkbox"
+                        disabled={!followUpAvailable}
                         checked={selectedPendingIds.includes(subscriber.id)}
                         onChange={() => togglePendingSelection(subscriber.id)}
                         className="accent-bs-cream"
@@ -467,14 +481,22 @@ export function SubscriberTable() {
                   <td className="py-2 pr-4 text-bs-cream/50">
                     {subscriber.status === "pending" ? (
                       <div className="space-y-0.5">
-                        <p className={`whitespace-nowrap ${status.color}`}>
-                          {status.symbol} {"\u23f3"} {pendingDays}g | {"\u21bb"} {followUpCount}/
-                          {FOLLOW_UP_MAX_ATTEMPTS}
-                        </p>
-                        <p className="text-[11px] text-bs-cream/35 whitespace-nowrap">
-                          Ultimo: {formatDate(subscriber.follow_up_last_sent_at)} | Prossimo:{" "}
-                          {formatDate(nextDueAt)}
-                        </p>
+                        {followUpAvailable ? (
+                          <>
+                            <p className={`whitespace-nowrap ${status.color}`}>
+                              {status.symbol} {"\u23f3"} {pendingDays}g | {"\u21bb"} {followUpCount}
+                              /{FOLLOW_UP_MAX_ATTEMPTS}
+                            </p>
+                            <p className="text-[11px] text-bs-cream/35 whitespace-nowrap">
+                              Ultimo: {formatDate(subscriber.follow_up_last_sent_at)} | Prossimo:{" "}
+                              {formatDate(nextDueAt)}
+                            </p>
+                          </>
+                        ) : (
+                          <p className="text-[11px] text-bs-cream/35 whitespace-nowrap">
+                            Follow-up non attivo su questo database
+                          </p>
+                        )}
                       </div>
                     ) : (
                       <span className="text-bs-cream/20">{"\u2014"}</span>
