@@ -25,6 +25,11 @@ function isMissingFollowUpColumnsError(message?: string) {
   return normalized.includes("follow_up_count") || normalized.includes("follow_up_last_sent_at");
 }
 
+function isInvalidStatusValueError(message?: string) {
+  const normalized = message?.toLowerCase() ?? "";
+  return normalized.includes("invalid input value for enum") && normalized.includes("status");
+}
+
 export async function GET(request: NextRequest) {
   const supabase = getSupabase();
   const session = await auth();
@@ -51,22 +56,31 @@ export async function GET(request: NextRequest) {
     return Response.json({ error: "Errore database", code: "DB_ERROR" }, { status: 500 });
   }
 
-  const statusCountsEntries = await Promise.all(
-    ["confirmed", "pending", "blocked"].map(async (entryStatus) => {
-      const { count: entryCount, error: entryError } = await supabase
-        .from("subscribers")
-        .select("*", { count: "exact", head: true })
-        .eq("status", entryStatus);
+  const statusCounts: Record<string, number> = {
+    confirmed: 0,
+    pending: 0,
+    blocked: 0,
+  };
 
-      if (entryError) {
-        throw entryError;
+  for (const entryStatus of ["confirmed", "pending", "blocked"]) {
+    const { count: entryCount, error: entryError } = await supabase
+      .from("subscribers")
+      .select("id", { count: "exact", head: true })
+      .eq("status", entryStatus);
+
+    if (entryError) {
+      // Older schemas may not support all status values (e.g. blocked).
+      if (isInvalidStatusValueError(entryError.message) && entryStatus === "blocked") {
+        statusCounts.blocked = 0;
+        continue;
       }
 
-      return [entryStatus, entryCount ?? 0] as const;
-    }),
-  );
+      console.error("[SUBSCRIBE] Status count error:", entryError.message);
+      return Response.json({ error: "Errore database", code: "DB_ERROR" }, { status: 500 });
+    }
 
-  const statusCounts = Object.fromEntries(statusCountsEntries);
+    statusCounts[entryStatus] = entryCount ?? 0;
+  }
 
   let subscribersQuery = supabase
     .from("subscribers")
@@ -107,6 +121,13 @@ export async function GET(request: NextRequest) {
     );
     error = fallbackResult.error;
     filteredTotal = fallbackResult.count;
+  }
+
+  if (error && isInvalidStatusValueError(error.message) && status === "blocked") {
+    // If blocked is not a valid status in this schema, return an empty blocked page.
+    subscribers = [];
+    filteredTotal = 0;
+    error = null;
   }
 
   if (error) {
