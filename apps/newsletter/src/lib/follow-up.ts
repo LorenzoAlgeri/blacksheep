@@ -83,7 +83,8 @@ export function buildFollowUpEmail(subscriber: PendingSubscriber, siteUrl: strin
   const confirmUrl = `${siteUrl}/api/confirm?token=${subscriber.token}`;
   const unsubscribeUrl = `${siteUrl}/api/unsubscribe?token=${subscriber.token}`;
 
-  const subject = "Conferma la tua email per BLACK SHEEP";
+  const attemptNumber = getSafeCount(subscriber.follow_up_count) + 1;
+  const subject = `Conferma la tua email per BLACK SHEEP (${attemptNumber}/${FOLLOW_UP_MAX_ATTEMPTS})`;
   const text = [
     `${safeName ? `Ciao ${subscriber.name},` : "Ciao,"}`,
     "",
