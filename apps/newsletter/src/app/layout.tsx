@@ -15,10 +15,11 @@ export const metadata: Metadata = {
     "Iscriviti alla newsletter di BLACK SHEEP. Lineup e date prima di tutti. Ogni lunedì al 11 Clubroom, Corso Como, Milano.",
   icons: {
     icon: [
-      { url: "/favicon.ico", sizes: "any" },
-      { url: "/icon.png", type: "image/png", sizes: "192x192" },
+      { url: "/favicons/logo/favicon.ico", sizes: "any" },
+      { url: "/favicons/logo/icon-192.png", type: "image/png", sizes: "192x192" },
+      { url: "/favicons/logo/icon-512.png", type: "image/png", sizes: "512x512" },
     ],
-    apple: "/apple-icon.png",
+    apple: "/favicons/logo/apple-touch-icon.png",
   },
   openGraph: {
     title: "BLACK SHEEP",
