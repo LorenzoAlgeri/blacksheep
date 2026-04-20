@@ -114,9 +114,6 @@ export async function POST(request: Request) {
       subject: message.subject,
       html: message.html,
       text: message.text,
-      headers: {
-        "List-Unsubscribe": `<${message.unsubscribeUrl}>`,
-      },
     });
 
     if (sendResult.error) {
