@@ -127,6 +127,36 @@ export default async function Home() {
           </a>
         </div>
       </main>
+
+      {/* Footer — powered by, ultra-subtle */}
+      <footer className="relative z-10 pb-4 flex justify-center">
+        <a
+          href="https://instagram.com/lorenzo_algerii"
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="Lorenzo Algeri su Instagram"
+          className="flex items-center gap-1.5 opacity-[0.08] hover:opacity-20 transition-opacity duration-500 text-bs-cream no-underline"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="10"
+            height="10"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <rect x="2" y="2" width="20" height="20" rx="5" ry="5" />
+            <circle cx="12" cy="12" r="5" />
+            <circle cx="17.5" cy="6.5" r="1.5" fill="currentColor" stroke="none" />
+          </svg>
+          <span className="font-body text-[9px] tracking-widest uppercase">
+            Powered by Lorenzo Algeri
+          </span>
+        </a>
+      </footer>
     </LandingMotion>
   );
 }
