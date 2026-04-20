@@ -17,7 +17,17 @@ const SEND_DELAY_MS = 250;
 const MAX_OLDEST_COUNT = 50;
 
 export async function POST(request: Request) {
-  const supabase = getSupabase();
+  let supabase: ReturnType<typeof getSupabase>;
+  try {
+    supabase = getSupabase();
+  } catch (err) {
+    console.error("[FOLLOW_UP] Supabase init error:", err);
+    return Response.json(
+      { error: "Configurazione database mancante", code: "CONFIG_ERROR" },
+      { status: 500 },
+    );
+  }
+
   const session = await auth();
   if (!session) {
     return Response.json({ error: "Non autorizzato", code: "UNAUTHORIZED" }, { status: 401 });
@@ -87,8 +97,19 @@ export async function POST(request: Request) {
       continue;
     }
 
+    let resend: ReturnType<typeof getResend>;
+    try {
+      resend = getResend();
+    } catch (err) {
+      console.error("[FOLLOW_UP] Resend init error:", err);
+      return Response.json(
+        { error: "Configurazione email mancante (RESEND_API_KEY)", code: "CONFIG_ERROR" },
+        { status: 500 },
+      );
+    }
+
     const message = buildFollowUpEmail(subscriber, siteUrl);
-    const sendResult = await getResend().emails.send({
+    const sendResult = await resend.emails.send({
       from,
       replyTo,
       to: subscriber.email,
