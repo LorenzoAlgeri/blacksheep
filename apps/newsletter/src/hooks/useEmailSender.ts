@@ -27,11 +27,22 @@ export function useEmailSender() {
     fetch(`${basePath}/api/admin/subscribers`)
       .then((r) => r.json())
       .then((data) => {
-        if (data.subscribers) {
-          const confirmed = data.subscribers.filter(
-            (s: { status: string }) => s.status === "confirmed",
-          ).length;
-          setSubscriberCount(confirmed);
+        if (data && typeof data === "object") {
+          const confirmedCount = Number(
+            (data as { statusCounts?: { confirmed?: number } }).statusCounts?.confirmed,
+          );
+
+          if (Number.isFinite(confirmedCount)) {
+            setSubscriberCount(confirmedCount);
+            return;
+          }
+
+          if (Array.isArray((data as { subscribers?: Array<{ status?: string }> }).subscribers)) {
+            const confirmed = (
+              data as { subscribers: Array<{ status?: string }> }
+            ).subscribers.filter((s) => s.status === "confirmed").length;
+            setSubscriberCount(confirmed);
+          }
         }
       })
       .catch(() => {});
