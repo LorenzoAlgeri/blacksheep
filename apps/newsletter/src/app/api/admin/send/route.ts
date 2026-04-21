@@ -15,6 +15,13 @@ function normalizeAppBaseUrl(siteUrl: string): string {
   return `${trimmedSiteUrl}${basePath.startsWith("/") ? "" : "/"}${basePath}`;
 }
 
+function extractEmailAddress(value: string | undefined): string | null {
+  if (!value) return null;
+  const trimmed = value.trim();
+  const match = trimmed.match(/<([^>]+)>/);
+  return (match?.[1] ?? trimmed).trim() || null;
+}
+
 export async function POST(request: Request) {
   const supabase = getSupabase();
   const session = await auth();
@@ -49,20 +56,31 @@ export async function POST(request: Request) {
 
     const fromEmail = process.env.RESEND_FROM_EMAIL ?? "BLACK SHEEP <noreply@blacksheep.community>";
     const replyTo = process.env.REPLY_TO_EMAIL ?? undefined;
-    const htmlWithoutUnsubPlaceholder = html.replaceAll("{{UNSUB}}", "");
-    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+    const normalizedTargetEmail = targetEmail.trim().toLowerCase();
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.blacksheep-community.com";
     const appBaseUrl = normalizeAppBaseUrl(siteUrl);
 
     const { data: singleSubscriber } = await supabase
       .from("subscribers")
       .select("token")
-      .eq("email", targetEmail)
+      .ilike("email", normalizedTargetEmail)
       .maybeSingle();
+
+    const unsubscribeUrl = singleSubscriber?.token
+      ? `${appBaseUrl}/api/unsubscribe?token=${singleSubscriber.token}`
+      : null;
+    const unsubscribeLink = unsubscribeUrl
+      ? `<br><a href="${unsubscribeUrl}" style="color:rgba(255,255,243,0.25);text-decoration:underline;">Disiscriviti</a> &middot; <a href="${appBaseUrl}/privacy" style="color:rgba(255,255,243,0.25);text-decoration:underline;">Privacy Policy</a>`
+      : "";
+    const htmlWithUnsubPlaceholder = html.replaceAll("{{UNSUB}}", unsubscribeLink);
 
     const unsubscribeHeaders = singleSubscriber?.token
       ? buildListUnsubscribeHeaders({
-          unsubscribeUrl: `${appBaseUrl}/api/unsubscribe?token=${singleSubscriber.token}`,
-          mailtoAddress: replyTo ?? "the.blacksheep.night@gmail.com",
+          unsubscribeUrl,
+          mailtoAddress:
+            extractEmailAddress(replyTo) ??
+            extractEmailAddress(fromEmail) ??
+            "the.blacksheep.night@gmail.com",
           mailtoSubjectToken: singleSubscriber.token,
         })
       : undefined;
@@ -70,9 +88,9 @@ export async function POST(request: Request) {
     const { error: emailError } = await getResend().emails.send({
       from: fromEmail,
       replyTo,
-      to: targetEmail,
+      to: normalizedTargetEmail,
       subject,
-      html: htmlWithoutUnsubPlaceholder,
+      html: htmlWithUnsubPlaceholder,
       headers: unsubscribeHeaders,
     });
 
