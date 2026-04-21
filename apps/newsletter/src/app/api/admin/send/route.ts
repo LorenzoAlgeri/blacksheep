@@ -66,22 +66,23 @@ export async function POST(request: Request) {
       .ilike("email", normalizedTargetEmail)
       .maybeSingle();
 
-    const unsubscribeUrl = singleSubscriber?.token
-      ? `${appBaseUrl}/api/unsubscribe?token=${singleSubscriber.token}`
+    const subscriberToken = singleSubscriber?.token ? String(singleSubscriber.token) : null;
+    const unsubscribeUrl = subscriberToken
+      ? `${appBaseUrl}/api/unsubscribe?token=${subscriberToken}`
       : null;
     const unsubscribeLink = unsubscribeUrl
       ? `<br><a href="${unsubscribeUrl}" style="color:rgba(255,255,243,0.25);text-decoration:underline;">Disiscriviti</a> &middot; <a href="${appBaseUrl}/privacy" style="color:rgba(255,255,243,0.25);text-decoration:underline;">Privacy Policy</a>`
       : "";
     const htmlWithUnsubPlaceholder = html.replaceAll("{{UNSUB}}", unsubscribeLink);
 
-    const unsubscribeHeaders = singleSubscriber?.token
+    const unsubscribeHeaders = subscriberToken
       ? buildListUnsubscribeHeaders({
-          unsubscribeUrl,
+          unsubscribeUrl: `${appBaseUrl}/api/unsubscribe?token=${subscriberToken}`,
           mailtoAddress:
             extractEmailAddress(replyTo) ??
             extractEmailAddress(fromEmail) ??
             "the.blacksheep.night@gmail.com",
-          mailtoSubjectToken: singleSubscriber.token,
+          mailtoSubjectToken: subscriberToken,
         })
       : undefined;
 
