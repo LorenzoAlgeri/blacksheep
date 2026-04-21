@@ -1,4 +1,5 @@
 import { getResend } from "@/lib/resend";
+import { buildListUnsubscribeHeaders } from "@/lib/unsubscribe-headers";
 
 interface Subscriber {
   email: string;
@@ -34,6 +35,7 @@ export async function sendBatchEmails(
     const batch = subscribers.slice(i, i + BATCH_SIZE);
 
     const promises = batch.map((sub) => {
+      const unsubscribeUrl = `${appBaseUrl}/api/unsubscribe?token=${sub.token}`;
       const unsubscribeLink = `<br><a href="${appBaseUrl}/api/unsubscribe?token=${sub.token}" style="color:rgba(255,255,243,0.25);text-decoration:underline;">Disiscriviti</a> &middot; <a href="${appBaseUrl}/privacy" style="color:rgba(255,255,243,0.25);text-decoration:underline;">Privacy Policy</a>`;
       const personalizedHtml = html.replaceAll("{{UNSUB}}", unsubscribeLink);
       const trackedHtml = injectOpenTrackingPixel(
@@ -49,6 +51,11 @@ export async function sendBatchEmails(
         to: sub.email,
         subject,
         html: trackedHtml,
+        headers: buildListUnsubscribeHeaders({
+          unsubscribeUrl,
+          mailtoAddress: replyTo ?? "the.blacksheep.night@gmail.com",
+          mailtoSubjectToken: sub.token,
+        }),
       });
     });
 

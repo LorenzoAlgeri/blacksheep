@@ -17,7 +17,7 @@ function UnsubscribeContent() {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(`${basePath}/api/unsubscribe`, {
+      const res = await fetch(`${basePath}/api/unsubscribe?gdpr=delete`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ token }),

@@ -39,19 +39,50 @@ export async function GET(request: NextRequest) {
 // POST: GDPR Art. 17 — full data erasure
 export async function POST(request: NextRequest) {
   const supabase = getSupabase();
-  let body: { token?: string } = {};
+  const { searchParams } = new URL(request.url);
+
+  let body: { token?: string; gdprDelete?: boolean } | null = null;
   try {
     body = await request.json();
   } catch {
-    return Response.json(
-      { error: "Richiesta non valida.", code: "INVALID_REQUEST" },
-      { status: 400 },
-    );
+    body = null;
   }
 
-  const { token } = body;
+  const tokenFromQuery = searchParams.get("token") ?? undefined;
+  const tokenFromBody = body?.token;
+  const token = tokenFromQuery ?? tokenFromBody;
+
   if (!token || !UUID_RE.test(token)) {
     return Response.json({ error: "Token non valido.", code: "INVALID_TOKEN" }, { status: 400 });
+  }
+
+  const shouldDelete = searchParams.get("gdpr") === "delete" || body?.gdprDelete === true;
+
+  if (!shouldDelete) {
+    const { data: subscriber } = await supabase
+      .from("subscribers")
+      .select("id")
+      .eq("token", token)
+      .single();
+
+    if (!subscriber) {
+      return Response.json({ success: true, unsubscribed: false }, { status: 200 });
+    }
+
+    const { error: updateError } = await supabase
+      .from("subscribers")
+      .update({ status: "unsubscribed" })
+      .eq("id", subscriber.id);
+
+    if (updateError) {
+      console.error("[SUBSCRIBE] One-click unsubscribe update error:", updateError.message);
+      return Response.json(
+        { error: "Errore durante la disiscrizione.", code: "DB_ERROR" },
+        { status: 500 },
+      );
+    }
+
+    return Response.json({ success: true, unsubscribed: true }, { status: 200 });
   }
 
   const { data: subscriber } = await supabase

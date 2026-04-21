@@ -6,6 +6,7 @@ import {
   getFollowUpEligibility,
   type PendingSubscriber,
 } from "@/lib/follow-up";
+import { buildListUnsubscribeHeaders } from "@/lib/unsubscribe-headers";
 
 function wait(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -67,9 +68,11 @@ export async function GET(request: Request) {
       subject: message.subject,
       html: message.html,
       text: message.text,
-      headers: {
-        "List-Unsubscribe": `<${message.unsubscribeUrl}>`,
-      },
+      headers: buildListUnsubscribeHeaders({
+        unsubscribeUrl: message.unsubscribeUrl,
+        mailtoAddress: replyTo,
+        mailtoSubjectToken: subscriber.token,
+      }),
     });
 
     if (sendResult.error) {

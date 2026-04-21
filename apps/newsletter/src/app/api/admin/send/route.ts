@@ -3,6 +3,17 @@ import { getResend } from "@/lib/resend";
 import { getSupabase } from "@/lib/supabase";
 import { sendNewsletterSchema } from "@/lib/validations";
 import { sendBatchEmails } from "@/lib/send-batch";
+import { buildListUnsubscribeHeaders } from "@/lib/unsubscribe-headers";
+
+function normalizeAppBaseUrl(siteUrl: string): string {
+  const trimmedSiteUrl = siteUrl.replace(/\/+$/, "");
+  const basePath = (process.env.NEXT_PUBLIC_BASE_PATH ?? "").replace(/\/+$/, "");
+
+  if (!basePath) return trimmedSiteUrl;
+  if (trimmedSiteUrl.endsWith(basePath)) return trimmedSiteUrl;
+
+  return `${trimmedSiteUrl}${basePath.startsWith("/") ? "" : "/"}${basePath}`;
+}
 
 export async function POST(request: Request) {
   const supabase = getSupabase();
@@ -39,6 +50,22 @@ export async function POST(request: Request) {
     const fromEmail = process.env.RESEND_FROM_EMAIL ?? "BLACK SHEEP <noreply@blacksheep.community>";
     const replyTo = process.env.REPLY_TO_EMAIL ?? undefined;
     const htmlWithoutUnsubPlaceholder = html.replaceAll("{{UNSUB}}", "");
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+    const appBaseUrl = normalizeAppBaseUrl(siteUrl);
+
+    const { data: singleSubscriber } = await supabase
+      .from("subscribers")
+      .select("token")
+      .eq("email", targetEmail)
+      .maybeSingle();
+
+    const unsubscribeHeaders = singleSubscriber?.token
+      ? buildListUnsubscribeHeaders({
+          unsubscribeUrl: `${appBaseUrl}/api/unsubscribe?token=${singleSubscriber.token}`,
+          mailtoAddress: replyTo ?? "the.blacksheep.night@gmail.com",
+          mailtoSubjectToken: singleSubscriber.token,
+        })
+      : undefined;
 
     const { error: emailError } = await getResend().emails.send({
       from: fromEmail,
@@ -46,6 +73,7 @@ export async function POST(request: Request) {
       to: targetEmail,
       subject,
       html: htmlWithoutUnsubPlaceholder,
+      headers: unsubscribeHeaders,
     });
 
     if (emailError) {
