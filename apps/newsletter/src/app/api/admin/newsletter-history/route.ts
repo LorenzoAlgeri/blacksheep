@@ -18,7 +18,7 @@ export async function GET() {
     const { data: campaigns, error } = await supabase
       .from("newsletter_campaigns")
       .select(
-        "id, subject, source, recipient_count, sent_count, opened_unique_count, sent_at, created_at",
+        "id, subject, source, recipient_count, sent_count, opened_unique_count, sent_at, created_at, html",
       )
       .order("sent_at", { ascending: false, nullsFirst: false })
       .order("created_at", { ascending: false })
@@ -35,19 +35,24 @@ export async function GET() {
 
     const history = (campaigns ?? []).map((campaign) => {
       const denominator = Number(campaign.recipient_count ?? 0);
+      const sent = Number(campaign.sent_count ?? 0);
       const opens = Number(campaign.opened_unique_count ?? 0);
       const openRate = denominator > 0 ? Math.round((opens / denominator) * 1000) / 10 : 0;
+      const pending = Math.max(0, denominator - sent);
 
       return {
         id: String(campaign.id),
         subject: String(campaign.subject),
         source: String(campaign.source),
         recipientCount: denominator,
-        sentCount: Number(campaign.sent_count ?? 0),
+        sentCount: sent,
+        pendingCount: pending,
         uniqueOpens: opens,
         openRate,
         sentAt: campaign.sent_at,
         createdAt: campaign.created_at,
+        canResume: pending > 0,
+        hasStoredHtml: typeof campaign.html === "string" && campaign.html.length > 0,
       };
     });
 

@@ -98,11 +98,22 @@ export function useEmailSender() {
 
         if (!res.ok) {
           setResult(`Errore: ${data.error}`);
+        } else if (payload.deliveryMode === "single") {
+          setResult(`Inviata a ${resolvedSingleTargetEmail}.`);
+          onSuccess();
         } else {
-          if (payload.deliveryMode === "single") {
-            setResult(`Inviata a ${resolvedSingleTargetEmail}.`);
+          const { sent, total, status } = data as {
+            sent: number;
+            total: number;
+            status?: "complete" | "partial";
+          };
+          if (status === "partial") {
+            const missing = Math.max(0, total - sent);
+            setResult(
+              `Inviata a ${sent}/${total}. ${missing} ancora da inviare — clicca "Riprendi" nello storico per continuare.`,
+            );
           } else {
-            setResult(`Inviata a ${data.sent}/${data.total} iscritti.`);
+            setResult(`Inviata a ${sent}/${total} iscritti.`);
           }
           onSuccess();
         }
