@@ -2,8 +2,14 @@ import { auth } from "@/lib/auth";
 import { getResend } from "@/lib/resend";
 import { getSupabase } from "@/lib/supabase";
 import { sendNewsletterSchema } from "@/lib/validations";
-import { sendBatchEmails } from "@/lib/send-batch";
+import { runCampaignSend } from "@/lib/send-batch";
 import { buildListUnsubscribeHeaders } from "@/lib/unsubscribe-headers";
+
+// Vercel Hobby caps serverless execution at 60s. The campaign send loop is
+// budget-aware (see DEFAULT_BUDGET_MS in send-batch.ts) and stops cleanly
+// before this hard limit; remaining recipients drain via the resume endpoint
+// or the daily cron.
+export const maxDuration = 60;
 
 function normalizeAppBaseUrl(siteUrl: string): string {
   const trimmedSiteUrl = siteUrl.replace(/\/+$/, "");
@@ -126,6 +132,7 @@ export async function POST(request: Request) {
       subject,
       source: "manual",
       recipient_count: subscribers.length,
+      html,
     })
     .select("id")
     .single();
@@ -151,16 +158,34 @@ export async function POST(request: Request) {
 
   console.log(`[SEND] Sending newsletter "${subject}" to ${subscribers.length} subscribers`);
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
-  const result = await sendBatchEmails(subscribers, subject, html, siteUrl, {
+  const result = await runCampaignSend({
     campaignId: campaign.id,
+    subject,
+    html,
+    siteUrl,
   });
 
+  // sent_at marks the campaign as "delivery started"; the actual aggregate
+  // sent_count is kept fresh by runCampaignSend on every run.
   await supabase
     .from("newsletter_campaigns")
-    .update({ sent_count: result.sent, sent_at: new Date().toISOString() })
-    .eq("id", campaign.id);
+    .update({ sent_at: new Date().toISOString() })
+    .eq("id", campaign.id)
+    .is("sent_at", null);
 
-  console.log(`[SEND] Complete: ${result.sent}/${result.total} sent`);
+  console.log(
+    `[SEND] ${result.status}: ${result.totalDelivered}/${result.totalRecipients} delivered (run ${result.delivered} new, ${result.retryable} retryable, ${result.failed} permanent, ${result.orphaned} orphan)`,
+  );
 
-  return Response.json(result);
+  return Response.json({
+    campaignId: result.campaignId,
+    status: result.status,
+    sent: result.totalDelivered,
+    total: result.totalRecipients,
+    delivered: result.delivered,
+    retryable: result.retryable,
+    failed: result.failed,
+    orphaned: result.orphaned,
+    durationMs: result.durationMs,
+  });
 }
