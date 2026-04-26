@@ -82,12 +82,15 @@ BEGIN
     RETURN;
   END IF;
 
+  -- subscribers.token is uuid; newsletter_campaign_recipients.subscriber_token
+  -- is text (the original schema chose text for forward-compat with non-uuid
+  -- tokens). PostgreSQL won't auto-coerce uuid = text, so we cast explicitly.
   UPDATE public.newsletter_campaign_recipients r
      SET sent_at = '2026-04-25 13:00:22+00'::timestamptz,
          attempts = GREATEST(r.attempts, 1)
     FROM public.subscribers s
    WHERE r.campaign_id = target_campaign
-     AND r.subscriber_token = s.token
+     AND r.subscriber_token = s.token::text
      AND r.sent_at IS NULL
      AND lower(s.email) = ANY (SELECT lower(unnest(delivered_emails)));
 
