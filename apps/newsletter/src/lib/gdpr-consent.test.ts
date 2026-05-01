@@ -66,9 +66,12 @@ describe("GDPR consent trail", () => {
     const { readFile } = await import("fs/promises");
     const { join } = await import("path");
 
-    const routeSource = await readFile(join(__dirname, "../app/api/subscribe/route.ts"), "utf-8");
+    // Email body has been refactored out of the route handler into a shared
+    // template module (lib/emails/confirmation.ts). The privacy link lives
+    // there now.
+    const templateSource = await readFile(join(__dirname, "./emails/confirmation.ts"), "utf-8");
 
-    expect(routeSource).toContain("/privacy");
-    expect(routeSource).toContain("Privacy Policy");
+    expect(templateSource).toContain("/privacy");
+    expect(templateSource).toContain("Privacy Policy");
   });
 });
