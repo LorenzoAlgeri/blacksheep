@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, afterEach } from "vitest";
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { isAllowedOrigin } from "./origin-check";
 
 function makeRequest(headers: Record<string, string>): Request {
@@ -14,7 +14,7 @@ describe("isAllowedOrigin", () => {
   beforeEach(() => {
     process.env = { ...originalEnv };
     process.env.NEXT_PUBLIC_SITE_URL = "https://blacksheep.community";
-    process.env.NODE_ENV = "production";
+    vi.stubEnv("NODE_ENV", "production");
   });
 
   afterEach(() => {
@@ -44,13 +44,13 @@ describe("isAllowedOrigin", () => {
   });
 
   it("returns true when Origin is localhost in development", () => {
-    process.env.NODE_ENV = "development";
+    vi.stubEnv("NODE_ENV", "development");
     const req = makeRequest({ origin: "http://localhost:3000" });
     expect(isAllowedOrigin(req)).toBe(true);
   });
 
   it("returns false when Origin is localhost in production", () => {
-    process.env.NODE_ENV = "production";
+    vi.stubEnv("NODE_ENV", "production");
     const req = makeRequest({ origin: "http://localhost:3000" });
     expect(isAllowedOrigin(req)).toBe(false);
   });

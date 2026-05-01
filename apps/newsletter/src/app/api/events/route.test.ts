@@ -10,7 +10,9 @@ vi.mock("next/server", () => ({
 
 const { mockSupabaseResponse } = vi.hoisted(() => {
   return {
-    mockSupabaseResponse: { current: { data: [] as unknown[], error: null as unknown } },
+    mockSupabaseResponse: {
+      current: { data: [] as unknown[] | null, error: null as unknown },
+    },
   };
 });
 

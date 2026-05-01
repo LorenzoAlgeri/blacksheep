@@ -61,7 +61,7 @@ beforeEach(async () => {
   vi.resetModules();
   process.env.BLACKSHEEP_LIST_ENABLED = "true";
   process.env.NEXT_PUBLIC_SITE_URL = "http://localhost:3000";
-  process.env.NODE_ENV = "test";
+  vi.stubEnv("NODE_ENV", "test");
   state.eventResponse = { data: null, error: null };
   state.subscriberResponse = { data: null, error: null };
   state.insertResponse = { error: null };
