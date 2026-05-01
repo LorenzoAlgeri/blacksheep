@@ -1,0 +1,6 @@
+# Local Supabase CLI artifacts
+.branches/
+.temp/
+
+# Production schema snapshots (audit reference, never committed)
+.prod-schema-snapshot/
