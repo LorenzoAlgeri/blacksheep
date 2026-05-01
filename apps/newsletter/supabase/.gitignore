@@ -4,3 +4,12 @@
 
 # Production schema snapshots (audit reference, never committed)
 .prod-schema-snapshot/
+
+# Supabase
+.branches
+.temp
+
+# dotenvx
+.env.keys
+.env.local
+.env.*.local
