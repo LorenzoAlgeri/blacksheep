@@ -3,14 +3,7 @@ import { subscribeSchema } from "@/lib/validations";
 import { getSupabase } from "@/lib/supabase";
 import { getResend } from "@/lib/resend";
 import { rateLimit } from "@/lib/rate-limit";
-
-function escapeHtml(str: string): string {
-  return str
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;");
-}
+import { escapeHtml } from "@/lib/html";
 
 export async function POST(request: NextRequest) {
   const supabase = getSupabase();
