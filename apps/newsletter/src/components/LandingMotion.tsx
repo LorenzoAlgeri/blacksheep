@@ -3,8 +3,13 @@
 import { useRef } from "react";
 import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
+import { MASCOTTE_REVEAL_EVENT } from "@/components/MascotteIntro";
 
 gsap.registerPlugin(useGSAP);
+
+// Safety fallback: if the mascotte event never fires (e.g. WebP load failure),
+// the entrance still plays after this many ms.
+const REVEAL_FALLBACK_MS = 5000;
 
 export function LandingMotion({ children }: { children: React.ReactNode }) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -100,46 +105,11 @@ export function LandingMotion({ children }: { children: React.ReactNode }) {
         return;
       }
 
-      // --- Check sessionStorage: skip entrance on revisit ---
-      let hasSeenEntrance = false;
-      try {
-        hasSeenEntrance = !!sessionStorage.getItem("bs-entrance-seen");
-      } catch {
-        // sessionStorage unavailable — always show entrance
-      }
-
-      if (hasSeenEntrance) {
-        // Set everything to final visible state
-        gsap.set("[data-motion='gradient']", { opacity: 1 });
-        gsap.set("[data-motion='logo']", {
-          clipPath: "inset(0 0% 0 0)",
-          filter: "blur(0px)",
-          opacity: 1,
-        });
-        gsap.set("[data-motion='logo'] svg", {
-          filter: "drop-shadow(0 0 30px rgba(255,255,243,0.15))",
-        });
-        gsap.set("[data-motion='every-monday']", { opacity: 1, y: 0 });
-        gsap.set("[data-motion='location']", { opacity: 1 });
-        gsap.set("[data-motion='divider']", { opacity: 0.2 });
-        gsap.set("[data-motion='input']", { opacity: 1, y: 0 });
-        gsap.set("[data-motion='cta']", { opacity: 1, scale: 1 });
-        gsap.set("[data-motion='socials']", { opacity: 1 });
-        gsap.set("[data-motion='microcopy']", { opacity: 1 });
-        gsap.set("[data-motion='consent']", { opacity: 1 });
-        gsap.set("[data-motion='spotlight']", { opacity: 0.05 });
-        containerRef.current
-          ?.querySelector("[data-motion='cta']")
-          ?.classList.add("cta-glow-active");
-        startAmbientMotion();
-        return;
-      }
-
       // ===================================================
-      // FIRST VISIT — Landing Entrance
+      // ENTRANCE — synced with the mascotte intro
       // ===================================================
 
-      // --- Initial hidden states ---
+      // --- Initial hidden states (everything off-screen until mascotte hits frame 100) ---
       gsap.set("[data-motion='gradient']", { opacity: 0 });
       gsap.set("[data-motion='logo']", {
         clipPath: "inset(0 100% 0 0)",
@@ -159,95 +129,116 @@ export function LandingMotion({ children }: { children: React.ReactNode }) {
       gsap.set("[data-motion='consent']", { opacity: 0 });
       gsap.set("[data-motion='spotlight']", { opacity: 0 });
 
-      const tl = gsap.timeline({
-        onComplete: () => {
-          try {
-            sessionStorage.setItem("bs-entrance-seen", "true");
-          } catch {
-            /* ignore */
-          }
-          startAmbientMotion();
-        },
-      });
+      let started = false;
+      let fallbackTimer: ReturnType<typeof setTimeout> | null = null;
 
-      // PHASE 1: gradient emerges
-      tl.to("[data-motion='gradient']", { opacity: 1, duration: 0.8, ease: "power2.inOut" }, 0);
+      const startEntrance = () => {
+        if (started) return;
+        started = true;
+        if (fallbackTimer) clearTimeout(fallbackTimer);
+        window.removeEventListener(MASCOTTE_REVEAL_EVENT, startEntrance);
+        playEntranceTimeline();
+      };
 
-      // PHASE 2: brand reveals
-      tl.to(
-        "[data-motion='logo']",
-        {
-          clipPath: "inset(0 0% 0 0)",
-          duration: 0.8,
-          ease: "power3.out",
-        },
-        0.8,
-      );
-      tl.to(
-        "[data-motion='logo']",
-        { filter: "blur(0px)", duration: 0.6, ease: "power2.out" },
-        0.8,
-      );
-      tl.to(
-        "[data-motion='logo'] svg",
-        {
-          filter: "drop-shadow(0 0 30px rgba(255,255,243,0.15))",
-          duration: 0.8,
-          ease: "power2.out",
-        },
-        1.4,
-      );
+      window.addEventListener(MASCOTTE_REVEAL_EVENT, startEntrance, { once: true });
+      fallbackTimer = setTimeout(startEntrance, REVEAL_FALLBACK_MS);
 
-      tl.to(
-        "[data-motion='every-monday']",
-        { opacity: 1, y: 0, duration: 0.3, ease: "power2.out" },
-        1.9,
-      );
-      tl.to("[data-motion='location']", { opacity: 1, duration: 0.3, ease: "power2.out" }, 2.1);
+      function playEntranceTimeline() {
+        const tl = gsap.timeline({
+          onComplete: () => {
+            startAmbientMotion();
+          },
+        });
 
-      // PHASE 3: form appears
-      tl.to("[data-motion='divider']", { opacity: 0.2, duration: 0.3, ease: "power2.out" }, 2.3);
-      tl.to(
-        "[data-motion='input']",
-        {
-          opacity: 1,
-          y: 0,
-          duration: 0.4,
-          stagger: 0.1,
-          ease: "power2.out",
-        },
-        2.4,
-      );
-      tl.to(
-        "[data-motion='cta']",
-        { opacity: 1, scale: 1, duration: 0.4, ease: "power2.out" },
-        2.7,
-      );
-      tl.call(
-        () => {
-          containerRef.current
-            ?.querySelector("[data-motion='cta']")
-            ?.classList.add("cta-glow-active");
-        },
-        [],
-        2.7,
-      );
+        // PHASE 1: gradient emerges
+        tl.to("[data-motion='gradient']", { opacity: 1, duration: 0.8, ease: "power2.inOut" }, 0);
 
-      tl.to("[data-motion='socials']", { opacity: 0.75, duration: 0.3, ease: "power2.out" }, 2.9);
-      tl.to("[data-motion='microcopy']", { opacity: 0.7, duration: 0.3, ease: "power2.out" }, 2.9);
-      tl.to("[data-motion='consent']", { opacity: 1, duration: 0.3, ease: "power2.out" }, 2.9);
+        // PHASE 2: brand reveals
+        tl.to(
+          "[data-motion='logo']",
+          {
+            clipPath: "inset(0 0% 0 0)",
+            duration: 0.8,
+            ease: "power3.out",
+          },
+          0.8,
+        );
+        tl.to(
+          "[data-motion='logo']",
+          { filter: "blur(0px)", duration: 0.6, ease: "power2.out" },
+          0.8,
+        );
+        tl.to(
+          "[data-motion='logo'] svg",
+          {
+            filter: "drop-shadow(0 0 30px rgba(255,255,243,0.15))",
+            duration: 0.8,
+            ease: "power2.out",
+          },
+          1.4,
+        );
 
-      tl.to("[data-motion='spotlight']", { opacity: 0.05, duration: 1.5, ease: "power1.out" }, 0.8);
+        tl.to(
+          "[data-motion='every-monday']",
+          { opacity: 1, y: 0, duration: 0.3, ease: "power2.out" },
+          1.9,
+        );
+        tl.to("[data-motion='location']", { opacity: 1, duration: 0.3, ease: "power2.out" }, 2.1);
+
+        // PHASE 3: form appears
+        tl.to("[data-motion='divider']", { opacity: 0.2, duration: 0.3, ease: "power2.out" }, 2.3);
+        tl.to(
+          "[data-motion='input']",
+          {
+            opacity: 1,
+            y: 0,
+            duration: 0.4,
+            stagger: 0.1,
+            ease: "power2.out",
+          },
+          2.4,
+        );
+        tl.to(
+          "[data-motion='cta']",
+          { opacity: 1, scale: 1, duration: 0.4, ease: "power2.out" },
+          2.7,
+        );
+        tl.call(
+          () => {
+            containerRef.current
+              ?.querySelector("[data-motion='cta']")
+              ?.classList.add("cta-glow-active");
+          },
+          [],
+          2.7,
+        );
+
+        tl.to("[data-motion='socials']", { opacity: 0.75, duration: 0.3, ease: "power2.out" }, 2.9);
+        tl.to(
+          "[data-motion='microcopy']",
+          { opacity: 0.7, duration: 0.3, ease: "power2.out" },
+          2.9,
+        );
+        tl.to("[data-motion='consent']", { opacity: 1, duration: 0.3, ease: "power2.out" }, 2.9);
+
+        tl.to(
+          "[data-motion='spotlight']",
+          { opacity: 0.05, duration: 1.5, ease: "power1.out" },
+          0.8,
+        );
+      }
 
       return () => {
         mm.revert();
+        if (fallbackTimer) clearTimeout(fallbackTimer);
+        window.removeEventListener(MASCOTTE_REVEAL_EVENT, startEntrance);
       };
     },
     { scope: containerRef },
   );
 
   return (
-    <div ref={containerRef} className="relative flex flex-1 flex-col overflow-x-hidden">
+    <div ref={containerRef} className="page-column relative overflow-x-hidden">
       {/* Animated background gradient */}
       <div
         data-motion="gradient"

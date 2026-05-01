@@ -47,7 +47,16 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="it" className={`${arialBlack.variable} h-full antialiased`}>
-      <body className="min-h-dvh flex flex-col">{children}</body>
+      <body className="min-h-dvh flex flex-col">
+        <div className="site-bg" aria-hidden>
+          <img
+            src={`${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/sfondo.png`}
+            alt=""
+            draggable={false}
+          />
+        </div>
+        {children}
+      </body>
     </html>
   );
 }
