@@ -1,7 +1,7 @@
 -- ============================================================
 -- ROLLBACK DOCUMENTALE — NON eseguito automaticamente.
 -- Esegui manualmente solo se necessario rollback della migration
--- 20260501_blacksheep_list_events.sql.
+-- 20260501000000_blacksheep_list_events.sql.
 -- ============================================================
 --
 -- The leading dot in the filename ('.rollback_...') keeps the
@@ -14,7 +14,7 @@
 --   3. contact_help_requests
 --
 -- The shared trigger function update_updated_at_column() is owned
--- by 20260405_schema_hardening.sql and MUST NOT be dropped here.
+-- by 20260405000100_schema_hardening.sql and MUST NOT be dropped here.
 -- ============================================================
 
 -- 1. Drop the registration table first (it FKs into list_events).
@@ -38,5 +38,5 @@ DROP TABLE IF EXISTS public.contact_help_requests;
 -- (expected: zero rows)
 
 -- ============================================================
--- End of .rollback_20260501.sql
+-- End of .rollback_20260501000000.sql
 -- ============================================================
