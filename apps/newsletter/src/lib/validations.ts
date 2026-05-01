@@ -42,8 +42,73 @@ export const adminFollowUpSchema = z.object({
   oldestCount: z.number().int().positive().max(50).optional(),
 });
 
+// ============================================================
+// BlackSheep List — Phase 4 endpoints (events / contact-help)
+// ============================================================
+
+/**
+ * /api/events/register — public event registration form.
+ * email + emailConfirmation must match case-insensitively (anti-typo).
+ * website is a honeypot; truthy values are rejected at route level.
+ */
+export const eventRegisterSchema = z
+  .object({
+    eventId: z.uuid("ID evento non valido"),
+    email: z.email("Inserisci un'email valida"),
+    emailConfirmation: z.email("Inserisci un'email valida"),
+    website: z.string().optional(), // honeypot
+  })
+  .refine((d) => d.email.toLowerCase() === d.emailConfirmation.toLowerCase(), {
+    message: "Le email non coincidono",
+    path: ["emailConfirmation"],
+  });
+
+/**
+ * /api/events/resend-confirmation — request a new confirmation email
+ * for a subscriber stuck in 'pending' status.
+ */
+export const resendConfirmationSchema = z.object({
+  email: z.email("Inserisci un'email valida"),
+});
+
+/**
+ * /api/contact-help — "Scrivici" form for users in pending state who
+ * cannot find their confirmation email. Persisted in contact_help_requests
+ * and forwarded to founders via Resend.
+ */
+export const contactHelpSchema = z.object({
+  email: z.email("Inserisci un'email valida"),
+  phone: z.string().min(5, "Telefono troppo corto").max(30, "Telefono troppo lungo"),
+  name: z.string().min(1, "Nome obbligatorio").max(100, "Nome troppo lungo"),
+  message: z.string().max(2000, "Messaggio troppo lungo").optional(),
+  website: z.string().optional(), // honeypot
+});
+
+/**
+ * /api/admin/events — admin CRUD for events. event_date must be ISO 8601;
+ * slug is lowercase + dash (URL-safe). status defaults to 'draft' so
+ * admin creates aren't published until explicitly set to 'published'.
+ */
+export const adminEventSchema = z.object({
+  slug: z
+    .string()
+    .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, "Slug deve essere lowercase con trattini")
+    .min(3, "Slug troppo corto")
+    .max(80, "Slug troppo lungo"),
+  title: z.string().min(1, "Titolo obbligatorio").max(200, "Titolo troppo lungo"),
+  event_date: z.iso.datetime({ message: "Data evento non valida (richiesto formato ISO 8601)" }),
+  venue: z.string().min(1, "Venue obbligatorio").max(200, "Venue troppo lungo"),
+  description: z.string().max(5000, "Descrizione troppo lunga").optional().nullable(),
+  capacity: z.number().int().positive().optional().nullable(),
+  status: z.enum(["draft", "published", "archived"]).default("draft"),
+});
+
 export type SubscribeInput = z.infer<typeof subscribeSchema>;
 export type SendNewsletterInput = z.infer<typeof sendNewsletterSchema>;
 export type ScheduleNewsletterInput = z.infer<typeof scheduleNewsletterSchema>;
 export type SubscriberActionInput = z.infer<typeof subscriberActionSchema>;
 export type AdminFollowUpInput = z.infer<typeof adminFollowUpSchema>;
+export type EventRegisterInput = z.infer<typeof eventRegisterSchema>;
+export type ResendConfirmationInput = z.infer<typeof resendConfirmationSchema>;
+export type ContactHelpInput = z.infer<typeof contactHelpSchema>;
+export type AdminEventInput = z.infer<typeof adminEventSchema>;
