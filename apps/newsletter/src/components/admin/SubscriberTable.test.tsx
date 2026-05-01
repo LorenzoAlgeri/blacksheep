@@ -33,26 +33,52 @@ const mockSubscribers = [
   },
 ];
 
-function mockFetchSuccess() {
-  mockFetch.mockResolvedValueOnce({
+// Default mock implementation: parses ?status=<state> from URL and returns
+// only the subscribers in that state, mirroring the backend filter. Includes
+// total/filteredTotal/statusCounts/followUpAvailable so the component reads
+// fully populated responses (matches the real /api/admin/subscribers shape).
+function statusCountsFor(rows: typeof mockSubscribers) {
+  return {
+    confirmed: rows.filter((s) => s.status === "confirmed").length,
+    pending: rows.filter((s) => s.status === "pending").length,
+    blocked: rows.filter((s) => s.status === "blocked").length,
+  };
+}
+
+function defaultFetchImpl(input: string | URL | Request) {
+  const url = typeof input === "string" ? input : input.toString();
+  const match = url.match(/[?&]status=([^&]+)/);
+  const status = match ? match[1] : null;
+  const filtered = status ? mockSubscribers.filter((s) => s.status === status) : mockSubscribers;
+  return Promise.resolve({
     ok: true,
-    json: async () => ({ subscribers: mockSubscribers }),
-  });
+    json: async () => ({
+      subscribers: filtered,
+      total: mockSubscribers.length,
+      filteredTotal: filtered.length,
+      statusCounts: statusCountsFor(mockSubscribers),
+      followUpAvailable: true,
+    }),
+  } as Response);
 }
 
 describe("SubscriberTable", () => {
   beforeEach(() => {
     mockFetch.mockReset();
+    // Default: every test gets a fetch mock that filters by ?status=
+    // unless overridden with mockReturnValueOnce / mockResolvedValueOnce
+    // / mockRejectedValueOnce for that specific scenario.
+    mockFetch.mockImplementation(defaultFetchImpl);
   });
 
   it("shows loading state initially", () => {
-    mockFetch.mockReturnValueOnce(new Promise(() => {})); // never resolves
+    mockFetch.mockReset(); // override default: never-resolves promise
+    mockFetch.mockReturnValueOnce(new Promise(() => {}));
     render(<SubscriberTable />);
     expect(screen.getByText("Caricamento...")).toBeInTheDocument();
   });
 
   it("renders confirmed subscribers by default", async () => {
-    mockFetchSuccess();
     render(<SubscriberTable />);
 
     await waitFor(() => {
@@ -64,7 +90,6 @@ describe("SubscriberTable", () => {
   });
 
   it("shows all 4 stat cards with correct counts", async () => {
-    mockFetchSuccess();
     render(<SubscriberTable />);
 
     await waitFor(() => {
@@ -77,7 +102,6 @@ describe("SubscriberTable", () => {
   });
 
   it("shows 3 tabs", async () => {
-    mockFetchSuccess();
     render(<SubscriberTable />);
 
     await waitFor(() => {
@@ -88,7 +112,6 @@ describe("SubscriberTable", () => {
   });
 
   it("switches tab to show pending subscribers", async () => {
-    mockFetchSuccess();
     const user = userEvent.setup();
     render(<SubscriberTable />);
 
@@ -98,12 +121,13 @@ describe("SubscriberTable", () => {
 
     await user.click(screen.getByRole("button", { name: "In attesa" }));
 
-    expect(screen.getAllByText("pending@test.com").length).toBeGreaterThanOrEqual(1);
+    await waitFor(() => {
+      expect(screen.getAllByText("pending@test.com").length).toBeGreaterThanOrEqual(1);
+    });
     expect(screen.queryByText("confirmed@test.com")).not.toBeInTheDocument();
   });
 
   it("switches tab to show blocked subscribers", async () => {
-    mockFetchSuccess();
     const user = userEvent.setup();
     render(<SubscriberTable />);
 
@@ -113,7 +137,9 @@ describe("SubscriberTable", () => {
 
     await user.click(screen.getByRole("button", { name: "Bloccati" }));
 
-    expect(screen.getAllByText("blocked@test.com").length).toBeGreaterThanOrEqual(1);
+    await waitFor(() => {
+      expect(screen.getAllByText("blocked@test.com").length).toBeGreaterThanOrEqual(1);
+    });
     expect(screen.queryByText("confirmed@test.com")).not.toBeInTheDocument();
   });
 
