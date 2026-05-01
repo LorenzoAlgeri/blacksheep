@@ -49,45 +49,48 @@ ON CONFLICT (id) DO NOTHING;
 --
 -- Deterministic UUIDs (id and token) for stable test fixtures.
 -- ------------------------------------------------------------
+-- UUIDs are RFC 4122 v4 compliant (version digit '4' at pos 13,
+-- variant digit '8' at pos 17) so Zod v4 z.uuid() accepts them
+-- when the API endpoints validate body inputs.
 INSERT INTO public.subscribers
   (id, email, name, status, token, subscribed_ip, subscribed_user_agent, consent_version)
 VALUES
   (
-    '11111111-1111-1111-1111-111111111111',
+    '11111111-1111-4111-8111-111111111111',
     'confirmed@example.test',
     'Confirmed User',
     'confirmed',
-    'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
+    'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
     '127.0.0.1',
     'seed-local',
     '1.0'
   ),
   (
-    '22222222-2222-2222-2222-222222222222',
+    '22222222-2222-4222-8222-222222222222',
     'pending@example.test',
     'Pending User',
     'pending',
-    'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb',
+    'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',
     '127.0.0.1',
     'seed-local',
     '1.0'
   ),
   (
-    '33333333-3333-3333-3333-333333333333',
+    '33333333-3333-4333-8333-333333333333',
     'blocked@example.test',
     'Blocked User',
     'blocked',
-    'cccccccc-cccc-cccc-cccc-cccccccccccc',
+    'cccccccc-cccc-4ccc-8ccc-cccccccccccc',
     '127.0.0.1',
     'seed-local',
     '1.0'
   ),
   (
-    '44444444-4444-4444-4444-444444444444',
+    '44444444-4444-4444-8444-444444444444',
     'unsubscribed@example.test',
     'Unsubscribed User',
     'unsubscribed',
-    'dddddddd-dddd-dddd-dddd-dddddddddddd',
+    'dddddddd-dddd-4ddd-8ddd-dddddddddddd',
     '127.0.0.1',
     'seed-local',
     '1.0'
@@ -106,7 +109,7 @@ INSERT INTO public.list_events
   (id, slug, title, event_date, venue, description, capacity, status, published_at, created_by)
 VALUES
   (
-    '55555555-5555-5555-5555-555555555555',
+    '55555555-5555-4555-8555-555555555555',
     'monday-club-night-may',
     'BLACK SHEEP — Monday Club Night (May)',
     (now() + interval '14 days')::timestamptz,
@@ -118,7 +121,7 @@ VALUES
     'seed-local'
   ),
   (
-    '66666666-6666-6666-6666-666666666666',
+    '66666666-6666-4666-8666-666666666666',
     'monday-club-night-june',
     'BLACK SHEEP — Monday Club Night (June)',
     (now() + interval '45 days')::timestamptz,
