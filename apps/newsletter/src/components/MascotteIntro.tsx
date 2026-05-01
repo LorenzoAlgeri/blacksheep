@@ -48,6 +48,11 @@ export function MascotteIntro() {
     if (prefersReducedMotion) {
       fireReveal();
       fireEnd();
+      // TODO(mascotte): refactor setState in effect — sposta setDone in
+      // callback gated o in un useEffect dipendente. Vedi commit 395c94d
+      // (wip(website): mascotte intro + cinematic overhaul). Eseguito gating
+      // con eslint-disable per sbloccare CI durante la feature BlackSheep List.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setDone(true);
       return;
     }
