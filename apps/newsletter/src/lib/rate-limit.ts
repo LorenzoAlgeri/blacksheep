@@ -36,5 +36,36 @@ export const rateLimitLogin = createRateLimiter({
   maxRequests: 5,
 });
 
+// ============================================================
+// BlackSheep List — Phase 4 endpoints
+// ============================================================
+
+// /api/events/register: 5 registrations per minute per IP
+export const rateLimitEventRegister = createRateLimiter({
+  windowMs: 60_000,
+  maxRequests: 5,
+});
+
+// /api/events/resend-confirmation: 1 resend per minute per email
+// (anti-bombing: prevent flooding the same recipient with confirmation emails)
+export const rateLimitResendConfirmEmail = createRateLimiter({
+  windowMs: 60_000,
+  maxRequests: 1,
+});
+
+// /api/events/resend-confirmation: 3 resend requests per 15 minutes per IP
+// (anti-bot: cap how many distinct emails one IP can probe)
+export const rateLimitResendConfirmIp = createRateLimiter({
+  windowMs: 15 * 60_000,
+  maxRequests: 3,
+});
+
+// /api/contact-help: 3 submissions per 15 minutes per IP
+// (anti-spam: founders inbox protection)
+export const rateLimitContactHelp = createRateLimiter({
+  windowMs: 15 * 60_000,
+  maxRequests: 3,
+});
+
 export { createRateLimiter };
 export type { RateLimiterConfig };
