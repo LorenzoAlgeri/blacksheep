@@ -388,3 +388,169 @@ dialog::backdrop {
     -webkit-backdrop-filter: none;
   }
 }
+
+/* === EventCard V1 — Editorial Drama (CSS-native scroll-driven) === */
+@keyframes bs-rise {
+  from {
+    opacity: 0;
+    transform: translateY(28px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes bs-num-fill {
+  from {
+    -webkit-text-fill-color: transparent;
+    -webkit-text-stroke: 1px rgba(255, 255, 243, 0.45);
+    letter-spacing: -0.04em;
+  }
+  to {
+    -webkit-text-fill-color: rgba(255, 255, 243, 1);
+    -webkit-text-stroke: 0 transparent;
+    letter-spacing: -0.06em;
+  }
+}
+
+@keyframes bs-word-rise {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes bs-rule-draw {
+  from {
+    transform: scaleY(0);
+  }
+  to {
+    transform: scaleY(1);
+  }
+}
+
+@keyframes bs-line-draw {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+@keyframes bs-cta-pop {
+  0% {
+    opacity: 0;
+    transform: scale(0.94);
+  }
+  60% {
+    opacity: 1;
+    transform: scale(1.025);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes bs-fade-only {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Tier 1: native scroll-timeline (Chrome 115+, Edge 115+, Safari 26+) */
+@supports (animation-timeline: view()) {
+  [data-bs-card] {
+    animation: bs-rise linear both;
+    animation-timeline: view();
+    animation-range: entry 0% cover 18%;
+    animation-delay: calc(var(--card-i, 0) * 80ms);
+  }
+  [data-bs-card] [data-bs-day] {
+    animation: bs-num-fill linear both;
+    animation-timeline: view();
+    animation-range: cover 4% cover 12%;
+  }
+  [data-bs-card] [data-bs-word] {
+    animation: bs-word-rise linear both;
+    animation-timeline: view();
+    animation-range: cover 6% cover 16%;
+    animation-delay: calc(var(--word-i, 0) * 60ms);
+  }
+  [data-bs-card] [data-bs-rule] {
+    animation: bs-rule-draw linear both;
+    animation-timeline: view();
+    animation-range: cover 10% cover 16%;
+  }
+  [data-bs-card] [data-bs-cta] {
+    animation: bs-cta-pop cubic-bezier(0.34, 1.4, 0.64, 1) both;
+    animation-timeline: view();
+    animation-range: cover 14% cover 20%;
+  }
+  [data-bs-card] [data-bs-line] {
+    animation: bs-line-draw linear both;
+    animation-timeline: view();
+    animation-range: cover 18% cover 24%;
+  }
+}
+
+/* Tier 2: IntersectionObserver fallback (Safari < 26 / older Chromium) */
+@supports not (animation-timeline: view()) {
+  [data-bs-card][data-fallback="true"] {
+    opacity: 0;
+    transform: translateY(28px);
+  }
+  [data-bs-card][data-fallback="true"][data-animated="true"] {
+    animation: bs-rise 700ms cubic-bezier(0.16, 1, 0.3, 1) both;
+    animation-delay: calc(var(--card-i, 0) * 80ms);
+  }
+  [data-bs-card][data-fallback="true"][data-animated="true"] [data-bs-day] {
+    animation: bs-num-fill 600ms cubic-bezier(0.16, 1, 0.3, 1) both;
+    animation-delay: calc(var(--card-i, 0) * 80ms + 100ms);
+  }
+  [data-bs-card][data-fallback="true"][data-animated="true"] [data-bs-word] {
+    animation: bs-word-rise 500ms cubic-bezier(0.16, 1, 0.3, 1) both;
+    animation-delay: calc(var(--card-i, 0) * 80ms + 150ms + var(--word-i, 0) * 60ms);
+  }
+  [data-bs-card][data-fallback="true"][data-animated="true"] [data-bs-rule] {
+    animation: bs-rule-draw 500ms cubic-bezier(0.16, 1, 0.3, 1) both;
+    animation-delay: calc(var(--card-i, 0) * 80ms + 250ms);
+  }
+  [data-bs-card][data-fallback="true"][data-animated="true"] [data-bs-cta] {
+    animation: bs-cta-pop 400ms cubic-bezier(0.34, 1.4, 0.64, 1) both;
+    animation-delay: calc(var(--card-i, 0) * 80ms + 300ms);
+  }
+  [data-bs-card][data-fallback="true"][data-animated="true"] [data-bs-line] {
+    animation: bs-line-draw 500ms cubic-bezier(0.16, 1, 0.3, 1) both;
+    animation-delay: calc(var(--card-i, 0) * 80ms + 400ms);
+  }
+}
+
+/* prefers-reduced-motion: opacity-only fade — disables transforms,
+   text-stroke morph, scale pop, and stretch typography. */
+@media (prefers-reduced-motion: reduce) {
+  [data-bs-card],
+  [data-bs-card] [data-bs-day],
+  [data-bs-card] [data-bs-word],
+  [data-bs-card] [data-bs-rule],
+  [data-bs-card] [data-bs-line],
+  [data-bs-card] [data-bs-cta] {
+    animation-name: bs-fade-only !important;
+    animation-duration: 400ms !important;
+    animation-timing-function: ease-out !important;
+    animation-timeline: auto !important;
+    animation-range: auto !important;
+  }
+  [data-bs-card] {
+    transform: none !important;
+  }
+}
