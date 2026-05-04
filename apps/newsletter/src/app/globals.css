@@ -69,13 +69,16 @@ body:has(.admin-layout) .site-bg {
   display: none;
 }
 
-/* Page content column: 480px max on the main landing — keeps original mobile-first layout */
+/* Page content column: 480px max on the main landing — keeps original mobile-first layout.
+ * min-height: 100dvh forces the hero to occupy the entire first viewport so the
+ * EventsList section always lands below the fold. */
 .page-column {
   max-width: 480px;
   margin: 0 auto;
   width: 100%;
   display: flex;
   flex: 1;
+  min-height: 100dvh !important;
   flex-direction: column;
   position: relative;
 }
