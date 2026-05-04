@@ -4,9 +4,11 @@ import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Menu, X } from "lucide-react";
+import { signOut } from "next-auth/react";
 
 const NAV_ITEMS = [
   { href: "/admin", label: "Iscritti" },
+  { href: "/admin/events", label: "Eventi" },
   { href: "/admin/compose", label: "Invia" },
   { href: "/admin/settings", label: "Impostazioni" },
 ] as const;
@@ -39,6 +41,14 @@ export function AdminNav() {
         >
           Vedi sito ↗
         </a>
+        <button
+          type="button"
+          onClick={() => signOut({ callbackUrl: "/newsletter/admin/login" })}
+          className="hover:text-bs-cream transition-colors"
+          aria-label="Esci dall'area amministratore"
+        >
+          Esci
+        </button>
       </nav>
 
       {/* Mobile hamburger button */}
@@ -75,6 +85,14 @@ export function AdminNav() {
           >
             Vedi sito ↗
           </a>
+          <button
+            type="button"
+            onClick={() => signOut({ callbackUrl: "/newsletter/admin/login" })}
+            className="block w-full text-left px-4 py-3 text-sm font-body text-bs-cream/50 hover:text-bs-cream transition-colors"
+            aria-label="Esci dall'area amministratore"
+          >
+            Esci
+          </button>
         </nav>
       )}
     </>
