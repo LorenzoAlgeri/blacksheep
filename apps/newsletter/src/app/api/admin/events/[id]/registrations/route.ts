@@ -32,7 +32,7 @@ export async function GET(request: NextRequest, ctx: RouteContext) {
   const supabase = getSupabase();
   let query = supabase
     .from("list_event_registrations")
-    .select("id, registered_at, source, subscriber:subscribers(id, email, name, status)", {
+    .select("id, registered_at, source, subscriber:subscribers(id, email, name, status, gender)", {
       count: "exact",
     })
     .eq("event_id", id)

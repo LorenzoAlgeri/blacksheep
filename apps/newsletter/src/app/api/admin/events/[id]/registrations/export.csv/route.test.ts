@@ -88,8 +88,8 @@ describe("GET /api/admin/events/[id]/registrations/export.csv", () => {
       'filename="event-monday-may-registrations.csv"',
     );
     const text = await res.text();
-    expect(text.split("\n")[0]).toBe("email,name,status,registered_at,source");
-    expect(text).toContain("user@test.com,Mario,confirmed,2026-05-01T10:00:00Z,form");
+    expect(text.split("\n")[0]).toBe("email,name,status,gender,registered_at,source");
+    expect(text).toContain("user@test.com,Mario,confirmed,,2026-05-01T10:00:00Z,form");
   });
 
   it("escapes commas and quotes per RFC 4180", async () => {
@@ -117,7 +117,7 @@ describe("GET /api/admin/events/[id]/registrations/export.csv", () => {
     state.listResponse = { data: [], error: null };
     const res = await GET(req(), ctx());
     const text = await res.text();
-    expect(text).toBe("email,name,status,registered_at,source\n");
+    expect(text).toBe("email,name,status,gender,registered_at,source\n");
   });
 
   it("returns 500 on supabase error", async () => {

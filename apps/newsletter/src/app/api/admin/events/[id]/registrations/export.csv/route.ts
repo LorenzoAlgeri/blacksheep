@@ -13,6 +13,7 @@ interface RegistrationRow {
     email?: string | null;
     name?: string | null;
     status?: string | null;
+    gender?: string | null;
   } | null;
 }
 
@@ -59,7 +60,7 @@ export async function GET(_request: NextRequest, ctx: RouteContext) {
 
   const { data, error } = await supabase
     .from("list_event_registrations")
-    .select("registered_at, source, subscriber:subscribers(email, name, status)")
+    .select("registered_at, source, subscriber:subscribers(email, name, status, gender)")
     .eq("event_id", id)
     .order("registered_at", { ascending: false });
 
@@ -69,7 +70,7 @@ export async function GET(_request: NextRequest, ctx: RouteContext) {
   }
 
   const rows = (data ?? []) as unknown as RegistrationRow[];
-  const header = "email,name,status,registered_at,source";
+  const header = "email,name,status,gender,registered_at,source";
   const body = rows
     .map((r) => {
       const sub = r.subscriber ?? {};
@@ -77,6 +78,7 @@ export async function GET(_request: NextRequest, ctx: RouteContext) {
         csvField(sub.email),
         csvField(sub.name),
         csvField(sub.status),
+        csvField(sub.gender),
         csvField(r.registered_at),
         csvField(r.source),
       ].join(",");
