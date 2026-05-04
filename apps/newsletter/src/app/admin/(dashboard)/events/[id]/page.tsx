@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import Link from "next/link";
 import { EventForm } from "@/components/admin/EventForm";
 import { getSupabase } from "@/lib/supabase";
 export const metadata: Metadata = {
@@ -36,6 +37,14 @@ export default async function EditEventPage({ params }: { params: Promise<{ id: 
       <h1 className="font-[family-name:var(--font-brand)] text-xl tracking-wider text-bs-cream mb-6">
         MODIFICA EVENTO
       </h1>
+      <div className="mb-6">
+        <Link
+          href={`/admin/events/${event.id}/registrations`}
+          className="font-body text-xs text-bs-cream/40 hover:text-bs-cream/70 transition-colors"
+        >
+          Vedi iscritti →
+        </Link>
+      </div>
       <EventForm mode="edit" defaultValues={event} eventId={event.id} />
     </div>
   );
