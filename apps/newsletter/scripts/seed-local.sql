@@ -37,7 +37,7 @@ INSERT INTO public.site_config (id, tagline, venue)
 VALUES (
   'main',
   'EVERY MONDAY',
-  '11 Clubroom &middot; Corso Como &middot; Milano'
+  '11 Clubroom · Corso Como · Milano'
 )
 ON CONFLICT (id) DO NOTHING;
 
