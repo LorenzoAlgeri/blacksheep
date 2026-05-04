@@ -80,7 +80,7 @@ function LoginForm() {
 
 export default function AdminLoginPage() {
   return (
-    <main className="flex flex-1 flex-col items-center justify-center px-6">
+    <main className="relative z-10 flex flex-1 flex-col items-center justify-center px-6">
       <Image
         src={`${basePath}/bs-logo.svg`}
         alt="BLACK SHEEP"
