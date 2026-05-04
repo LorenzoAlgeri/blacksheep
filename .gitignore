@@ -22,6 +22,11 @@ build/
 # Testing
 coverage/
 
+# Playwright
+test-results/
+playwright-report/
+playwright/.cache/
+
 # IDE
 .vscode/
 .idea/
