@@ -37,7 +37,10 @@ export function useEventRegistration(eventId: string): UseEventRegistrationRetur
         const json = await res.json();
 
         if (!res.ok) {
-          setState({ kind: "error", message: json.error ?? "Errore. Riprova." });
+          setState({
+            kind: "error",
+            message: json.error ?? "Qualcosa non ha funzionato. Riprova tra qualche secondo.",
+          });
           return;
         }
 
@@ -66,7 +69,10 @@ export function useEventRegistration(eventId: string): UseEventRegistrationRetur
             setState({ kind: "error", message: "Risposta non riconosciuta." });
         }
       } catch {
-        setState({ kind: "error", message: "Errore di rete. Riprova." });
+        setState({
+          kind: "error",
+          message: "Qualcosa non ha funzionato. Riprova tra qualche secondo.",
+        });
       }
     },
     [eventId, state.kind],

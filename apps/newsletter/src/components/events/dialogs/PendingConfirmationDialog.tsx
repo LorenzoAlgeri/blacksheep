@@ -109,7 +109,7 @@ export function PendingConfirmationDialog({
           onClick={handleResend}
           disabled={resendDisabled}
           aria-busy={resendDisabled}
-          className="min-h-[44px] px-6 py-3 bg-bs-cream text-[#0a0a0a] font-[family-name:var(--font-brand)] text-xs uppercase tracking-[0.15em] hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
+          className="min-h-[44px] px-6 py-3 bg-bs-cream text-[#0a0a0a] font-[family-name:var(--font-brand)] text-xs uppercase tracking-[0.15em] rounded-md hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {resendLabel}
         </button>

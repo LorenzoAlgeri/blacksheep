@@ -63,7 +63,7 @@ export function Dialog({
   };
 
   const baseClass =
-    "max-w-md w-full bg-[#0a0a0a] text-bs-cream border border-[rgba(255,255,243,0.08)] p-0 m-auto open:flex open:flex-col";
+    "max-w-md w-full bg-[#0a0a0a] text-bs-cream border border-[rgba(255,255,243,0.08)] p-0 m-auto rounded-lg open:flex open:flex-col";
 
   return (
     <dialog

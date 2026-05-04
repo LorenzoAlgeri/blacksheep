@@ -115,7 +115,7 @@ export function EventRegistrationForm({
         type="submit"
         disabled={isSubmitting}
         aria-busy={isSubmitting}
-        className="min-h-[44px] px-6 py-3 bg-bs-cream text-[#0a0a0a] font-[family-name:var(--font-brand)] text-xs uppercase tracking-[0.2em] hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed mt-2"
+        className="min-h-[44px] px-6 py-3 bg-bs-cream text-[#0a0a0a] font-[family-name:var(--font-brand)] text-xs uppercase tracking-[0.2em] rounded-md hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed mt-2"
       >
         {isSubmitting ? "Invio in corso..." : "Entra in lista"}
       </button>
