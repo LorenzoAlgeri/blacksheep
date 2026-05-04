@@ -6,17 +6,22 @@ import { buildEventRegistrationUrl, insertAtCursor, renderEmailPreview } from ".
 // ---------------------------------------------------------------------------
 
 describe("buildEventRegistrationUrl", () => {
-  it("builds URL with default base when NEXT_PUBLIC_SITE_URL is not set", () => {
+  it("builds single-click URL with default base when NEXT_PUBLIC_SITE_URL is not set", () => {
     const url = buildEventRegistrationUrl({ slug: "blacknight-may" });
     expect(url).toBe(
-      "https://www.blacksheep-community.com/newsletter?event=blacknight-may&from=email",
+      "https://www.blacksheep-community.com/newsletter/api/events/register-from-email?token={{TOKEN}}&event_slug=blacknight-may",
     );
+  });
+
+  it("preserves the literal {{TOKEN}} placeholder (not URL-encoded)", () => {
+    const url = buildEventRegistrationUrl({ slug: "any-slug" });
+    expect(url).toContain("token={{TOKEN}}");
+    expect(url).not.toContain("token=%7B%7BTOKEN%7D%7D");
   });
 
   it("encodes special characters in the slug", () => {
     const url = buildEventRegistrationUrl({ slug: "event with spaces" });
-    expect(url).toContain("event%20with%20spaces");
-    expect(url).toContain("&from=email");
+    expect(url).toContain("event_slug=event%20with%20spaces");
   });
 
   it("strips trailing slash from base URL", () => {
@@ -28,7 +33,9 @@ describe("buildEventRegistrationUrl", () => {
     } else {
       process.env.NEXT_PUBLIC_SITE_URL = original;
     }
-    expect(url).toBe("https://example.com/newsletter?event=test-slug&from=email");
+    expect(url).toBe(
+      "https://example.com/newsletter/api/events/register-from-email?token={{TOKEN}}&event_slug=test-slug",
+    );
   });
 });
 
@@ -80,10 +87,10 @@ describe("renderEmailPreview", () => {
 
   it("auto-links URLs with query params", () => {
     const result = renderEmailPreview(
-      "Register: https://www.blacksheep-community.com/newsletter?event=slug&from=email",
+      "Register: https://www.blacksheep-community.com/newsletter/api/events/register-from-email?token=abc&event_slug=foo",
     );
     expect(result).toContain(
-      'href="https://www.blacksheep-community.com/newsletter?event=slug&amp;from=email"',
+      'href="https://www.blacksheep-community.com/newsletter/api/events/register-from-email?token=abc&amp;event_slug=foo"',
     );
   });
 

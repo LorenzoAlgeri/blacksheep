@@ -3,21 +3,24 @@ import { escapeHtml } from "@/lib/html";
 /**
  * Builds an event registration deep-link URL for inclusion in email campaigns.
  *
- * Recipients clicking this URL land on the newsletter homepage with the event
- * slug as a query param. The homepage must handle `?event=<slug>&from=email`
- * to scroll to / open the event registration flow.
+ * The URL targets the GET /api/events/register-from-email endpoint, which
+ * looks up the subscriber by `token`, registers them to the event identified
+ * by `event_slug`, and 303-redirects to /events/<slug>/registered with a
+ * status query string. This produces a true single-click registration flow.
  *
- * ⚠️  GAP (Phase 8+): The newsletter homepage does not yet handle the
- * `?event=<slug>` query param. Links still land on the correct page and
- * subscribers can register manually. A `scrollToEventByQuery` micro-fix in
- * EventsList / EventsListGate will be needed to make the deep-link fully work.
+ * The literal `{{TOKEN}}` placeholder is preserved here on purpose: it is
+ * substituted per-recipient at send time by send-batch.ts (same pattern as
+ * `{{UNSUB}}`). Keeping the placeholder literal makes the campaign HTML
+ * byte-identical for every recipient before substitution, which is
+ * important for Resend idempotency keys and template caching.
  */
 export function buildEventRegistrationUrl(event: { slug: string }): string {
   const base =
     (typeof process !== "undefined"
       ? process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/+$/, "")
       : undefined) ?? "https://www.blacksheep-community.com";
-  return `${base}/newsletter?event=${encodeURIComponent(event.slug)}&from=email`;
+  // {{TOKEN}} must remain literal — do NOT URL-encode it.
+  return `${base}/newsletter/api/events/register-from-email?token={{TOKEN}}&event_slug=${encodeURIComponent(event.slug)}`;
 }
 
 /**
