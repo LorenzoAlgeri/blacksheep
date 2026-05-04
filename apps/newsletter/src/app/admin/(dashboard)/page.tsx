@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 
 export default function AdminDashboardPage() {
   return (
-    <div>
+    <div className="mx-auto max-w-2xl py-8">
       <h1 className="font-[family-name:var(--font-brand)] text-xl tracking-wider text-bs-cream mb-4">
         ISCRITTI
       </h1>
