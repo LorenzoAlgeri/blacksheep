@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
+import Script from "next/script";
 import "./globals.css";
 
 const arialBlack = localFont({
@@ -48,6 +49,13 @@ export default function RootLayout({
   return (
     <html lang="it" className={`${arialBlack.variable} h-full antialiased`}>
       <body className="min-h-dvh flex flex-col">
+        <Script
+          id="Cookiebot"
+          src="https://consent.cookiebot.com/uc.js"
+          data-cbid="dff080ac-afb5-4db6-a106-34b33f135e10"
+          data-blockingmode="auto"
+          strategy="beforeInteractive"
+        />
         <div className="site-bg" aria-hidden>
           <img
             src={`${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/sfondo.png`}
