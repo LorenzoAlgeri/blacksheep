@@ -4,15 +4,22 @@ import { useId, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { GENDER_VALUES, type Gender } from "@/lib/validations";
 import { basePath } from "@/lib/base-path";
 import { SuccessMessage } from "./SuccessMessage";
 import { validateEmail, type EmailValidation } from "@/lib/email-validation";
+
+const genderOptions: { value: Gender; label: string }[] = [
+  { value: "female", label: "Donna" },
+  { value: "male", label: "Uomo" },
+];
 
 // Extend subscribeSchema locally with emailConfirmation for client-side UX
 const subscribeFormSchema = z
   .object({
     email: z.email("Inserisci un'email valida"),
     emailConfirmation: z.email("Inserisci un'email valida"),
+    gender: z.enum(GENDER_VALUES, { error: "Seleziona un'opzione" }),
     name: z.string().max(100).optional(),
     website: z.string().optional(),
   })
@@ -29,6 +36,7 @@ type DisposableResult = Extract<EmailValidation, { kind: "disposable" }>;
 export function SubscribeForm() {
   const emailErrorId = useId();
   const confirmErrorId = useId();
+  const genderErrorId = useId();
 
   const [submitted, setSubmitted] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
@@ -56,7 +64,12 @@ export function SubscribeForm() {
       const res = await fetch(`${basePath}/api/subscribe`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: data.email, name: data.name, website: data.website }),
+        body: JSON.stringify({
+          email: data.email,
+          gender: data.gender,
+          name: data.name,
+          website: data.website,
+        }),
       });
       const json = await res.json();
       if (!res.ok) {
@@ -198,14 +211,36 @@ export function SubscribeForm() {
         )}
       </div>
 
+      {/* Gender segmented control */}
+      <fieldset data-motion="input" aria-describedby={errors.gender ? genderErrorId : undefined}>
+        <legend className="block font-[family-name:var(--font-brand)] text-[10px] uppercase tracking-[0.3em] text-bs-cream/30 mb-2">
+          Genere
+        </legend>
+        <div className="grid grid-cols-2 gap-1">
+          {genderOptions.map(({ value, label }) => (
+            <label key={value} className="relative cursor-pointer">
+              <input type="radio" value={value} className="sr-only peer" {...register("gender")} />
+              <span className="flex items-center justify-center px-2 py-1.5 border border-bs-cream/15 rounded-sm font-[family-name:var(--font-brand)] text-[9px] uppercase tracking-[0.18em] text-bs-cream/40 transition-all duration-150 peer-checked:border-bs-cream/50 peer-checked:text-bs-cream peer-checked:bg-bs-cream/5 hover:border-bs-cream/25 hover:text-bs-cream/60">
+                {label}
+              </span>
+            </label>
+          ))}
+        </div>
+        {errors.gender && (
+          <p id={genderErrorId} role="alert" className="font-body text-xs text-bs-burgundy mt-1">
+            {errors.gender.message}
+          </p>
+        )}
+      </fieldset>
+
       <div data-motion="input">
         <label htmlFor="name" className="sr-only">
-          Nome (opzionale)
+          Nome
         </label>
         <input
           id="name"
           type="text"
-          placeholder="Nome (opzionale)"
+          placeholder="Nome"
           autoComplete="given-name"
           className="w-full bg-transparent border-0 border-b border-bs-cream/10 rounded-none px-2 input-responsive input-field font-body text-sm text-bs-cream placeholder:text-bs-cream/30 focus:outline-none focus:border-b-bs-cream/30 focus:ring-0 transition-all duration-200"
           {...register("name")}

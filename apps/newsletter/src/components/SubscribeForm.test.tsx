@@ -17,6 +17,22 @@ describe("SubscribeForm", () => {
     expect(screen.getByRole("button", { name: /ISCRIVITI/i })).toBeInTheDocument();
   });
 
+  it("renders gender fieldset with Donna and Uomo options", () => {
+    render(<SubscribeForm />);
+    expect(screen.getByRole("group", { name: /Genere/i })).toBeInTheDocument();
+    expect(screen.getByRole("radio", { name: /Donna/i })).toBeInTheDocument();
+    expect(screen.getByRole("radio", { name: /Uomo/i })).toBeInTheDocument();
+  });
+
+  it("blocks submit without gender selection", async () => {
+    const user = userEvent.setup();
+    render(<SubscribeForm />);
+    await user.type(screen.getByPlaceholderText("La tua email"), "test@example.com");
+    await user.type(screen.getByPlaceholderText(/ripeti/i), "test@example.com");
+    await user.click(screen.getByRole("button", { name: /ISCRIVITI/i }));
+    expect(mockFetch).not.toHaveBeenCalled();
+  });
+
   it("shows success message after valid submission", async () => {
     mockFetch.mockResolvedValueOnce({
       ok: true,
@@ -28,6 +44,7 @@ describe("SubscribeForm", () => {
 
     await user.type(screen.getByPlaceholderText("La tua email"), "test@example.com");
     await user.type(screen.getByPlaceholderText(/ripeti/i), "test@example.com");
+    await user.click(screen.getByRole("radio", { name: /Donna/i }));
     await user.click(screen.getByRole("button", { name: /ISCRIVITI/i }));
 
     await waitFor(() => {
@@ -58,6 +75,7 @@ describe("SubscribeForm", () => {
 
     await user.type(screen.getByPlaceholderText("La tua email"), "test@example.com");
     await user.type(screen.getByPlaceholderText(/ripeti/i), "test@example.com");
+    await user.click(screen.getByRole("radio", { name: /Donna/i }));
     await user.click(screen.getByRole("button", { name: /ISCRIVITI/i }));
 
     await waitFor(() => {
@@ -135,6 +153,7 @@ describe("SubscribeForm", () => {
       render(<SubscribeForm />);
       await user.type(screen.getByPlaceholderText("La tua email"), "test@gmail.com");
       await user.type(screen.getByPlaceholderText(/ripeti/i), "other@gmail.com");
+      await user.click(screen.getByRole("radio", { name: /Donna/i }));
       await user.click(screen.getByRole("button", { name: /ISCRIVITI/i }));
       await waitFor(() => {
         expect(screen.getByRole("alert")).toHaveTextContent(/non coincidono/i);
@@ -151,6 +170,7 @@ describe("SubscribeForm", () => {
       render(<SubscribeForm />);
       await user.type(screen.getByPlaceholderText("La tua email"), "Test@gmail.com");
       await user.type(screen.getByPlaceholderText(/ripeti/i), "test@gmail.com");
+      await user.click(screen.getByRole("radio", { name: /Donna/i }));
       await user.click(screen.getByRole("button", { name: /ISCRIVITI/i }));
       await waitFor(() => {
         expect(screen.getByText("CI SEI")).toBeInTheDocument();
