@@ -2,6 +2,7 @@
 
 import { useState, useCallback } from "react";
 import { basePath } from "@/lib/base-path";
+import type { Gender } from "@/lib/validations";
 
 type RegistrationState =
   | { kind: "idle" }
@@ -10,12 +11,14 @@ type RegistrationState =
   | { kind: "pending_subscriber"; email: string }
   | { kind: "already_registered"; eventTitle: string; eventDate: string }
   | { kind: "no_subscriber" }
+  | { kind: "gender_required"; email: string; emailConfirmation: string }
   | { kind: "error"; message: string };
 
 interface UseEventRegistrationReturn {
   state: RegistrationState;
   isSubmitting: boolean;
   register: (email: string, emailConfirmation: string) => Promise<void>;
+  submitGender: (gender: Gender) => Promise<void>;
   dismiss: () => void;
 }
 
@@ -65,6 +68,9 @@ export function useEventRegistration(eventId: string): UseEventRegistrationRetur
           case "no_subscriber":
             setState({ kind: "no_subscriber" });
             break;
+          case "gender_required":
+            setState({ kind: "gender_required", email, emailConfirmation });
+            break;
           default:
             setState({ kind: "error", message: "Risposta non riconosciuta." });
         }
@@ -78,9 +84,60 @@ export function useEventRegistration(eventId: string): UseEventRegistrationRetur
     [eventId, state.kind],
   );
 
+  const submitGender = useCallback(
+    async (gender: Gender) => {
+      if (state.kind !== "gender_required") return;
+
+      const { email, emailConfirmation } = state;
+      setState({ kind: "submitting" });
+      try {
+        const res = await fetch(`${basePath}/api/events/register`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ eventId, email, emailConfirmation, gender }),
+        });
+
+        const json = await res.json();
+
+        if (!res.ok) {
+          setState({
+            kind: "error",
+            message: json.error ?? "Qualcosa non ha funzionato. Riprova tra qualche secondo.",
+          });
+          return;
+        }
+
+        switch (json.status) {
+          case "registered":
+            setState({
+              kind: "registered",
+              eventTitle: json.eventTitle,
+              eventDate: json.eventDate,
+            });
+            break;
+          case "already_registered":
+            setState({
+              kind: "already_registered",
+              eventTitle: json.eventTitle,
+              eventDate: json.eventDate,
+            });
+            break;
+          default:
+            setState({ kind: "error", message: "Risposta non riconosciuta." });
+        }
+      } catch {
+        setState({
+          kind: "error",
+          message: "Qualcosa non ha funzionato. Riprova tra qualche secondo.",
+        });
+      }
+    },
+    [eventId, state],
+  );
+
   const dismiss = useCallback(() => {
     setState({ kind: "idle" });
   }, []);
 
-  return { state, isSubmitting: state.kind === "submitting", register, dismiss };
+  return { state, isSubmitting: state.kind === "submitting", register, submitGender, dismiss };
 }

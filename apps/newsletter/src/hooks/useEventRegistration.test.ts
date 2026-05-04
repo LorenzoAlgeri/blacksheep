@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { renderHook, act } from "@testing-library/react";
 import { useEventRegistration } from "./useEventRegistration";
+import type { Gender } from "@/lib/validations";
 
 const mockFetch = vi.fn();
 vi.stubGlobal("fetch", mockFetch);
@@ -171,5 +172,57 @@ describe("useEventRegistration", () => {
     expect(body.eventId).toBe(EVENT_ID);
     expect(body.email).toBe("User@Example.COM");
     expect(body.emailConfirmation).toBe("User@Example.COM");
+  });
+
+  it("register() transitions to gender_required when server returns that status", async () => {
+    mockFetch.mockResolvedValueOnce(makeResponse({ status: "gender_required" }));
+    const { result } = renderHook(() => useEventRegistration(EVENT_ID));
+    await act(async () => {
+      await result.current.register("user@example.com", "user@example.com");
+    });
+    expect(result.current.state.kind).toBe("gender_required");
+    if (result.current.state.kind === "gender_required") {
+      expect(result.current.state.email).toBe("user@example.com");
+      expect(result.current.state.emailConfirmation).toBe("user@example.com");
+    }
+  });
+
+  it("submitGender() sends gender + stored email to API and transitions to registered", async () => {
+    mockFetch
+      .mockResolvedValueOnce(makeResponse({ status: "gender_required" }))
+      .mockResolvedValueOnce(
+        makeResponse({
+          status: "registered",
+          eventTitle: "Black Night",
+          eventDate: "2026-05-09T22:00:00Z",
+        }),
+      );
+    const { result } = renderHook(() => useEventRegistration(EVENT_ID));
+    await act(async () => {
+      await result.current.register("user@example.com", "user@example.com");
+    });
+    expect(result.current.state.kind).toBe("gender_required");
+    await act(async () => {
+      await result.current.submitGender("female" as Gender);
+    });
+    expect(result.current.state.kind).toBe("registered");
+    const [, init] = mockFetch.mock.calls[1];
+    const body = JSON.parse(init.body as string);
+    expect(body.gender).toBe("female");
+    expect(body.email).toBe("user@example.com");
+  });
+
+  it("submitGender() on error transitions to error state", async () => {
+    mockFetch
+      .mockResolvedValueOnce(makeResponse({ status: "gender_required" }))
+      .mockResolvedValueOnce(makeResponse({ error: "Errore interno." }, false, 500));
+    const { result } = renderHook(() => useEventRegistration(EVENT_ID));
+    await act(async () => {
+      await result.current.register("user@example.com", "user@example.com");
+    });
+    await act(async () => {
+      await result.current.submitGender("female" as Gender);
+    });
+    expect(result.current.state.kind).toBe("error");
   });
 });

@@ -68,7 +68,7 @@ export async function POST(request: NextRequest) {
   // 2. Lookup the subscriber by lowercase email
   const { data: subscriber, error: subError } = await supabase
     .from("subscribers")
-    .select("id, name, status, token")
+    .select("id, name, status, token, gender")
     .eq("email", email)
     .maybeSingle();
 
@@ -101,7 +101,24 @@ export async function POST(request: NextRequest) {
     });
   }
 
-  // 4. confirmed → INSERT registration
+  // 4. confirmed → check gender (required since 2026-05; legacy users may not have it)
+  const incomingGender = parsed.data.gender ?? null;
+  if (!subscriber.gender) {
+    if (!incomingGender) {
+      return Response.json({ status: "gender_required" });
+    }
+    // Atomic: update gender before registering
+    const { error: genderError } = await supabase
+      .from("subscribers")
+      .update({ gender: incomingGender })
+      .eq("id", subscriber.id);
+    if (genderError) {
+      console.error("[EVENTS_REGISTER] Gender update error:", genderError.message);
+      return Response.json({ error: "Errore interno." }, { status: 500 });
+    }
+  }
+
+  // 5. INSERT registration
   const { error: insertError } = await supabase.from("list_event_registrations").insert({
     event_id: event.id,
     subscriber_id: subscriber.id,

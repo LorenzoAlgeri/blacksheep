@@ -12,6 +12,7 @@ const { state } = vi.hoisted(() => ({
   state: {
     eventResponse: { data: null as unknown, error: null as unknown },
     subscriberResponse: { data: null as unknown, error: null as unknown },
+    subscriberUpdateResponse: { error: null as unknown },
     insertResponse: { error: null as unknown },
     sendResponse: { error: null as unknown },
     sendCalls: [] as unknown[],
@@ -24,8 +25,12 @@ vi.mock("@/lib/supabase", () => {
     eq: vi.fn(() => eventBuilder),
     single: vi.fn(() => Promise.resolve(state.eventResponse)),
   };
+  const subscriberUpdateBuilder = {
+    eq: vi.fn(() => Promise.resolve(state.subscriberUpdateResponse)),
+  };
   const subscriberBuilder = {
     select: vi.fn(() => subscriberBuilder),
+    update: vi.fn(() => subscriberUpdateBuilder),
     eq: vi.fn(() => subscriberBuilder),
     maybeSingle: vi.fn(() => Promise.resolve(state.subscriberResponse)),
   };
@@ -64,6 +69,7 @@ beforeEach(async () => {
   vi.stubEnv("NODE_ENV", "test");
   state.eventResponse = { data: null, error: null };
   state.subscriberResponse = { data: null, error: null };
+  state.subscriberUpdateResponse = { error: null };
   state.insertResponse = { error: null };
   state.sendResponse = { error: null };
   state.sendCalls = [];
@@ -108,6 +114,7 @@ describe("POST /api/events/register", () => {
         name: "Mario",
         status: "confirmed",
         token: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+        gender: "female",
       },
       error: null,
     };
@@ -174,7 +181,7 @@ describe("POST /api/events/register", () => {
   it("returns already_registered on UNIQUE violation 23505", async () => {
     state.eventResponse = { data: validEvent, error: null };
     state.subscriberResponse = {
-      data: { id: "x", name: "M", status: "confirmed", token: "t" },
+      data: { id: "x", name: "M", status: "confirmed", token: "t", gender: "female" },
       error: null,
     };
     state.insertResponse = {
@@ -262,5 +269,37 @@ describe("POST /api/events/register", () => {
     const localPOST = mod.POST as unknown as typeof POST;
     const res = await localPOST(makeRequest(validBody, "2.2.2.5"));
     expect(res.status).toBe(404);
+  });
+
+  it("returns gender_required for confirmed subscriber with null gender", async () => {
+    state.eventResponse = { data: validEvent, error: null };
+    state.subscriberResponse = {
+      data: { id: "x", name: "M", status: "confirmed", token: "t", gender: null },
+      error: null,
+    };
+    const res = await POST(makeRequest(validBody, "3.3.3.1"));
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.status).toBe("gender_required");
+    expect(state.sendCalls).toHaveLength(0);
+  });
+
+  it("atomically updates gender and registers when gender provided for legacy subscriber", async () => {
+    state.eventResponse = { data: validEvent, error: null };
+    state.subscriberResponse = {
+      data: {
+        id: "11111111-1111-4111-8111-111111111111",
+        name: "Maria",
+        status: "confirmed",
+        token: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa",
+        gender: null,
+      },
+      error: null,
+    };
+    const res = await POST(makeRequest({ ...validBody, gender: "female" }, "3.3.3.2"));
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.status).toBe("registered");
+    expect(state.sendCalls).toHaveLength(1);
   });
 });
