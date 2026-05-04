@@ -8,6 +8,7 @@ import { RegistrationSuccessDialog } from "./dialogs/RegistrationSuccessDialog";
 import { PendingConfirmationDialog } from "./dialogs/PendingConfirmationDialog";
 import { AlreadyRegisteredDialog } from "./dialogs/AlreadyRegisteredDialog";
 import { NoSubscriberDialog } from "./dialogs/NoSubscriberDialog";
+import { GenderRequiredDialog } from "./dialogs/GenderRequiredDialog";
 import { ContactHelpDialog } from "./ContactHelpDialog";
 import type { EventCardData } from "./EventCard";
 
@@ -24,7 +25,7 @@ export function EventRegistrationFlow({
 }: EventRegistrationFlowProps) {
   const titleId = useId();
   const descId = useId();
-  const { state, isSubmitting, register, dismiss } = useEventRegistration(event.id);
+  const { state, isSubmitting, register, submitGender, dismiss } = useEventRegistration(event.id);
   const [showContactHelp, setShowContactHelp] = useState(false);
 
   function handleClose() {
@@ -78,6 +79,10 @@ export function EventRegistrationFlow({
 
   if (state.kind === "no_subscriber") {
     return <NoSubscriberDialog open onClose={handleClose} onSubscribeClick={onSubscribeClick} />;
+  }
+
+  if (state.kind === "gender_required") {
+    return <GenderRequiredDialog open onSubmit={submitGender} onCancel={handleClose} />;
   }
 
   // idle | submitting | error — show form dialog
