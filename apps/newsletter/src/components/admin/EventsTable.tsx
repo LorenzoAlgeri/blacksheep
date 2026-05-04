@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
-import { CheckCircle, Pencil, Archive, Trash2 } from "lucide-react";
+import { CheckCircle, Pencil, Archive, Trash2, Users } from "lucide-react";
 import { basePath } from "@/lib/base-path";
 import { Dialog } from "@/components/dialog/Dialog";
 import { DialogHeader } from "@/components/dialog/DialogHeader";
@@ -189,6 +189,13 @@ export function EventsTable() {
                 )}
                 <div className="flex gap-2 pt-1">
                   <Link
+                    href={`/admin/events/${event.id}/registrations`}
+                    title="Iscritti"
+                    className="p-1.5 rounded text-bs-cream/40 hover:text-bs-cream hover:bg-bs-cream/10 transition-colors"
+                  >
+                    <Users size={14} />
+                  </Link>
+                  <Link
                     href={`/admin/events/${event.id}`}
                     title="Modifica"
                     className="p-1.5 rounded text-bs-cream/40 hover:text-bs-cream hover:bg-bs-cream/10 transition-colors"
@@ -236,6 +243,13 @@ export function EventsTable() {
                     </td>
                     <td className="py-2 text-right">
                       <div className="flex items-center justify-end gap-1">
+                        <Link
+                          href={`/admin/events/${event.id}/registrations`}
+                          title="Iscritti"
+                          className="p-1.5 rounded text-bs-cream/40 hover:text-bs-cream hover:bg-bs-cream/10 transition-colors"
+                        >
+                          <Users size={14} />
+                        </Link>
                         <Link
                           href={`/admin/events/${event.id}`}
                           title="Modifica"
