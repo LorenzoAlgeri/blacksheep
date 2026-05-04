@@ -1,7 +1,12 @@
+import { headers } from "next/headers";
 import { SubscribeForm } from "@/components/SubscribeForm";
 import { LandingMotionLazy as LandingMotion } from "@/components/LandingMotionLazy";
 import { MascotteIntroLazy } from "@/components/MascotteIntroLazy";
+import { EventsList } from "@/components/events/EventsList";
+import { EventsListGate } from "@/components/events/EventsListGate";
+import { fetchActiveEvents } from "@/lib/events/fetchActiveEvents";
 import { getSupabase } from "@/lib/supabase";
+import type { EventCardData } from "@/components/events/EventCard";
 
 export const dynamic = "force-dynamic";
 
@@ -19,8 +24,25 @@ async function getSiteConfig() {
   }
 }
 
+async function getEvents(): Promise<EventCardData[]> {
+  // Build absolute base URL from the request host so the SSR fetch stays
+  // self-referential without depending on a NEXT_PUBLIC_SITE_URL env var.
+  const h = await headers();
+  const host = h.get("host") ?? "localhost:3000";
+  const protocol = host.startsWith("localhost") ? "http" : "https";
+  // Newsletter form is the primary CTA — never let an events API failure
+  // black-hole the entire landing. Log + degrade to empty list; root
+  // error.tsx remains as last-resort safety net for unexpected throws.
+  try {
+    return await fetchActiveEvents({ baseUrl: `${protocol}://${host}` });
+  } catch (error) {
+    console.error("[home] fetchActiveEvents failed:", error);
+    return [];
+  }
+}
+
 export default async function Home() {
-  const config = await getSiteConfig();
+  const [config, events] = await Promise.all([getSiteConfig(), getEvents()]);
   return (
     <>
       <MascotteIntroLazy />
@@ -161,6 +183,9 @@ export default async function Home() {
           </a>
         </footer>
       </LandingMotion>
+      <EventsListGate>
+        <EventsList events={events} />
+      </EventsListGate>
     </>
   );
 }
