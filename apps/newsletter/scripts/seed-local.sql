@@ -135,6 +135,53 @@ VALUES
 ON CONFLICT (id) DO NOTHING;
 
 
+-- ------------------------------------------------------------
+-- 4. list_events (additional) — 3 more published future events
+--    added for dev experience: /api/events returns ≥4 items so
+--    EventsList renders with multiple cards during local review.
+-- ------------------------------------------------------------
+INSERT INTO public.list_events
+  (id, slug, title, event_date, venue, description, capacity, status, published_at, created_by)
+VALUES
+  (
+    '77777777-7777-4777-8777-777777777777',
+    'residency-june',
+    'RESIDENCY · JUNE',
+    (now() + interval '21 days')::timestamptz,
+    '11 Clubroom — Corso Como, Milano',
+    'Lista ingresso fino a mezzanotte. Dress: dark / streetwear.',
+    120,
+    'published',
+    now(),
+    'seed-local'
+  ),
+  (
+    '88888888-8888-4888-8888-888888888888',
+    'summer-opening',
+    'SUMMER OPENING',
+    (now() + interval '42 days')::timestamptz,
+    '11 Clubroom — Corso Como, Milano',
+    'Apertura stagione estiva. Lista fino a mezzanotte.',
+    180,
+    'published',
+    now(),
+    'seed-local'
+  ),
+  (
+    '99999999-9999-4999-8999-999999999999',
+    'after-summer-late-night-vol1',
+    'AFTER SUMMER — LATE NIGHT EDITION VOL.1',
+    (now() + interval '63 days')::timestamptz,
+    '11 Clubroom — Corso Como, Milano',
+    NULL,
+    250,
+    'published',
+    now(),
+    'seed-local'
+  )
+ON CONFLICT (id) DO NOTHING;
+
+
 -- ============================================================
 -- End of seed-local.sql
 -- ============================================================
