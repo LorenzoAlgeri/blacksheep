@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, fireEvent } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { SubscribeForm } from "./SubscribeForm";
 
@@ -57,6 +57,65 @@ describe("SubscribeForm", () => {
 
     await waitFor(() => {
       expect(screen.getByRole("alert")).toHaveTextContent("Rate limited");
+    });
+  });
+
+  describe("email typo suggestion", () => {
+    it("shows suggestion after blur with TLD typo", async () => {
+      render(<SubscribeForm />);
+      const emailInput = screen.getByPlaceholderText("La tua email");
+      await userEvent.type(emailInput, "test@yahoo.con");
+      fireEvent.blur(emailInput);
+      await waitFor(() => {
+        expect(screen.getByRole("status")).toHaveTextContent(/forse intendevi/i);
+        expect(screen.getByRole("status")).toHaveTextContent("test@yahoo.com");
+      });
+    });
+
+    it("shows suggestion after blur with domain typo", async () => {
+      render(<SubscribeForm />);
+      const emailInput = screen.getByPlaceholderText("La tua email");
+      await userEvent.type(emailInput, "test@libreo.it");
+      fireEvent.blur(emailInput);
+      await waitFor(() => {
+        expect(screen.getByRole("status")).toHaveTextContent("test@libero.it");
+      });
+    });
+
+    it("does not show suggestion for valid known email on blur", async () => {
+      render(<SubscribeForm />);
+      const emailInput = screen.getByPlaceholderText("La tua email");
+      await userEvent.type(emailInput, "test@gmail.com");
+      fireEvent.blur(emailInput);
+      await waitFor(() => {
+        expect(screen.queryByRole("status")).toBeNull();
+      });
+    });
+
+    it("clicking Correggi updates email value and hides suggestion", async () => {
+      render(<SubscribeForm />);
+      const emailInput = screen.getByPlaceholderText("La tua email");
+      await userEvent.type(emailInput, "test@libreo.it");
+      fireEvent.blur(emailInput);
+      await waitFor(() => {
+        expect(screen.getByRole("button", { name: /correggi/i })).toBeInTheDocument();
+      });
+      fireEvent.click(screen.getByRole("button", { name: /correggi/i }));
+      await waitFor(() => {
+        expect(emailInput).toHaveValue("test@libero.it");
+        expect(screen.queryByRole("status")).toBeNull();
+      });
+    });
+
+    it("suggestion uses aria-live=polite (not role=alert)", async () => {
+      render(<SubscribeForm />);
+      const emailInput = screen.getByPlaceholderText("La tua email");
+      await userEvent.type(emailInput, "test@gmail.con");
+      fireEvent.blur(emailInput);
+      await waitFor(() => {
+        const status = screen.getByRole("status");
+        expect(status).toHaveAttribute("aria-live", "polite");
+      });
     });
   });
 });

@@ -6,14 +6,19 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { subscribeSchema, type SubscribeInput } from "@/lib/validations";
 import { basePath } from "@/lib/base-path";
 import { SuccessMessage } from "./SuccessMessage";
+import { validateEmail, type EmailValidation } from "@/lib/email-validation";
+
+type Suggestion = Extract<EmailValidation, { kind: "suggestion" }>;
 
 export function SubscribeForm() {
   const [submitted, setSubmitted] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
+  const [emailSuggestion, setEmailSuggestion] = useState<Suggestion | null>(null);
 
   const {
     register,
     handleSubmit,
+    setValue,
     formState: { errors, isSubmitting },
   } = useForm<SubscribeInput>({
     resolver: zodResolver(subscribeSchema),
@@ -42,6 +47,8 @@ export function SubscribeForm() {
     return <SuccessMessage />;
   }
 
+  const emailReg = register("email");
+
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-3 w-full" noValidate>
       {/* Honeypot */}
@@ -60,10 +67,30 @@ export function SubscribeForm() {
           placeholder="La tua email"
           autoComplete="email"
           className="w-full bg-transparent border-0 border-b border-bs-cream/10 rounded-none px-2 input-responsive input-field font-body text-sm text-bs-cream placeholder:text-bs-cream/30 focus:outline-none focus:border-b-bs-cream/30 focus:ring-0 transition-all duration-200"
-          {...register("email")}
+          {...emailReg}
+          onBlur={(e) => {
+            emailReg.onBlur(e);
+            const result = validateEmail(e.target.value);
+            setEmailSuggestion(result.kind === "suggestion" ? result : null);
+          }}
         />
         {errors.email && (
           <p className="font-body text-xs text-bs-burgundy mt-1">{errors.email.message}</p>
+        )}
+        {emailSuggestion && !errors.email && (
+          <div role="status" aria-live="polite" className="mt-2 font-body text-xs text-amber-300">
+            Forse intendevi <strong>{emailSuggestion.suggested}</strong>?{" "}
+            <button
+              type="button"
+              className="underline"
+              onClick={() => {
+                setValue("email", emailSuggestion.suggested, { shouldValidate: true });
+                setEmailSuggestion(null);
+              }}
+            >
+              Correggi
+            </button>
+          </div>
         )}
       </div>
 
