@@ -434,4 +434,46 @@ describe("sendCampaignBatch", () => {
       expect(cap.html).toContain(`t=${token}`);
     }
   });
+
+  it("replaces {{TOKEN}} with the subscriber token per recipient (event-link single-click)", async () => {
+    const recipients: PendingRecipient[] = [
+      { subscriberToken: "tok-alpha", attempts: 0 },
+      { subscriberToken: "tok-beta", attempts: 0 },
+      { subscriberToken: "tok-gamma", attempts: 0 },
+    ];
+    const subscribers: SubscriberRecord[] = recipients.map((r) => ({
+      token: r.subscriberToken,
+      email: `${r.subscriberToken}@test.com`,
+    }));
+    const { store } = buildStore({ recipients, subscribers, totalRecipients: 3 });
+
+    const captured: { to: string; html: string }[] = [];
+    const mailer: MailSender = {
+      async sendBatch(payload) {
+        for (const p of payload) captured.push({ to: p.to, html: p.html });
+        return { successCount: payload.length, failedIndexes: [] };
+      },
+    };
+
+    const html =
+      '<a href="https://example.com/api/events/register-from-email?token={{TOKEN}}&event_slug=foo">Iscriviti</a>{{UNSUB}}';
+
+    await sendCampaignBatch({
+      campaignId: "campaign-tokens",
+      subject: "Hello",
+      html,
+      siteUrl: "https://example.com",
+      store,
+      mailer,
+    });
+
+    expect(captured).toHaveLength(3);
+    for (const cap of captured) {
+      const token = cap.to.split("@")[0];
+      expect(cap.html).toContain(
+        `href="https://example.com/api/events/register-from-email?token=${token}&event_slug=foo"`,
+      );
+      expect(cap.html).not.toContain("{{TOKEN}}");
+    }
+  });
 });

@@ -236,7 +236,13 @@ interface BuildEmailArgs {
 function buildEmail(args: BuildEmailArgs): BatchEmailPayload {
   const unsubscribeUrl = `${args.appBaseUrl}/api/unsubscribe?token=${args.token}`;
   const unsubscribeLink = `<br><a href="${unsubscribeUrl}" style="color:rgba(255,255,243,0.25);text-decoration:underline;">Disiscriviti</a> &middot; <a href="${args.appBaseUrl}/privacy" style="color:rgba(255,255,243,0.25);text-decoration:underline;">Privacy Policy</a>`;
-  const personalised = args.html.replaceAll("{{UNSUB}}", unsubscribeLink);
+  // Replace per-recipient placeholders. {{TOKEN}} is the subscriber UUID
+  // used by the single-click event registration link
+  // (/api/events/register-from-email?token={{TOKEN}}&event_slug=...).
+  // {{UNSUB}} is the One-Click List-Unsubscribe link footer.
+  const personalised = args.html
+    .replaceAll("{{TOKEN}}", args.token)
+    .replaceAll("{{UNSUB}}", unsubscribeLink);
   const trackedHtml = injectOpenTrackingPixel(
     personalised,
     args.appBaseUrl,
