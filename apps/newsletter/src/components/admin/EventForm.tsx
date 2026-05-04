@@ -68,18 +68,22 @@ export function EventForm({ mode, defaultValues, eventId }: EventFormProps) {
   });
 
   const titleValue = watch("title");
-  const slugValue = watch("slug");
   const statusValue = watch("status");
+  // Track whether the user has manually edited the slug; once they do, stop
+  // auto-deriving it from the title so we don't clobber their input.
+  const [slugManuallyEdited, setSlugManuallyEdited] = useState(
+    mode === "edit" && Boolean(defaultValues?.slug),
+  );
 
   useEffect(() => {
     if (!titleValue) return;
-    if (slugValue && slugValue.length > 0) return;
+    if (slugManuallyEdited) return;
     const generated = titleValue
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, "-")
       .replace(/^-|-$/g, "");
     setValue("slug", generated, { shouldValidate: false });
-  }, [titleValue, slugValue, setValue]);
+  }, [titleValue, slugManuallyEdited, setValue]);
 
   useEffect(() => {
     if (!banner) return;
@@ -170,7 +174,9 @@ export function EventForm({ mode, defaultValues, eventId }: EventFormProps) {
           type="text"
           placeholder="nome-evento-slug"
           className={inputClass}
-          {...register("slug")}
+          {...register("slug", {
+            onChange: () => setSlugManuallyEdited(true),
+          })}
         />
         {errors.slug && <p className={errorClass}>{errors.slug.message}</p>}
       </div>
@@ -206,7 +212,7 @@ export function EventForm({ mode, defaultValues, eventId }: EventFormProps) {
 
       <div>
         <label htmlFor="event-capacity" className={labelClass}>
-          CAPIENZA
+          CAPIENZA <span className="text-bs-cream/30 normal-case tracking-normal">(opzionale)</span>
         </label>
         <input
           id="event-capacity"
