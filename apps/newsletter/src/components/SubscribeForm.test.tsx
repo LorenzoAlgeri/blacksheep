@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, waitFor, fireEvent } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { SubscribeForm } from "./SubscribeForm";
@@ -8,6 +8,9 @@ const mockFetch = vi.fn();
 vi.stubGlobal("fetch", mockFetch);
 
 describe("SubscribeForm", () => {
+  beforeEach(() => {
+    mockFetch.mockReset();
+  });
   it("renders the email input and submit button", () => {
     render(<SubscribeForm />);
     expect(screen.getByPlaceholderText("La tua email")).toBeInTheDocument();
@@ -24,6 +27,7 @@ describe("SubscribeForm", () => {
     render(<SubscribeForm />);
 
     await user.type(screen.getByPlaceholderText("La tua email"), "test@example.com");
+    await user.type(screen.getByPlaceholderText(/ripeti/i), "test@example.com");
     await user.click(screen.getByRole("button", { name: /ISCRIVITI/i }));
 
     await waitFor(() => {
@@ -39,7 +43,7 @@ describe("SubscribeForm", () => {
     await user.click(screen.getByRole("button", { name: /ISCRIVITI/i }));
 
     await waitFor(() => {
-      expect(screen.getByText(/email valida/i)).toBeInTheDocument();
+      expect(screen.getAllByText(/email valida/i).length).toBeGreaterThan(0);
     });
   });
 
@@ -53,6 +57,7 @@ describe("SubscribeForm", () => {
     render(<SubscribeForm />);
 
     await user.type(screen.getByPlaceholderText("La tua email"), "test@example.com");
+    await user.type(screen.getByPlaceholderText(/ripeti/i), "test@example.com");
     await user.click(screen.getByRole("button", { name: /ISCRIVITI/i }));
 
     await waitFor(() => {
@@ -115,6 +120,86 @@ describe("SubscribeForm", () => {
       await waitFor(() => {
         const status = screen.getByRole("status");
         expect(status).toHaveAttribute("aria-live", "polite");
+      });
+    });
+  });
+
+  describe("confirm email field", () => {
+    it("renders confirm email input", () => {
+      render(<SubscribeForm />);
+      expect(screen.getByPlaceholderText(/ripeti/i)).toBeInTheDocument();
+    });
+
+    it("blocks submit when emails do not match", async () => {
+      const user = userEvent.setup();
+      render(<SubscribeForm />);
+      await user.type(screen.getByPlaceholderText("La tua email"), "test@gmail.com");
+      await user.type(screen.getByPlaceholderText(/ripeti/i), "other@gmail.com");
+      await user.click(screen.getByRole("button", { name: /ISCRIVITI/i }));
+      await waitFor(() => {
+        expect(screen.getByRole("alert")).toHaveTextContent(/non coincidono/i);
+      });
+      expect(mockFetch).not.toHaveBeenCalled();
+    });
+
+    it("allows submit when emails match (case-insensitive)", async () => {
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ message: "ok" }),
+      });
+      const user = userEvent.setup();
+      render(<SubscribeForm />);
+      await user.type(screen.getByPlaceholderText("La tua email"), "Test@gmail.com");
+      await user.type(screen.getByPlaceholderText(/ripeti/i), "test@gmail.com");
+      await user.click(screen.getByRole("button", { name: /ISCRIVITI/i }));
+      await waitFor(() => {
+        expect(screen.getByText("CI SEI")).toBeInTheDocument();
+      });
+    });
+
+    it("shows typo suggestion also on confirm field after blur", async () => {
+      render(<SubscribeForm />);
+      const confirmInput = screen.getByPlaceholderText(/ripeti/i);
+      await userEvent.type(confirmInput, "test@gmail.con");
+      fireEvent.blur(confirmInput);
+      await waitFor(() => {
+        const statuses = screen.getAllByRole("status");
+        expect(statuses.some((s) => s.textContent?.includes("test@gmail.com"))).toBe(true);
+      });
+    });
+  });
+
+  describe("disposable email blocking", () => {
+    it("shows blocking error for disposable email on main field blur", async () => {
+      render(<SubscribeForm />);
+      const emailInput = screen.getByPlaceholderText("La tua email");
+      await userEvent.type(emailInput, "user@mailinator.com");
+      fireEvent.blur(emailInput);
+      await waitFor(() => {
+        expect(screen.getByRole("alert")).toHaveTextContent(/email personale/i);
+      });
+    });
+
+    it("blocks submit when main email is disposable", async () => {
+      const user = userEvent.setup();
+      render(<SubscribeForm />);
+      await user.type(screen.getByPlaceholderText("La tua email"), "user@mailinator.com");
+      fireEvent.blur(screen.getByPlaceholderText("La tua email"));
+      // wait for disposable alert to render (ensures state settled before submit)
+      await waitFor(() => screen.getByRole("alert"));
+      await user.type(screen.getByPlaceholderText(/ripeti/i), "user@mailinator.com");
+      await user.click(screen.getByRole("button", { name: /ISCRIVITI/i }));
+      expect(mockFetch).not.toHaveBeenCalled();
+    });
+
+    it("disposable error is visually distinct from suggestion (role=alert not status)", async () => {
+      render(<SubscribeForm />);
+      const emailInput = screen.getByPlaceholderText("La tua email");
+      await userEvent.type(emailInput, "user@yopmail.com");
+      fireEvent.blur(emailInput);
+      await waitFor(() => {
+        const alert = screen.getByRole("alert");
+        expect(alert).toHaveTextContent(/email personale/i);
       });
     });
   });

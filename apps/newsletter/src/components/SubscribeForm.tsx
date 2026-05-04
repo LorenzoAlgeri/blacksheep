@@ -1,36 +1,62 @@
 "use client";
 
-import { useState } from "react";
+import { useId, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { subscribeSchema, type SubscribeInput } from "@/lib/validations";
+import { z } from "zod";
 import { basePath } from "@/lib/base-path";
 import { SuccessMessage } from "./SuccessMessage";
 import { validateEmail, type EmailValidation } from "@/lib/email-validation";
 
+// Extend subscribeSchema locally with emailConfirmation for client-side UX
+const subscribeFormSchema = z
+  .object({
+    email: z.email("Inserisci un'email valida"),
+    emailConfirmation: z.email("Inserisci un'email valida"),
+    name: z.string().max(100).optional(),
+    website: z.string().optional(),
+  })
+  .refine((d) => d.email.toLowerCase() === d.emailConfirmation.toLowerCase(), {
+    message: "Le due email non coincidono",
+    path: ["emailConfirmation"],
+  });
+
+type SubscribeFormData = z.infer<typeof subscribeFormSchema>;
+
 type Suggestion = Extract<EmailValidation, { kind: "suggestion" }>;
+type DisposableResult = Extract<EmailValidation, { kind: "disposable" }>;
 
 export function SubscribeForm() {
+  const emailErrorId = useId();
+  const confirmErrorId = useId();
+
   const [submitted, setSubmitted] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
   const [emailSuggestion, setEmailSuggestion] = useState<Suggestion | null>(null);
+  const [confirmSuggestion, setConfirmSuggestion] = useState<Suggestion | null>(null);
+  const [emailDisposable, setEmailDisposable] = useState<DisposableResult | null>(null);
+  const [confirmDisposable, setConfirmDisposable] = useState<DisposableResult | null>(null);
 
   const {
     register,
     handleSubmit,
     setValue,
     formState: { errors, isSubmitting },
-  } = useForm<SubscribeInput>({
-    resolver: zodResolver(subscribeSchema),
+  } = useForm<SubscribeFormData>({
+    resolver: zodResolver(subscribeFormSchema),
+    mode: "onBlur",
   });
 
-  async function onSubmit(data: SubscribeInput) {
+  async function onSubmit(data: SubscribeFormData) {
+    // Hard block: disposable email detected on either field
+    if (emailDisposable || confirmDisposable) return;
+
     setServerError(null);
     try {
       const res = await fetch(`${basePath}/api/subscribe`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
+        body: JSON.stringify({ email: data.email, name: data.name, website: data.website }),
       });
       const json = await res.json();
       if (!res.ok) {
@@ -43,11 +69,24 @@ export function SubscribeForm() {
     }
   }
 
+  function handleEmailBlur(value: string) {
+    const result = validateEmail(value);
+    setEmailSuggestion(result.kind === "suggestion" ? result : null);
+    setEmailDisposable(result.kind === "disposable" ? result : null);
+  }
+
+  function handleConfirmBlur(value: string) {
+    const result = validateEmail(value);
+    setConfirmSuggestion(result.kind === "suggestion" ? result : null);
+    setConfirmDisposable(result.kind === "disposable" ? result : null);
+  }
+
   if (submitted) {
     return <SuccessMessage />;
   }
 
   const emailReg = register("email");
+  const confirmReg = register("emailConfirmation");
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-3 w-full" noValidate>
@@ -57,8 +96,12 @@ export function SubscribeForm() {
         <input id="website" type="text" tabIndex={-1} autoComplete="off" {...register("website")} />
       </div>
 
+      {/* Email field */}
       <div data-motion="input">
-        <label htmlFor="email" className="sr-only">
+        <label
+          htmlFor="email"
+          className="block font-[family-name:var(--font-brand)] text-[10px] uppercase tracking-[0.3em] text-bs-cream/50 mb-1 sr-only"
+        >
           Email
         </label>
         <input
@@ -66,18 +109,26 @@ export function SubscribeForm() {
           type="email"
           placeholder="La tua email"
           autoComplete="email"
+          aria-invalid={!!errors.email || !!emailDisposable}
+          aria-describedby={errors.email || emailDisposable ? emailErrorId : undefined}
           className="w-full bg-transparent border-0 border-b border-bs-cream/10 rounded-none px-2 input-responsive input-field font-body text-sm text-bs-cream placeholder:text-bs-cream/30 focus:outline-none focus:border-b-bs-cream/30 focus:ring-0 transition-all duration-200"
           {...emailReg}
           onBlur={(e) => {
             emailReg.onBlur(e);
-            const result = validateEmail(e.target.value);
-            setEmailSuggestion(result.kind === "suggestion" ? result : null);
+            handleEmailBlur(e.target.value);
           }}
         />
-        {errors.email && (
-          <p className="font-body text-xs text-bs-burgundy mt-1">{errors.email.message}</p>
+        {emailDisposable && (
+          <p id={emailErrorId} role="alert" className="font-body text-xs text-bs-burgundy mt-1">
+            Per cortesia usa un&apos;email personale (Gmail, Outlook, ecc.)
+          </p>
         )}
-        {emailSuggestion && !errors.email && (
+        {errors.email && !emailDisposable && (
+          <p id={emailErrorId} role="alert" className="font-body text-xs text-bs-burgundy mt-1">
+            {errors.email.message}
+          </p>
+        )}
+        {emailSuggestion && !errors.email && !emailDisposable && (
           <div role="status" aria-live="polite" className="mt-2 font-body text-xs text-amber-300">
             Forse intendevi <strong>{emailSuggestion.suggested}</strong>?{" "}
             <button
@@ -86,6 +137,59 @@ export function SubscribeForm() {
               onClick={() => {
                 setValue("email", emailSuggestion.suggested, { shouldValidate: true });
                 setEmailSuggestion(null);
+              }}
+            >
+              Correggi
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* Confirm email field */}
+      <div data-motion="input">
+        <label
+          htmlFor="email-confirmation"
+          className="block font-[family-name:var(--font-brand)] text-[10px] uppercase tracking-[0.3em] text-bs-cream/50 mb-1 sr-only"
+        >
+          Conferma email
+        </label>
+        <input
+          id="email-confirmation"
+          type="email"
+          placeholder="Ripeti la tua email"
+          autoComplete="email"
+          aria-invalid={!!errors.emailConfirmation || !!confirmDisposable}
+          aria-describedby={
+            errors.emailConfirmation || confirmDisposable ? confirmErrorId : undefined
+          }
+          className="w-full bg-transparent border-0 border-b border-bs-cream/10 rounded-none px-2 input-responsive input-field font-body text-sm text-bs-cream placeholder:text-bs-cream/30 focus:outline-none focus:border-b-bs-cream/30 focus:ring-0 transition-all duration-200"
+          {...confirmReg}
+          onBlur={(e) => {
+            confirmReg.onBlur(e);
+            handleConfirmBlur(e.target.value);
+          }}
+        />
+        {confirmDisposable && (
+          <p id={confirmErrorId} role="alert" className="font-body text-xs text-bs-burgundy mt-1">
+            Per cortesia usa un&apos;email personale (Gmail, Outlook, ecc.)
+          </p>
+        )}
+        {errors.emailConfirmation && !confirmDisposable && (
+          <p id={confirmErrorId} role="alert" className="font-body text-xs text-bs-burgundy mt-1">
+            {errors.emailConfirmation.message}
+          </p>
+        )}
+        {confirmSuggestion && !errors.emailConfirmation && !confirmDisposable && (
+          <div role="status" aria-live="polite" className="mt-2 font-body text-xs text-amber-300">
+            Forse intendevi <strong>{confirmSuggestion.suggested}</strong>?{" "}
+            <button
+              type="button"
+              className="underline"
+              onClick={() => {
+                setValue("emailConfirmation", confirmSuggestion.suggested, {
+                  shouldValidate: true,
+                });
+                setConfirmSuggestion(null);
               }}
             >
               Correggi
