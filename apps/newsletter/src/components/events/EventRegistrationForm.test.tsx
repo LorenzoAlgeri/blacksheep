@@ -168,4 +168,51 @@ describe("EventRegistrationForm", () => {
       });
     });
   });
+
+  describe("disposable email blocking", () => {
+    it("shows blocking alert when main email is disposable on blur", async () => {
+      render(<EventRegistrationForm {...baseProps} />);
+      const emailInput = screen.getByLabelText(/^Email$/i);
+      await userEvent.type(emailInput, "user@mailinator.com");
+      fireEvent.blur(emailInput);
+      await waitFor(() => {
+        expect(screen.getByRole("alert")).toHaveTextContent(/email personale/i);
+      });
+    });
+
+    it("blocks form submission when main email is disposable", async () => {
+      render(<EventRegistrationForm {...baseProps} />);
+      const emailInput = screen.getByLabelText(/^Email$/i);
+      const confirmInput = screen.getByLabelText(/Conferma email/i);
+      await userEvent.type(emailInput, "anon@yopmail.com");
+      fireEvent.blur(emailInput);
+      await userEvent.type(confirmInput, "anon@yopmail.com");
+      fireEvent.click(screen.getByRole("button", { name: /Entra in lista/i }));
+      await waitFor(() => {
+        expect(baseProps.onSubmit).not.toHaveBeenCalled();
+      });
+    });
+
+    it("shows blocking alert when confirm email is disposable on blur", async () => {
+      render(<EventRegistrationForm {...baseProps} />);
+      const confirmInput = screen.getByLabelText(/Conferma email/i);
+      await userEvent.type(confirmInput, "user@guerrillamail.com");
+      fireEvent.blur(confirmInput);
+      await waitFor(() => {
+        expect(screen.getByRole("alert")).toHaveTextContent(/email personale/i);
+      });
+    });
+
+    it("disposable alert uses role=alert (red, not amber like suggestion)", async () => {
+      render(<EventRegistrationForm {...baseProps} />);
+      const emailInput = screen.getByLabelText(/^Email$/i);
+      await userEvent.type(emailInput, "anon@trashmail.com");
+      fireEvent.blur(emailInput);
+      await waitFor(() => {
+        // must be alert, not status
+        expect(screen.queryByRole("status")).toBeNull();
+        expect(screen.getByRole("alert")).toBeInTheDocument();
+      });
+    });
+  });
 });

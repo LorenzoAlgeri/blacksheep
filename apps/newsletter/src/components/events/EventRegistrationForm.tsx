@@ -26,6 +26,7 @@ interface EventRegistrationFormProps {
 }
 
 type Suggestion = Extract<EmailValidation, { kind: "suggestion" }>;
+type DisposableResult = Extract<EmailValidation, { kind: "disposable" }>;
 
 export function EventRegistrationForm({
   onSubmit,
@@ -38,26 +39,32 @@ export function EventRegistrationForm({
 
   const [emailSuggestion, setEmailSuggestion] = useState<Suggestion | null>(null);
   const [confirmSuggestion, setConfirmSuggestion] = useState<Suggestion | null>(null);
+  const [emailDisposable, setEmailDisposable] = useState<DisposableResult | null>(null);
+  const [confirmDisposable, setConfirmDisposable] = useState<DisposableResult | null>(null);
 
   const {
     register,
     handleSubmit,
     setValue,
     formState: { errors },
-  } = useForm<FormData>({ resolver: zodResolver(formSchema) });
+  } = useForm<FormData>({ resolver: zodResolver(formSchema), mode: "onBlur" });
 
   function onValid(data: FormData) {
+    // Hard block: disposable email detected
+    if (emailDisposable || confirmDisposable) return;
     onSubmit(data.email, data.emailConfirmation);
   }
 
   function handleEmailBlur(e: React.FocusEvent<HTMLInputElement>) {
     const result = validateEmail(e.target.value);
     setEmailSuggestion(result.kind === "suggestion" ? result : null);
+    setEmailDisposable(result.kind === "disposable" ? result : null);
   }
 
   function handleConfirmBlur(e: React.FocusEvent<HTMLInputElement>) {
     const result = validateEmail(e.target.value);
     setConfirmSuggestion(result.kind === "suggestion" ? result : null);
+    setConfirmDisposable(result.kind === "disposable" ? result : null);
   }
 
   const emailReg = register("email");
@@ -89,8 +96,8 @@ export function EventRegistrationForm({
           type="email"
           autoComplete="email"
           placeholder="La tua email"
-          aria-invalid={!!errors.email}
-          aria-describedby={errors.email ? emailErrorId : undefined}
+          aria-invalid={!!errors.email || !!emailDisposable}
+          aria-describedby={errors.email || emailDisposable ? emailErrorId : undefined}
           className="w-full bg-transparent border-b border-bs-cream/15 px-0 py-2 font-body text-sm text-bs-cream placeholder:text-bs-cream/25 focus:outline-none focus:border-bs-cream/40 transition-colors"
           {...emailReg}
           onBlur={(e) => {
@@ -98,12 +105,17 @@ export function EventRegistrationForm({
             handleEmailBlur(e);
           }}
         />
-        {errors.email && (
+        {emailDisposable && (
+          <p id={emailErrorId} role="alert" className="mt-1 font-body text-xs text-bs-burgundy">
+            Per cortesia usa un&apos;email personale (Gmail, Outlook, ecc.)
+          </p>
+        )}
+        {errors.email && !emailDisposable && (
           <p id={emailErrorId} role="alert" className="mt-1 font-body text-xs text-bs-burgundy">
             {errors.email.message}
           </p>
         )}
-        {emailSuggestion && !errors.email && (
+        {emailSuggestion && !errors.email && !emailDisposable && (
           <div role="status" aria-live="polite" className="mt-2 font-body text-xs text-amber-300">
             Forse intendevi <strong>{emailSuggestion.suggested}</strong>?{" "}
             <button
@@ -132,8 +144,10 @@ export function EventRegistrationForm({
           type="email"
           autoComplete="email"
           placeholder="Ripeti la tua email"
-          aria-invalid={!!errors.emailConfirmation}
-          aria-describedby={errors.emailConfirmation ? confirmErrorId : undefined}
+          aria-invalid={!!errors.emailConfirmation || !!confirmDisposable}
+          aria-describedby={
+            errors.emailConfirmation || confirmDisposable ? confirmErrorId : undefined
+          }
           className="w-full bg-transparent border-b border-bs-cream/15 px-0 py-2 font-body text-sm text-bs-cream placeholder:text-bs-cream/25 focus:outline-none focus:border-bs-cream/40 transition-colors"
           {...confirmReg}
           onBlur={(e) => {
@@ -141,12 +155,17 @@ export function EventRegistrationForm({
             handleConfirmBlur(e);
           }}
         />
-        {errors.emailConfirmation && (
+        {confirmDisposable && (
+          <p id={confirmErrorId} role="alert" className="mt-1 font-body text-xs text-bs-burgundy">
+            Per cortesia usa un&apos;email personale (Gmail, Outlook, ecc.)
+          </p>
+        )}
+        {errors.emailConfirmation && !confirmDisposable && (
           <p id={confirmErrorId} role="alert" className="mt-1 font-body text-xs text-bs-burgundy">
             {errors.emailConfirmation.message}
           </p>
         )}
-        {confirmSuggestion && !errors.emailConfirmation && (
+        {confirmSuggestion && !errors.emailConfirmation && !confirmDisposable && (
           <div role="status" aria-live="polite" className="mt-2 font-body text-xs text-amber-300">
             Forse intendevi <strong>{confirmSuggestion.suggested}</strong>?{" "}
             <button
