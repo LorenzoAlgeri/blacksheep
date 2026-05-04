@@ -1,7 +1,12 @@
 import { z } from "zod/v4";
 
+export const GENDER_VALUES = ["male", "female"] as const;
+export type Gender = (typeof GENDER_VALUES)[number];
+export const genderSchema = z.enum(GENDER_VALUES);
+
 export const subscribeSchema = z.object({
   email: z.email("Inserisci un'email valida"),
+  gender: genderSchema,
   name: z.string().max(100).optional(),
   website: z.string().optional(), // honeypot: any value allowed, checked in route
 });
@@ -56,6 +61,7 @@ export const eventRegisterSchema = z
     eventId: z.uuid("ID evento non valido"),
     email: z.email("Inserisci un'email valida"),
     emailConfirmation: z.email("Inserisci un'email valida"),
+    gender: genderSchema.optional(), // optional: provided for atomic gender-update+register flow
     website: z.string().optional(), // honeypot
   })
   .refine((d) => d.email.toLowerCase() === d.emailConfirmation.toLowerCase(), {

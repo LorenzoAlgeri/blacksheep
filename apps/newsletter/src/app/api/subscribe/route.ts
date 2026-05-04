@@ -32,7 +32,7 @@ export async function POST(request: NextRequest) {
   }
 
   const email = parsed.data.email.toLowerCase();
-  const { name } = parsed.data;
+  const { name, gender } = parsed.data;
 
   // GDPR: capture consent metadata for audit trail
   const subscribedIp = ip;
@@ -68,6 +68,7 @@ export async function POST(request: NextRequest) {
       {
         email,
         name,
+        gender,
         status: "pending",
         subscribed_ip: subscribedIp,
         subscribed_user_agent: subscribedUserAgent,

@@ -1,6 +1,8 @@
 import { describe, it, expect } from "vitest";
 import {
   subscribeSchema,
+  genderSchema,
+  GENDER_VALUES,
   sendNewsletterSchema,
   scheduleNewsletterSchema,
   eventRegisterSchema,
@@ -9,37 +11,55 @@ import {
   adminEventSchema,
 } from "./validations";
 
+describe("genderSchema", () => {
+  it("GENDER_VALUES contains male and female", () => {
+    expect(GENDER_VALUES).toEqual(["male", "female"]);
+  });
+
+  it("accepts both valid gender values", () => {
+    for (const v of GENDER_VALUES) {
+      expect(genderSchema.safeParse(v).success).toBe(true);
+    }
+  });
+
+  it("rejects an empty string gender", () => {
+    expect(genderSchema.safeParse("").success).toBe(false);
+  });
+
+  it("rejects an arbitrary string gender", () => {
+    expect(genderSchema.safeParse("nonbinary").success).toBe(false);
+  });
+});
+
 describe("subscribeSchema", () => {
-  it("accepts a valid email", () => {
-    const result = subscribeSchema.safeParse({ email: "user@example.com" });
-    expect(result.success).toBe(true);
+  const base = { email: "user@example.com", gender: "female" as const };
+
+  it("accepts a valid email with valid gender", () => {
+    expect(subscribeSchema.safeParse(base).success).toBe(true);
   });
 
   it("rejects an invalid email", () => {
-    const result = subscribeSchema.safeParse({ email: "not-an-email" });
+    const result = subscribeSchema.safeParse({ ...base, email: "not-an-email" });
     expect(result.success).toBe(false);
   });
 
   it("rejects an empty email", () => {
-    const result = subscribeSchema.safeParse({ email: "" });
+    const result = subscribeSchema.safeParse({ ...base, email: "" });
     expect(result.success).toBe(false);
   });
 
   it("rejects email with only spaces", () => {
-    const result = subscribeSchema.safeParse({ email: "   " });
+    const result = subscribeSchema.safeParse({ ...base, email: "   " });
     expect(result.success).toBe(false);
   });
 
   it("accepts email regardless of case", () => {
-    const result = subscribeSchema.safeParse({ email: "User@Example.COM" });
+    const result = subscribeSchema.safeParse({ ...base, email: "User@Example.COM" });
     expect(result.success).toBe(true);
   });
 
   it("accepts email with optional name", () => {
-    const result = subscribeSchema.safeParse({
-      email: "user@example.com",
-      name: "Lorenzo",
-    });
+    const result = subscribeSchema.safeParse({ ...base, name: "Lorenzo" });
     expect(result.success).toBe(true);
     if (result.success) {
       expect(result.data.name).toBe("Lorenzo");
@@ -47,27 +67,34 @@ describe("subscribeSchema", () => {
   });
 
   it("rejects name longer than 100 characters", () => {
-    const result = subscribeSchema.safeParse({
-      email: "user@example.com",
-      name: "a".repeat(101),
-    });
+    const result = subscribeSchema.safeParse({ ...base, name: "a".repeat(101) });
     expect(result.success).toBe(false);
   });
 
   it("allows honeypot field (website) to be empty", () => {
-    const result = subscribeSchema.safeParse({
-      email: "user@example.com",
-      website: "",
-    });
+    const result = subscribeSchema.safeParse({ ...base, website: "" });
     expect(result.success).toBe(true);
   });
 
   it("allows honeypot field (website) with value for schema (checked in route)", () => {
-    const result = subscribeSchema.safeParse({
-      email: "user@example.com",
-      website: "http://spam.com",
-    });
+    const result = subscribeSchema.safeParse({ ...base, website: "http://spam.com" });
     expect(result.success).toBe(true);
+  });
+
+  it("rejects missing gender (required for new signups)", () => {
+    const result = subscribeSchema.safeParse({ email: "user@example.com" });
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects invalid gender value", () => {
+    const result = subscribeSchema.safeParse({ ...base, gender: "nonbinary" });
+    expect(result.success).toBe(false);
+  });
+
+  it("accepts both valid gender values", () => {
+    for (const g of GENDER_VALUES) {
+      expect(subscribeSchema.safeParse({ ...base, gender: g }).success).toBe(true);
+    }
   });
 });
 
@@ -217,6 +244,35 @@ describe("eventRegisterSchema", () => {
       website: "http://spam.com",
     });
     expect(result.success).toBe(true);
+  });
+
+  it("accepts optional valid gender for atomic update+register flow", () => {
+    const result = eventRegisterSchema.safeParse({
+      eventId: validUuid,
+      email: "user@example.com",
+      emailConfirmation: "user@example.com",
+      gender: "female",
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it("accepts missing gender (gender_required handled in route)", () => {
+    const result = eventRegisterSchema.safeParse({
+      eventId: validUuid,
+      email: "user@example.com",
+      emailConfirmation: "user@example.com",
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it("rejects invalid gender value in event register", () => {
+    const result = eventRegisterSchema.safeParse({
+      eventId: validUuid,
+      email: "user@example.com",
+      emailConfirmation: "user@example.com",
+      gender: "nonbinary",
+    });
+    expect(result.success).toBe(false);
   });
 });
 
