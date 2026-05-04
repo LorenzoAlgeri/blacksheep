@@ -93,4 +93,79 @@ describe("EventRegistrationForm", () => {
     expect(emailInput).not.toHaveAttribute("aria-invalid", "true");
     expect(emailInput).not.toHaveAttribute("aria-describedby");
   });
+
+  describe("email typo suggestion", () => {
+    it("shows suggestion after blur with TLD typo", async () => {
+      render(<EventRegistrationForm {...baseProps} />);
+      const emailInput = screen.getByLabelText(/^Email$/i);
+      await userEvent.type(emailInput, "test@gmail.con");
+      fireEvent.blur(emailInput);
+      await waitFor(() => {
+        expect(screen.getByRole("status")).toHaveTextContent(/forse intendevi/i);
+        expect(screen.getByRole("status")).toHaveTextContent("test@gmail.com");
+      });
+    });
+
+    it("shows suggestion after blur with domain typo", async () => {
+      render(<EventRegistrationForm {...baseProps} />);
+      const emailInput = screen.getByLabelText(/^Email$/i);
+      await userEvent.type(emailInput, "test@gmali.com");
+      fireEvent.blur(emailInput);
+      await waitFor(() => {
+        expect(screen.getByRole("status")).toHaveTextContent("test@gmail.com");
+      });
+    });
+
+    it("does not show suggestion for valid email on blur", async () => {
+      render(<EventRegistrationForm {...baseProps} />);
+      const emailInput = screen.getByLabelText(/^Email$/i);
+      await userEvent.type(emailInput, "test@gmail.com");
+      fireEvent.blur(emailInput);
+      await waitFor(() => {
+        expect(screen.queryByRole("status")).toBeNull();
+      });
+    });
+
+    it("clicking Correggi updates the email input value", async () => {
+      render(<EventRegistrationForm {...baseProps} />);
+      const emailInput = screen.getByLabelText(/^Email$/i);
+      await userEvent.type(emailInput, "test@gmail.con");
+      fireEvent.blur(emailInput);
+      await waitFor(() => {
+        expect(screen.getByRole("button", { name: /correggi/i })).toBeInTheDocument();
+      });
+      fireEvent.click(screen.getByRole("button", { name: /correggi/i }));
+      await waitFor(() => {
+        expect(emailInput).toHaveValue("test@gmail.com");
+        expect(screen.queryByRole("status")).toBeNull();
+      });
+    });
+
+    it("suggestion does not block form submission (non-blocking)", async () => {
+      render(<EventRegistrationForm {...baseProps} />);
+      const emailInput = screen.getByLabelText(/^Email$/i);
+      const confirmInput = screen.getByLabelText(/Conferma email/i);
+      await userEvent.type(emailInput, "test@gmail.con");
+      fireEvent.blur(emailInput);
+      await waitFor(() => {
+        expect(screen.getByRole("status")).toBeInTheDocument();
+      });
+      await userEvent.type(confirmInput, "test@gmail.con");
+      fireEvent.click(screen.getByRole("button", { name: /Entra in lista/i }));
+      await waitFor(() => {
+        expect(baseProps.onSubmit).toHaveBeenCalledWith("test@gmail.con", "test@gmail.con");
+      });
+    });
+
+    it("suggestion uses aria-live=polite (not role=alert)", async () => {
+      render(<EventRegistrationForm {...baseProps} />);
+      const emailInput = screen.getByLabelText(/^Email$/i);
+      await userEvent.type(emailInput, "test@gmail.con");
+      fireEvent.blur(emailInput);
+      await waitFor(() => {
+        const status = screen.getByRole("status");
+        expect(status).toHaveAttribute("aria-live", "polite");
+      });
+    });
+  });
 });

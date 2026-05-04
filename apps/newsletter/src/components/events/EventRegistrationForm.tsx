@@ -1,9 +1,10 @@
 "use client";
 
-import { useId } from "react";
+import { useId, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { validateEmail, type EmailValidation } from "@/lib/email-validation";
 
 const formSchema = z
   .object({
@@ -24,6 +25,8 @@ interface EventRegistrationFormProps {
   error: string | null;
 }
 
+type Suggestion = Extract<EmailValidation, { kind: "suggestion" }>;
+
 export function EventRegistrationForm({
   onSubmit,
   isSubmitting,
@@ -33,15 +36,32 @@ export function EventRegistrationForm({
   const confirmErrorId = useId();
   const serverErrorId = useId();
 
+  const [emailSuggestion, setEmailSuggestion] = useState<Suggestion | null>(null);
+  const [confirmSuggestion, setConfirmSuggestion] = useState<Suggestion | null>(null);
+
   const {
     register,
     handleSubmit,
+    setValue,
     formState: { errors },
   } = useForm<FormData>({ resolver: zodResolver(formSchema) });
 
   function onValid(data: FormData) {
     onSubmit(data.email, data.emailConfirmation);
   }
+
+  function handleEmailBlur(e: React.FocusEvent<HTMLInputElement>) {
+    const result = validateEmail(e.target.value);
+    setEmailSuggestion(result.kind === "suggestion" ? result : null);
+  }
+
+  function handleConfirmBlur(e: React.FocusEvent<HTMLInputElement>) {
+    const result = validateEmail(e.target.value);
+    setConfirmSuggestion(result.kind === "suggestion" ? result : null);
+  }
+
+  const emailReg = register("email");
+  const confirmReg = register("emailConfirmation");
 
   return (
     <form onSubmit={handleSubmit(onValid)} className="flex flex-col gap-4" noValidate>
@@ -72,12 +92,31 @@ export function EventRegistrationForm({
           aria-invalid={!!errors.email}
           aria-describedby={errors.email ? emailErrorId : undefined}
           className="w-full bg-transparent border-b border-bs-cream/15 px-0 py-2 font-body text-sm text-bs-cream placeholder:text-bs-cream/25 focus:outline-none focus:border-bs-cream/40 transition-colors"
-          {...register("email")}
+          {...emailReg}
+          onBlur={(e) => {
+            emailReg.onBlur(e);
+            handleEmailBlur(e);
+          }}
         />
         {errors.email && (
           <p id={emailErrorId} role="alert" className="mt-1 font-body text-xs text-bs-burgundy">
             {errors.email.message}
           </p>
+        )}
+        {emailSuggestion && !errors.email && (
+          <div role="status" aria-live="polite" className="mt-2 font-body text-xs text-amber-300">
+            Forse intendevi <strong>{emailSuggestion.suggested}</strong>?{" "}
+            <button
+              type="button"
+              className="underline"
+              onClick={() => {
+                setValue("email", emailSuggestion.suggested, { shouldValidate: true });
+                setEmailSuggestion(null);
+              }}
+            >
+              Correggi
+            </button>
+          </div>
         )}
       </div>
 
@@ -96,12 +135,33 @@ export function EventRegistrationForm({
           aria-invalid={!!errors.emailConfirmation}
           aria-describedby={errors.emailConfirmation ? confirmErrorId : undefined}
           className="w-full bg-transparent border-b border-bs-cream/15 px-0 py-2 font-body text-sm text-bs-cream placeholder:text-bs-cream/25 focus:outline-none focus:border-bs-cream/40 transition-colors"
-          {...register("emailConfirmation")}
+          {...confirmReg}
+          onBlur={(e) => {
+            confirmReg.onBlur(e);
+            handleConfirmBlur(e);
+          }}
         />
         {errors.emailConfirmation && (
           <p id={confirmErrorId} role="alert" className="mt-1 font-body text-xs text-bs-burgundy">
             {errors.emailConfirmation.message}
           </p>
+        )}
+        {confirmSuggestion && !errors.emailConfirmation && (
+          <div role="status" aria-live="polite" className="mt-2 font-body text-xs text-amber-300">
+            Forse intendevi <strong>{confirmSuggestion.suggested}</strong>?{" "}
+            <button
+              type="button"
+              className="underline"
+              onClick={() => {
+                setValue("emailConfirmation", confirmSuggestion.suggested, {
+                  shouldValidate: true,
+                });
+                setConfirmSuggestion(null);
+              }}
+            >
+              Correggi
+            </button>
+          </div>
         )}
       </div>
 
