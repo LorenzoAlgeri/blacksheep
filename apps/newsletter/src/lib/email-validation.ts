@@ -1,7 +1,84 @@
 export type EmailValidation =
   | { kind: "valid" }
   | { kind: "invalid_format" }
-  | { kind: "suggestion"; original: string; suggested: string; reason: "tld" | "domain" };
+  | { kind: "suggestion"; original: string; suggested: string; reason: "tld" | "domain" }
+  | { kind: "disposable"; domain: string };
+
+// Curated list of known disposable/temporary email providers (2024-2025)
+// ~70 domains — sweet spot for accuracy vs maintenance burden
+const DISPOSABLE_DOMAINS = new Set([
+  "mailinator.com",
+  "yopmail.com",
+  "yopmail.fr",
+  "10minutemail.com",
+  "10minutemail.net",
+  "guerrillamail.com",
+  "guerrillamail.info",
+  "guerrillamail.biz",
+  "guerrillamail.de",
+  "guerrillamail.net",
+  "guerrillamail.org",
+  "guerrillamailblock.com",
+  "tempmail.io",
+  "temp-mail.org",
+  "temp-mail.io",
+  "throwaway.email",
+  "throwam.com",
+  "maildrop.cc",
+  "getnada.com",
+  "sharklasers.com",
+  "spam4.me",
+  "trashmail.com",
+  "trashmail.me",
+  "trashmail.net",
+  "trashmail.org",
+  "trashmail.at",
+  "trashmail.io",
+  "fakeinbox.com",
+  "tempinbox.com",
+  "mintemail.com",
+  "mohmal.com",
+  "mailnull.com",
+  "spamgourmet.com",
+  "spamgourmet.net",
+  "spamgourmet.org",
+  "dispostable.com",
+  "discard.email",
+  "discardmail.com",
+  "discardmail.de",
+  "tempail.com",
+  "tempr.email",
+  "mailnesia.com",
+  "mailscrap.com",
+  "spamfree24.org",
+  "tmpmail.net",
+  "tmpmail.org",
+  "mail-temp.com",
+  "tempmailo.com",
+  "fakemail.net",
+  "getairmail.com",
+  "mailboxy.fun",
+  "mailtemp.info",
+  "inboxbear.com",
+  "spambox.io",
+  "dropjar.com",
+  "damnthespam.com",
+  "trbvm.com",
+  "pookmail.com",
+  "dontreg.com",
+  "sofort-mail.de",
+  "mytemp.email",
+  "lroid.com",
+  "spam.la",
+  "grr.la",
+  "cool.fr.nf",
+  "jetable.fr.nf",
+  "moncourrier.fr.nf",
+  "nospam.ze.tc",
+  "mailnow.top",
+  "tempmail.net",
+  "spamherelots.com",
+]);
 
 const COMMON_DOMAINS = [
   "gmail.com",
@@ -54,6 +131,11 @@ export function validateEmail(email: string): EmailValidation {
   const atIdx = trimmed.lastIndexOf("@");
   const local = trimmed.slice(0, atIdx).toLowerCase();
   const domain = trimmed.slice(atIdx + 1).toLowerCase();
+
+  // Disposable check takes priority over suggestion
+  if (DISPOSABLE_DOMAINS.has(domain)) {
+    return { kind: "disposable", domain };
+  }
 
   if (COMMON_DOMAINS.includes(domain as (typeof COMMON_DOMAINS)[number])) {
     return { kind: "valid" };

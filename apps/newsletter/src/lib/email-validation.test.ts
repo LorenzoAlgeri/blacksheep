@@ -121,3 +121,57 @@ describe("validateEmail — preserves original casing in suggestion", () => {
     });
   });
 });
+
+describe("validateEmail — disposable email blocking", () => {
+  it("returns disposable for mailinator.com", () => {
+    const result = validateEmail("user@mailinator.com");
+    expect(result).toEqual({ kind: "disposable", domain: "mailinator.com" });
+  });
+
+  it("returns disposable for yopmail.com", () => {
+    const result = validateEmail("hello@yopmail.com");
+    expect(result).toEqual({ kind: "disposable", domain: "yopmail.com" });
+  });
+
+  it("returns disposable for 10minutemail.com", () => {
+    const result = validateEmail("temp@10minutemail.com");
+    expect(result).toEqual({ kind: "disposable", domain: "10minutemail.com" });
+  });
+
+  it("returns disposable for guerrillamail.com", () => {
+    const result = validateEmail("anon@guerrillamail.com");
+    expect(result).toEqual({ kind: "disposable", domain: "guerrillamail.com" });
+  });
+
+  it("returns disposable for trashmail.com", () => {
+    const result = validateEmail("test@trashmail.com");
+    expect(result).toEqual({ kind: "disposable", domain: "trashmail.com" });
+  });
+
+  it("returns disposable for temp-mail.org", () => {
+    const result = validateEmail("test@temp-mail.org");
+    expect(result).toEqual({ kind: "disposable", domain: "temp-mail.org" });
+  });
+
+  it("returns disposable for maildrop.cc", () => {
+    const result = validateEmail("anon@maildrop.cc");
+    expect(result).toEqual({ kind: "disposable", domain: "maildrop.cc" });
+  });
+
+  it("does NOT flag gmail.com as disposable", () => {
+    const result = validateEmail("real@gmail.com");
+    expect(result.kind).not.toBe("disposable");
+  });
+
+  it("does NOT flag hotmail.com as disposable", () => {
+    const result = validateEmail("real@hotmail.com");
+    expect(result.kind).not.toBe("disposable");
+  });
+
+  it("disposable check takes priority over suggestion check", () => {
+    // mailinator.com is disposable; if checked after suggestion it might try to match
+    const result = validateEmail("user@mailinator.com");
+    expect(result.kind).toBe("disposable");
+    expect(result).not.toHaveProperty("suggested");
+  });
+});
