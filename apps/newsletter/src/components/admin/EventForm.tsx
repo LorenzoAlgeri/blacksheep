@@ -265,14 +265,14 @@ export function EventForm({ mode, defaultValues, eventId }: EventFormProps) {
           {mode === "create" ? "CREA EVENTO" : "SALVA MODIFICHE"}
         </button>
         {mode === "edit" && eventId && (
-          <a
+          <Link
             href={`/admin/events/${eventId}/preview`}
             target="_blank"
             rel="noopener noreferrer"
             className="font-body text-xs text-bs-cream/40 hover:text-bs-cream transition-colors"
           >
             ANTEPRIMA ↗
-          </a>
+          </Link>
         )}
         <Link
           href="/admin/events"
