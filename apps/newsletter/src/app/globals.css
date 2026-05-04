@@ -443,17 +443,19 @@ dialog::backdrop {
   }
 }
 
+/* CTA stays opacity:1 by default; animation only enhances with a scale pop.
+   This guarantees the button is reachable even when scroll-driven animation
+   is in its 'before-range' state (see issue: cover 14-20% range was leaving
+   the CTA at opacity:0 when its small element-relative view-timeline had
+   not yet progressed past the start). */
 @keyframes bs-cta-pop {
   0% {
-    opacity: 0;
     transform: scale(0.94);
   }
   60% {
-    opacity: 1;
     transform: scale(1.025);
   }
   100% {
-    opacity: 1;
     transform: scale(1);
   }
 }
