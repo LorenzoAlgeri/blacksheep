@@ -4,6 +4,7 @@ import { getSupabase } from "@/lib/supabase";
 import { getResend } from "@/lib/resend";
 import { rateLimitEventRegister } from "@/lib/rate-limit";
 import { isAllowedOrigin } from "@/lib/origin-check";
+import { getClientIp } from "@/lib/client-ip";
 import { renderEventRegistrationEmail } from "@/lib/emails/event-registration";
 
 /**
@@ -27,7 +28,7 @@ export async function POST(request: NextRequest) {
     return Response.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  const ip = request.headers.get("x-forwarded-for") ?? "unknown";
+  const ip = getClientIp(request);
   if (!rateLimitEventRegister(ip)) {
     return Response.json({ error: "Troppi tentativi. Riprova tra un minuto." }, { status: 429 });
   }

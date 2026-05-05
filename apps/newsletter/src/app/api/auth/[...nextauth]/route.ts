@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { handlers } from "@/lib/auth";
 import { rateLimitLogin } from "@/lib/rate-limit";
+import { getClientIp } from "@/lib/client-ip";
 
 export const { GET } = handlers;
 
@@ -14,7 +15,7 @@ export async function POST(
     params.nextauth?.includes("callback") && params.nextauth?.includes("credentials");
 
   if (isSignIn) {
-    const ip = request.headers.get("x-forwarded-for") ?? "unknown";
+    const ip = getClientIp(request);
     if (!rateLimitLogin(ip)) {
       return Response.json(
         { error: "Troppi tentativi di accesso. Riprova tra 15 minuti." },

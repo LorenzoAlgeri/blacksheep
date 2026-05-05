@@ -3,12 +3,13 @@ import { subscribeSchema } from "@/lib/validations";
 import { getSupabase } from "@/lib/supabase";
 import { getResend } from "@/lib/resend";
 import { rateLimit } from "@/lib/rate-limit";
+import { getClientIp } from "@/lib/client-ip";
 import { renderConfirmationEmail } from "@/lib/emails/confirmation";
 
 export async function POST(request: NextRequest) {
   const supabase = getSupabase();
-  // Rate limit by IP
-  const ip = request.headers.get("x-forwarded-for") ?? "unknown";
+  // Rate limit by IP — getClientIp normalises proxy chains (SEC-008).
+  const ip = getClientIp(request);
   if (!rateLimit(ip)) {
     return Response.json({ error: "Troppi tentativi. Riprova tra un minuto." }, { status: 429 });
   }

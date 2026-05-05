@@ -14,8 +14,10 @@ describe("GDPR consent trail", () => {
     expect(routeSource).toContain("subscribed_user_agent");
     expect(routeSource).toContain("consent_version");
 
-    // Verify IP is extracted from x-forwarded-for
-    expect(routeSource).toContain("x-forwarded-for");
+    // Verify IP is extracted via the canonical helper (SEC-008 refactor).
+    // Direct x-forwarded-for parsing was replaced with getClientIp() to
+    // canonicalise proxy chains and IPv4-mapped IPv6 forms.
+    expect(routeSource).toMatch(/getClientIp|x-forwarded-for|x-real-ip/);
 
     // Verify User-Agent is captured from headers
     expect(routeSource).toContain("user-agent");

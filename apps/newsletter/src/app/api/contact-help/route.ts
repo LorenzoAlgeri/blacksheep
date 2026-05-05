@@ -4,6 +4,7 @@ import { getSupabase } from "@/lib/supabase";
 import { getResend } from "@/lib/resend";
 import { rateLimitContactHelp } from "@/lib/rate-limit";
 import { isAllowedOrigin } from "@/lib/origin-check";
+import { getClientIp } from "@/lib/client-ip";
 import { CONTACT_HELP_RECIPIENTS, renderContactHelpEmail } from "@/lib/contact-help";
 
 /**
@@ -23,7 +24,7 @@ export async function POST(request: NextRequest) {
     return Response.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  const ip = request.headers.get("x-forwarded-for") ?? "unknown";
+  const ip = getClientIp(request);
   if (!rateLimitContactHelp(ip)) {
     return Response.json({ error: "Troppi tentativi. Riprova più tardi." }, { status: 429 });
   }

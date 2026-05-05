@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { z } from "zod/v4";
 import { getSupabase } from "@/lib/supabase";
+import { getClientIp } from "@/lib/client-ip";
 
 /**
  * GET /api/events/register-from-email — token-based registration trigger
@@ -75,7 +76,7 @@ export async function GET(request: NextRequest) {
   }
 
   // 3. INSERT registration with source='email_link'
-  const ip = request.headers.get("x-forwarded-for") ?? "unknown";
+  const ip = getClientIp(request);
   const userAgent = request.headers.get("user-agent") ?? "unknown";
 
   const { error: insertError } = await supabase.from("list_event_registrations").insert({
