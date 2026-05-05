@@ -1,7 +1,7 @@
 import { headers } from "next/headers";
 import { SubscribeForm } from "@/components/SubscribeForm";
-import { LandingMotionLazy as LandingMotion } from "@/components/LandingMotionLazy";
-import { MascotteIntroLazy } from "@/components/MascotteIntroLazy";
+import { LandingMotion } from "@/components/LandingMotion";
+import { MascotteIntro } from "@/components/MascotteIntro";
 import { EventsList } from "@/components/events/EventsList";
 import { EventsListGate } from "@/components/events/EventsListGate";
 import { fetchActiveEvents } from "@/lib/events/fetchActiveEvents";
@@ -45,7 +45,7 @@ export default async function Home() {
   const [config, events] = await Promise.all([getSiteConfig(), getEvents()]);
   return (
     <>
-      <MascotteIntroLazy />
+      <MascotteIntro />
       <LandingMotion>
         <main className="relative z-10 flex flex-1 flex-col items-center justify-center px-6 space-main-y">
           {/* 1. Logo — brand hero */}
