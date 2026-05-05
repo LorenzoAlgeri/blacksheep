@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { auth } from "@/lib/auth";
 import { getSupabase } from "@/lib/supabase";
+import { getFollowUpConstants } from "@/lib/follow-up";
 
 const DEFAULT_LIMIT = 100;
 const MAX_LIMIT = 500;
@@ -176,12 +177,36 @@ export async function GET(request: NextRequest) {
       return Response.json({ error: "Errore database", code: "DB_ERROR" }, { status: 500 });
     }
 
+    let followUpReadyCount = 0;
+    if (followUpAvailable) {
+      const { intervalHours, maxAttempts } = getFollowUpConstants();
+      const cutoff = new Date(Date.now() - intervalHours * 60 * 60 * 1000).toISOString();
+      const [neverSent, sentBefore] = await Promise.all([
+        supabase
+          .from("subscribers")
+          .select("id", { count: "exact", head: true })
+          .eq("status", "pending")
+          .lt("follow_up_count", maxAttempts)
+          .is("follow_up_last_sent_at", null)
+          .lte("created_at", cutoff),
+        supabase
+          .from("subscribers")
+          .select("id", { count: "exact", head: true })
+          .eq("status", "pending")
+          .lt("follow_up_count", maxAttempts)
+          .not("follow_up_last_sent_at", "is", null)
+          .lte("follow_up_last_sent_at", cutoff),
+      ]);
+      followUpReadyCount = (neverSent.count ?? 0) + (sentBefore.count ?? 0);
+    }
+
     return Response.json({
       subscribers,
       total: count ?? 0,
       filteredTotal: filteredTotal ?? 0,
       statusCounts,
       followUpAvailable,
+      followUpReadyCount,
       limit,
       offset,
       status,

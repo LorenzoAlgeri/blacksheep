@@ -86,6 +86,7 @@ export function SubscriberTable() {
   const [totalSubscribers, setTotalSubscribers] = useState(0);
   const [filteredTotal, setFilteredTotal] = useState(0);
   const [followUpAvailable, setFollowUpAvailable] = useState(true);
+  const [followUpReadyCount, setFollowUpReadyCount] = useState(0);
   const [statusCounts, setStatusCounts] = useState<Record<Tab, number>>({
     confirmed: 0,
     pending: 0,
@@ -120,6 +121,9 @@ export function SubscriberTable() {
         setTotalSubscribers(typeof data.total === "number" ? data.total : 0);
         setFilteredTotal(typeof data.filteredTotal === "number" ? data.filteredTotal : 0);
         setFollowUpAvailable(data.followUpAvailable !== false);
+        setFollowUpReadyCount(
+          typeof data.followUpReadyCount === "number" ? data.followUpReadyCount : 0,
+        );
         setStatusCounts({
           confirmed: Number(data.statusCounts?.confirmed ?? 0),
           pending: Number(data.statusCounts?.pending ?? 0),
@@ -232,7 +236,6 @@ export function SubscriberTable() {
   const confirmed = statusCounts.confirmed;
   const pending = statusCounts.pending;
   const blocked = statusCounts.blocked;
-  const eligiblePending = pendingSubscribers.filter(isEligibleForFollowUp).length;
   const exhaustedPending = pendingSubscribers.filter(
     (subscriber) => getFollowUpCount(subscriber) >= FOLLOW_UP_MAX_ATTEMPTS,
   ).length;
@@ -284,8 +287,11 @@ export function SubscriberTable() {
         </div>
         <div className="bg-bs-cream/5 rounded-lg p-4 text-center">
           <p className="text-bs-green mx-auto mb-1 text-lg">{"\u26a1"}</p>
-          <p className="font-[family-name:var(--font-brand)] text-2xl text-bs-cream">
-            {followUpAvailable ? eligiblePending : "-"}
+          <p
+            data-testid="followup-ready-count"
+            className="font-[family-name:var(--font-brand)] text-2xl text-bs-cream"
+          >
+            {followUpAvailable ? followUpReadyCount : "-"}
           </p>
           <p className="font-body text-xs text-bs-cream/40">Follow-up pronti</p>
         </div>

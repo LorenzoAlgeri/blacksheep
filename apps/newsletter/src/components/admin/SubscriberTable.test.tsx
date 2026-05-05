@@ -58,6 +58,7 @@ function defaultFetchImpl(input: string | URL | Request) {
       filteredTotal: filtered.length,
       statusCounts: statusCountsFor(mockSubscribers),
       followUpAvailable: true,
+      followUpReadyCount: 0,
     }),
   } as Response);
 }
@@ -165,5 +166,35 @@ describe("SubscriberTable", () => {
     await waitFor(() => {
       expect(screen.getByText("Nessun iscritto in questa sezione.")).toBeInTheDocument();
     });
+  });
+
+  it("shows followUpReadyCount from API on confirmed tab — regression bug #1", async () => {
+    // API returns followUpReadyCount: 5 regardless of active tab
+    mockFetch.mockImplementation((input: string | URL | Request) => {
+      const url = typeof input === "string" ? input : input.toString();
+      const match = url.match(/[?&]status=([^&]+)/);
+      const status = match ? match[1] : null;
+      const filtered = status
+        ? mockSubscribers.filter((s) => s.status === status)
+        : mockSubscribers;
+      return Promise.resolve({
+        ok: true,
+        json: async () => ({
+          subscribers: filtered,
+          total: mockSubscribers.length,
+          filteredTotal: filtered.length,
+          statusCounts: statusCountsFor(mockSubscribers),
+          followUpAvailable: true,
+          followUpReadyCount: 5,
+        }),
+      } as Response);
+    });
+
+    render(<SubscriberTable />);
+    // Default tab is "confirmed" — confirmed subscribers have no pending rows
+    // Old bug: eligiblePending computed from confirmed tab's data → always 0
+    // Fix: followUpReadyCount comes from API and stays 5
+    await waitFor(() => screen.getByTestId("followup-ready-count"));
+    expect(screen.getByTestId("followup-ready-count").textContent).toBe("5");
   });
 });
