@@ -191,5 +191,19 @@ describe("GET /api/admin/events/[id]/registrations/export.csv", () => {
       expect(text).toContain("Mario=Rossi");
       expect(text).not.toContain("'Mario=Rossi");
     });
+
+    it("prefixes leading LF [SEC-002]", async () => {
+      const text = await runWithName("\n=cmd");
+      // LF triggers RFC 4180 quoting; the apostrophe must precede the LF.
+      expect(text).toContain('"\'\n=cmd"');
+    });
+
+    it("prefixes leading '=' AND quotes when the value also contains a comma [SEC-002]", async () => {
+      // Combined defence-in-depth case: both the formula prefix and the
+      // RFC 4180 quoting must apply, and the apostrophe must end up
+      // INSIDE the surrounding quotes.
+      const text = await runWithName("=A,B");
+      expect(text).toContain('"\'=A,B"');
+    });
   });
 });

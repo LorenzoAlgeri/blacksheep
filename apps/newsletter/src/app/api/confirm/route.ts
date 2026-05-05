@@ -24,9 +24,13 @@ export async function GET(request: NextRequest) {
     return Response.redirect(new URL("/newsletter/confirm?already=true", request.url));
   }
 
-  // [SEC-001] Blocked subscribers must NOT be able to bypass an admin block by
-  // clicking a stale confirm link. Treat as invalid token (anti-enumeration).
-  if (subscriber.status === "blocked") {
+  // [SEC-001] Whitelist confirm path. Only 'pending' subscribers may flip
+  // to 'confirmed'. Any other state (blocked, unsubscribed, an unknown
+  // future enum, NULL) is treated as an invalid token so that:
+  //   - admin block decisions are preserved (blocked → not re-confirmed),
+  //   - unsubscribed users don't silently re-confirm via a stale link,
+  //   - any future status added to the schema fails closed by default.
+  if (subscriber.status !== "pending") {
     return Response.redirect(new URL("/newsletter/?error=invalid", request.url));
   }
 

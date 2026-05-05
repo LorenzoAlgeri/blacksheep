@@ -93,6 +93,23 @@ describe("GET /api/confirm", () => {
     expect(state.updateSpy).not.toHaveBeenCalled();
   });
 
+  it("does NOT re-confirm an unsubscribed subscriber [SEC-001 whitelist]", async () => {
+    // Whitelist invariant: only `pending` may transition to `confirmed`.
+    state.subscriberResult = { data: { id: "s1", status: "unsubscribed" }, error: null };
+    const res = await GET(makeReq(VALID_TOKEN));
+    expect(locationOf(res)).toContain("/newsletter/?error=invalid");
+    expect(state.updateSpy).not.toHaveBeenCalled();
+  });
+
+  it("rejects unknown future statuses (fail-closed) [SEC-001 whitelist]", async () => {
+    // If a new status enum value lands in the schema before this code is
+    // updated, the confirm path must refuse rather than silently accept.
+    state.subscriberResult = { data: { id: "s1", status: "quarantined" }, error: null };
+    const res = await GET(makeReq(VALID_TOKEN));
+    expect(locationOf(res)).toContain("/newsletter/?error=invalid");
+    expect(state.updateSpy).not.toHaveBeenCalled();
+  });
+
   it("confirms a pending subscriber and redirects to /newsletter/confirm", async () => {
     state.subscriberResult = { data: { id: "s1", status: "pending" }, error: null };
     const res = await GET(makeReq(VALID_TOKEN));

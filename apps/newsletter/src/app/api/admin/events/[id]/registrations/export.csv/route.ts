@@ -31,7 +31,9 @@ interface RegistrationRow {
 function csvField(value: string | null | undefined): string {
   if (value == null) return "";
   let str = String(value);
-  if (/^[=+\-@\t\r]/.test(str)) {
+  // Some spreadsheet importers strip leading whitespace before formula
+  // detection, so LF is included alongside TAB and CR.
+  if (/^[=+\-@\t\r\n]/.test(str)) {
     str = `'${str}`;
   }
   if (/[",\r\n]/.test(str)) {
