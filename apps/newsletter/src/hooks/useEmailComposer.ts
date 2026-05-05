@@ -22,6 +22,9 @@ export interface EditorState {
   showCta: boolean;
   ctaText: string;
   ctaLink: string;
+  showEventCta: boolean;
+  eventCtaUrl: string;
+  eventCtaTitle: string;
   palette: EmailPalette;
 }
 
@@ -56,6 +59,9 @@ export function freshState(): EditorState {
     showCta: true,
     ctaText: DEFAULTS.ctaText,
     ctaLink: DEFAULTS.ctaLink,
+    showEventCta: false,
+    eventCtaUrl: "",
+    eventCtaTitle: "",
     palette: PALETTE_PRESETS[0].palette,
   };
 }

@@ -28,6 +28,12 @@ export interface EmailTemplateData {
   showCta: boolean;
   ctaText: string;
   ctaLink: string;
+  // Event registration CTA — URL must contain {{TOKEN}} placeholder for per-recipient substitution.
+  // NOT sanitized via sanitizeUrl (which would percent-encode the braces).
+  // Safe: eventCtaUrl is always built by buildEventRegistrationUrl, never raw user input.
+  showEventCta?: boolean;
+  eventCtaUrl?: string;
+  eventCtaTitle?: string;
   unsubscribeUrl: string;
   privacyUrl?: string;
   palette: EmailPalette;
@@ -134,6 +140,15 @@ export function buildEmailHtml(data: EmailTemplateData): string {
   </div>`
     : "";
 
+  // Event registration CTA: URL is used as-is (not sanitized) so {{TOKEN}} survives for per-recipient substitution.
+  const eventCtaBlock =
+    data.showEventCta && data.eventCtaUrl?.startsWith("http") && data.eventCtaTitle
+      ? `
+  <div style="padding:32px 24px 8px;text-align:center;">
+    <a href="${data.eventCtaUrl}" style="display:inline-block;background:${p.accent};color:${p.bg};font-family:'Arial Black',sans-serif;font-size:13px;letter-spacing:0.15em;padding:14px 32px;text-decoration:none;">${escapeHtml(data.eventCtaTitle)}</a>
+  </div>`
+      : "";
+
   const unsubscribeLink = data.unsubscribeUrl
     ? `<br><a href="${data.unsubscribeUrl}" style="color:${hexAlpha(p.text, 0.5)};text-decoration:underline;">Disiscriviti</a> &middot; <a href="${data.privacyUrl ?? "#"}" style="color:${hexAlpha(p.text, 0.5)};text-decoration:underline;">Privacy Policy</a>`
     : "{{UNSUB}}";
@@ -173,6 +188,8 @@ export function buildEmailHtml(data: EmailTemplateData): string {
   ${photoBlock}
 
   ${eventsBlock}
+
+  ${eventCtaBlock}
 
   ${ctaBlock}
 

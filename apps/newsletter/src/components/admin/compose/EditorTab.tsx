@@ -48,6 +48,7 @@ export function EditorTab({
   // even after the textarea loses focus when the picker button is clicked.
   const [cursorPos, setCursorPos] = useState(0);
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [pickerMode, setPickerMode] = useState<"link" | "button">("link");
   const bodyRef = useRef<HTMLTextAreaElement>(null);
 
   function handleBodyCursorChange(e: SyntheticEvent<HTMLTextAreaElement>) {
@@ -55,6 +56,14 @@ export function EditorTab({
   }
 
   function handleEventSelect(event: PickableEvent) {
+    if (pickerMode === "button") {
+      set("eventCtaUrl", buildEventRegistrationUrl(event));
+      set("showEventCta", true);
+      if (!state.eventCtaTitle) {
+        set("eventCtaTitle", "ISCRIVITI ALLA LISTA");
+      }
+      return;
+    }
     const url = buildEventRegistrationUrl(event);
     const newBody = insertAtCursor(state.body, url, cursorPos);
     set("body", newBody);
@@ -131,7 +140,10 @@ export function EditorTab({
             <div className="flex gap-1.5">
               <button
                 type="button"
-                onClick={() => setPickerOpen(true)}
+                onClick={() => {
+                  setPickerMode("link");
+                  setPickerOpen(true);
+                }}
                 title="Inserisce l'URL di registrazione dell'evento alla posizione del cursore"
                 className="flex items-center gap-1 font-[family-name:var(--font-brand)] text-[9px] tracking-[0.1em] text-bs-cream/40 hover:text-bs-cream/70 border border-bs-cream/10 hover:border-bs-cream/25 px-2 py-1 rounded transition-colors cursor-pointer"
               >
@@ -305,6 +317,70 @@ export function EditorTab({
                   <Plus size={14} /> AGGIUNGI EVENTO
                 </button>
               )}
+            </div>
+          )}
+        </div>
+
+        <Divider />
+
+        {/* Bottone iscrizione evento */}
+        <div className="flex flex-col gap-3">
+          <label className="flex items-center gap-3 cursor-pointer">
+            <Toggle checked={state.showEventCta} onChange={(v) => set("showEventCta", v)} />
+            <span className={labelClass + " mb-0"}>Includi bottone iscrizione evento</span>
+          </label>
+          {state.showEventCta && (
+            <div className="flex flex-col gap-3 pl-1 border-l-2 border-bs-cream/10 ml-2">
+              <div className="pl-3">
+                {state.eventCtaUrl ? (
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="font-body text-[11px] text-bs-cream/40 truncate flex-1">
+                      {decodeURIComponent(
+                        state.eventCtaUrl.split("event_slug=")[1] ?? state.eventCtaUrl,
+                      )}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        set("eventCtaUrl", "");
+                        set("showEventCta", false);
+                      }}
+                      title="Rimuovi bottone evento"
+                      className="text-bs-cream/25 hover:text-bs-cream/60 transition-colors cursor-pointer flex-shrink-0"
+                    >
+                      <X size={12} />
+                    </button>
+                  </div>
+                ) : (
+                  <p className="font-body text-xs text-bs-cream/30 mb-2">
+                    Nessun evento selezionato
+                  </p>
+                )}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setPickerMode("button");
+                    setPickerOpen(true);
+                  }}
+                  className="flex items-center gap-1 font-[family-name:var(--font-brand)] text-[9px] tracking-[0.1em] text-bs-cream/40 hover:text-bs-cream/70 border border-bs-cream/10 hover:border-bs-cream/25 px-2 py-1 rounded transition-colors cursor-pointer"
+                >
+                  <Link2 size={10} aria-hidden="true" />
+                  {state.eventCtaUrl ? "CAMBIA EVENTO" : "SCEGLI EVENTO"}
+                </button>
+              </div>
+              <div className="pl-3">
+                <label htmlFor="nl-event-cta-title" className={labelClass}>
+                  Testo bottone
+                </label>
+                <input
+                  id="nl-event-cta-title"
+                  type="text"
+                  value={state.eventCtaTitle}
+                  onChange={(e) => set("eventCtaTitle", e.target.value)}
+                  placeholder="ISCRIVITI ALLA LISTA"
+                  className={inputClass}
+                />
+              </div>
             </div>
           )}
         </div>
