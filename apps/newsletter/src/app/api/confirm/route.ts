@@ -24,6 +24,12 @@ export async function GET(request: NextRequest) {
     return Response.redirect(new URL("/newsletter/confirm?already=true", request.url));
   }
 
+  // [SEC-001] Blocked subscribers must NOT be able to bypass an admin block by
+  // clicking a stale confirm link. Treat as invalid token (anti-enumeration).
+  if (subscriber.status === "blocked") {
+    return Response.redirect(new URL("/newsletter/?error=invalid", request.url));
+  }
+
   const { error: updateError } = await supabase
     .from("subscribers")
     .update({ status: "confirmed", confirmed_at: new Date().toISOString() })
