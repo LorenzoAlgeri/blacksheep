@@ -163,15 +163,15 @@ describe("BrandedDateTimePicker — time spinners", () => {
     render(<BrandedDateTimePicker value="2026-01-15T10:30" onChange={() => {}} />);
     await user.click(screen.getByRole("button", { name: /apri selettore data/i }));
     await user.click(screen.getByRole("button", { name: /aumenta ore/i }));
-    expect(screen.getByTestId("bdtp-hour-display")).toHaveTextContent("11");
+    expect(screen.getByTestId("bdtp-hour-display")).toHaveValue("11");
   });
 
-  it("decrements minute by 5 with -5 button", async () => {
+  it("decrements minute by 1 with button", async () => {
     const user = userEvent.setup();
     render(<BrandedDateTimePicker value="2026-01-15T10:30" onChange={() => {}} />);
     await user.click(screen.getByRole("button", { name: /apri selettore data/i }));
     await user.click(screen.getByRole("button", { name: /diminuisci minuti/i }));
-    expect(screen.getByTestId("bdtp-minute-display")).toHaveTextContent("25");
+    expect(screen.getByTestId("bdtp-minute-display")).toHaveValue("29");
   });
 
   it("hour wraps from 23 to 00", async () => {
@@ -179,7 +179,7 @@ describe("BrandedDateTimePicker — time spinners", () => {
     render(<BrandedDateTimePicker value="2026-01-15T23:00" onChange={() => {}} />);
     await user.click(screen.getByRole("button", { name: /apri selettore data/i }));
     await user.click(screen.getByRole("button", { name: /aumenta ore/i }));
-    expect(screen.getByTestId("bdtp-hour-display")).toHaveTextContent("00");
+    expect(screen.getByTestId("bdtp-hour-display")).toHaveValue("00");
   });
 
   it("hour wraps from 00 to 23 on decrement", async () => {
@@ -187,15 +187,42 @@ describe("BrandedDateTimePicker — time spinners", () => {
     render(<BrandedDateTimePicker value="2026-01-15T00:00" onChange={() => {}} />);
     await user.click(screen.getByRole("button", { name: /apri selettore data/i }));
     await user.click(screen.getByRole("button", { name: /diminuisci ore/i }));
-    expect(screen.getByTestId("bdtp-hour-display")).toHaveTextContent("23");
+    expect(screen.getByTestId("bdtp-hour-display")).toHaveValue("23");
   });
 
-  it("minute wraps from 00 to 55 on decrement", async () => {
+  it("minute wraps from 00 to 59 on decrement", async () => {
     const user = userEvent.setup();
     render(<BrandedDateTimePicker value="2026-01-15T10:00" onChange={() => {}} />);
     await user.click(screen.getByRole("button", { name: /apri selettore data/i }));
     await user.click(screen.getByRole("button", { name: /diminuisci minuti/i }));
-    expect(screen.getByTestId("bdtp-minute-display")).toHaveTextContent("55");
+    expect(screen.getByTestId("bdtp-minute-display")).toHaveValue("59");
+  });
+
+  // Note: we use fireEvent.change here instead of user.type because user-event v14
+  // does not reliably flush React 19 state updates between keystrokes in jsdom for
+  // controlled inputs, producing flaky intermediate snapshots. fireEvent.change sets
+  // the final value in one shot — equivalent to a paste/programmatic update — which
+  // is the only behaviour we actually need to verify here. The interactive
+  // keystroke-by-keystroke path is exercised by the Playwright visual smoke spec
+  // (e2e/admin-event-picker.spec.ts).
+  it("allows typing a new hour via keyboard input", async () => {
+    const user = userEvent.setup();
+    render(<BrandedDateTimePicker value="2026-01-15T10:30" onChange={() => {}} />);
+    await user.click(screen.getByRole("button", { name: /apri selettore data/i }));
+    const hourInput = screen.getByRole("textbox", { name: /ore/i });
+    fireEvent.change(hourInput, { target: { value: "22" } });
+    fireEvent.blur(hourInput);
+    expect(screen.getByTestId("bdtp-hour-display")).toHaveValue("22");
+  });
+
+  it("allows typing a new minute via keyboard input", async () => {
+    const user = userEvent.setup();
+    render(<BrandedDateTimePicker value="2026-01-15T10:30" onChange={() => {}} />);
+    await user.click(screen.getByRole("button", { name: /apri selettore data/i }));
+    const minuteInput = screen.getByRole("textbox", { name: /minuti/i });
+    fireEvent.change(minuteInput, { target: { value: "45" } });
+    fireEvent.blur(minuteInput);
+    expect(screen.getByTestId("bdtp-minute-display")).toHaveValue("45");
   });
 
   it("selecting a day preserves the previously chosen time", async () => {

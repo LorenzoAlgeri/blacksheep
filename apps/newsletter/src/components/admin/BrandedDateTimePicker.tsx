@@ -16,7 +16,14 @@ interface BrandedDateTimePickerProps {
 }
 
 const WEEKDAYS_IT = ["LUN", "MAR", "MER", "GIO", "VEN", "SAB", "DOM"];
-const MINUTE_STEP = 5;
+
+/** Returns midnight today — used when no value is set, so the picker
+ * doesn't leak the current clock time as a default. */
+function defaultSeed(): Date {
+  const d = new Date();
+  d.setHours(0, 0, 0, 0);
+  return d;
+}
 
 const triggerWeekdayFmt = new Intl.DateTimeFormat("it-IT", { weekday: "short" });
 const triggerMonthFmt = new Intl.DateTimeFormat("it-IT", { month: "short" });
@@ -95,14 +102,14 @@ export function BrandedDateTimePicker({
   const triggerRef = useRef<HTMLButtonElement>(null);
 
   const [open, setOpen] = useState(false);
-  const [draft, setDraft] = useState<Date>(() => parseLocal(value) ?? new Date());
-  const [anchor, setAnchor] = useState<Date>(() => parseLocal(value) ?? new Date());
-  const [focusedDay, setFocusedDay] = useState<Date>(() => parseLocal(value) ?? new Date());
+  const [draft, setDraft] = useState<Date>(() => parseLocal(value) ?? defaultSeed());
+  const [anchor, setAnchor] = useState<Date>(() => parseLocal(value) ?? defaultSeed());
+  const [focusedDay, setFocusedDay] = useState<Date>(() => parseLocal(value) ?? defaultSeed());
 
   // Reset draft/anchor/focus to `value` when transitioning closed → open.
   // Done in the toggle handler (not an effect) so we avoid cascading renders.
   function openPopover() {
-    const seed = parseLocal(value) ?? new Date();
+    const seed = parseLocal(value) ?? defaultSeed();
     setDraft(seed);
     setAnchor(seed);
     setFocusedDay(seed);
@@ -186,6 +193,18 @@ export function BrandedDateTimePicker({
       const m = (prev.getMinutes() + delta + 60) % 60;
       return new Date(prev.getFullYear(), prev.getMonth(), prev.getDate(), prev.getHours(), m);
     });
+  }
+
+  function setHour(n: number) {
+    setDraft(
+      (prev) => new Date(prev.getFullYear(), prev.getMonth(), prev.getDate(), n, prev.getMinutes()),
+    );
+  }
+
+  function setMinute(n: number) {
+    setDraft(
+      (prev) => new Date(prev.getFullYear(), prev.getMonth(), prev.getDate(), prev.getHours(), n),
+    );
   }
 
   function commit() {
@@ -418,10 +437,13 @@ export function BrandedDateTimePicker({
             <TimeSpinner
               ariaUp="Aumenta ore"
               ariaDown="Diminuisci ore"
+              label="Ore"
               testId="bdtp-hour-display"
               value={pad2(draft.getHours())}
+              max={23}
               onUp={() => bumpHour(1)}
               onDown={() => bumpHour(-1)}
+              onCommit={setHour}
             />
             <span aria-hidden="true" className="text-bs-cream/30 text-2xl pb-2">
               :
@@ -429,10 +451,13 @@ export function BrandedDateTimePicker({
             <TimeSpinner
               ariaUp="Aumenta minuti"
               ariaDown="Diminuisci minuti"
+              label="Minuti"
               testId="bdtp-minute-display"
               value={pad2(draft.getMinutes())}
-              onUp={() => bumpMinute(MINUTE_STEP)}
-              onDown={() => bumpMinute(-MINUTE_STEP)}
+              max={59}
+              onUp={() => bumpMinute(1)}
+              onDown={() => bumpMinute(-1)}
+              onCommit={setMinute}
             />
           </div>
 
@@ -464,13 +489,89 @@ export function BrandedDateTimePicker({
 interface TimeSpinnerProps {
   ariaUp: string;
   ariaDown: string;
+  label: string;
   testId: string;
   value: string;
+  max: number;
   onUp: () => void;
   onDown: () => void;
+  onCommit: (n: number) => void;
 }
 
-function TimeSpinner({ ariaUp, ariaDown, testId, value, onUp, onDown }: TimeSpinnerProps) {
+function TimeSpinner({
+  ariaUp,
+  ariaDown,
+  label,
+  testId,
+  value,
+  max,
+  onUp,
+  onDown,
+  onCommit,
+}: TimeSpinnerProps) {
+  // localDraft holds the in-progress typed string; null means use the controlled `value`.
+  const [localDraft, setLocalDraft] = useState<string | null>(null);
+  // Mirror in a ref so blur/Enter handlers always see the latest typed value
+  // (avoids stale closures across the typing → commit boundary).
+  const localDraftRef = useRef<string | null>(null);
+
+  // When the parent value changes (e.g. button click commits a new hour),
+  // discard any in-progress typed input.
+  const [prevValue, setPrevValue] = useState(value);
+  if (prevValue !== value) {
+    setPrevValue(value);
+    setLocalDraft(null);
+    localDraftRef.current = null;
+  }
+
+  const displayValue = localDraft ?? value;
+
+  function commitDraft() {
+    const draft = localDraftRef.current;
+    if (draft === null) return;
+    // Empty draft (after a clear with no subsequent typing) → discard, keep external value.
+    if (draft === "") {
+      setLocalDraft(null);
+      localDraftRef.current = null;
+      return;
+    }
+    const parsed = parseInt(draft, 10);
+    if (isNaN(parsed)) {
+      setLocalDraft(null);
+      localDraftRef.current = null;
+      return;
+    }
+    const clamped = Math.max(0, Math.min(max, parsed));
+    onCommit(clamped);
+    setLocalDraft(null);
+    localDraftRef.current = null;
+  }
+
+  function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const raw = e.target.value.replace(/\D/g, "").slice(0, 2);
+    setLocalDraft(raw);
+    localDraftRef.current = raw;
+  }
+
+  function handleBlur() {
+    commitDraft();
+  }
+
+  function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
+    if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setLocalDraft(null);
+      onUp();
+    } else if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setLocalDraft(null);
+      onDown();
+    } else if (e.key === "Enter") {
+      e.preventDefault();
+      commitDraft();
+    }
+  }
+
   return (
     <div className="flex flex-col items-center gap-1">
       <button
@@ -483,17 +584,18 @@ function TimeSpinner({ ariaUp, ariaDown, testId, value, onUp, onDown }: TimeSpin
           <path d="M3 11l5-6 5 6" fill="none" stroke="currentColor" strokeWidth="1.5" />
         </svg>
       </button>
-      <div
+      <input
         data-testid={testId}
-        aria-hidden="true"
-        className="font-[family-name:var(--font-brand)] text-3xl text-bs-cream tabular-nums leading-none px-2 select-none"
-      >
-        {value}
-      </div>
-      {/* The spinbutton ARIA pattern requires keyboard arrow handling on the
-       * focusable element. Until that's wired, the visible value is decorative
-       * and the up/down buttons (with aria-labels including the current value
-       * via the action verb) are the AT-accessible interaction surface. */}
+        type="text"
+        inputMode="numeric"
+        aria-label={label}
+        value={displayValue}
+        maxLength={2}
+        onChange={handleChange}
+        onBlur={handleBlur}
+        onKeyDown={handleKeyDown}
+        className="font-[family-name:var(--font-brand)] text-3xl text-bs-cream tabular-nums leading-none w-16 text-center bg-transparent border-none outline-none focus:bg-bs-cream/5 rounded select-all cursor-text"
+      />
       <button
         type="button"
         aria-label={ariaDown}
