@@ -19,8 +19,9 @@ describe("GDPR consent trail", () => {
     // canonicalise proxy chains and IPv4-mapped IPv6 forms.
     expect(routeSource).toMatch(/getClientIp|x-forwarded-for|x-real-ip/);
 
-    // Verify User-Agent is captured from headers
-    expect(routeSource).toContain("user-agent");
+    // Verify User-Agent is captured (either inline or via the canonical
+    // helper introduced in SEC-010). We accept any of the three references.
+    expect(routeSource).toMatch(/getUserAgent|user-agent|userAgent/);
 
     // Verify consent_version has a default value
     expect(routeSource).toContain('"1.0"');

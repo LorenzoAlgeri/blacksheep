@@ -1,10 +1,14 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
+type UpdateSpy = ((payload: Record<string, unknown>) => void) & {
+  mock: { calls: unknown[][] };
+};
+
 const { state } = vi.hoisted(() => ({
   state: {
     subscriberResult: { data: null as unknown, error: null as unknown },
     updateError: null as unknown,
-    updateSpy: null as ReturnType<typeof vi.fn> | null,
+    updateSpy: null as UpdateSpy | null,
   },
 }));
 
@@ -33,7 +37,7 @@ beforeEach(async () => {
   vi.resetModules();
   state.subscriberResult = { data: null, error: null };
   state.updateError = null;
-  state.updateSpy = vi.fn();
+  state.updateSpy = vi.fn() as unknown as UpdateSpy;
   const mod = await import("./route");
   GET = mod.GET as unknown as typeof GET;
 });

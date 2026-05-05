@@ -1,27 +1,38 @@
 import { NextResponse } from "next/server";
-import type { NextRequest } from "next/server";
+import { auth } from "@/lib/auth";
 
-export function proxy(request: NextRequest) {
-  const { pathname } = request.nextUrl;
+/**
+ * Admin gate for the Next 16 Proxy layer.
+ *
+ * [SEC-004] The previous implementation only checked the *presence* of the
+ * NextAuth session cookie. Setting `__Secure-authjs.session-token=garbage`
+ * was enough to pass the proxy — defence-in-depth was relying entirely on
+ * the (dashboard) layout's own `await auth()` call. If a future admin page
+ * landed outside that layout, it would be exposed.
+ *
+ * The NextAuth v5 idiomatic pattern wraps the proxy handler with `auth(...)`,
+ * which decodes and verifies the JWT signature using AUTH_SECRET before
+ * exposing it as `req.auth`. A spoofed or expired token now hits the redirect
+ * here, not just at the layout boundary.
+ */
+export const proxy = auth((req) => {
+  const { pathname } = req.nextUrl;
 
-  // Protect /admin routes (except /admin/login)
-  if (pathname.startsWith("/admin") && !pathname.startsWith("/admin/login")) {
-    // Check for session token (NextAuth v5 uses __Secure- prefix in production)
-    const token =
-      request.cookies.get("__Secure-authjs.session-token") ??
-      request.cookies.get("authjs.session-token");
+  // /admin/login is the only admin path reachable while unauthenticated.
+  if (!pathname.startsWith("/admin") || pathname.startsWith("/admin/login")) {
+    return NextResponse.next();
+  }
 
-    if (!token) {
-      const loginUrl = request.nextUrl.clone();
-      loginUrl.pathname = "/admin/login";
-      loginUrl.search = "";
-      loginUrl.searchParams.set("callbackUrl", `/newsletter${pathname}`);
-      return NextResponse.redirect(loginUrl);
-    }
+  if (!req.auth) {
+    const loginUrl = req.nextUrl.clone();
+    loginUrl.pathname = "/admin/login";
+    loginUrl.search = "";
+    loginUrl.searchParams.set("callbackUrl", `/newsletter${pathname}`);
+    return NextResponse.redirect(loginUrl);
   }
 
   return NextResponse.next();
-}
+});
 
 export const config = {
   matcher: ["/admin/:path*"],
