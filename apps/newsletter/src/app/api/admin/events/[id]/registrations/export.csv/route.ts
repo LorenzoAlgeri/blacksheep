@@ -18,13 +18,22 @@ interface RegistrationRow {
 }
 
 /**
- * Escape a single CSV field per RFC 4180:
- *  - quote if contains comma, quote, CR, or LF
- *  - double up internal quotes
+ * Escape a single CSV field per RFC 4180 plus formula-injection mitigation.
+ *
+ *  - [SEC-002] If the field starts with =, +, -, @, TAB or CR, prefix a
+ *    single quote so Excel / Numbers / LibreOffice do not evaluate the
+ *    cell as a formula. Without this, a malicious subscriber name like
+ *    `=cmd|'/c calc'!A0` can execute arbitrary commands on the admin's
+ *    machine when the CSV is opened.
+ *  - Quote per RFC 4180 if the (post-prefix) value contains a comma,
+ *    double-quote, CR or LF; double up any internal quotes.
  */
 function csvField(value: string | null | undefined): string {
   if (value == null) return "";
-  const str = String(value);
+  let str = String(value);
+  if (/^[=+\-@\t\r]/.test(str)) {
+    str = `'${str}`;
+  }
   if (/[",\r\n]/.test(str)) {
     return `"${str.replace(/"/g, '""')}"`;
   }

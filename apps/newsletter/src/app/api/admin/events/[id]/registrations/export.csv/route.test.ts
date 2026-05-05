@@ -125,4 +125,71 @@ describe("GET /api/admin/events/[id]/registrations/export.csv", () => {
     const res = await GET(req(), ctx());
     expect(res.status).toBe(500);
   });
+
+  // [SEC-002] CSV / formula injection.
+  // Excel, Numbers and LibreOffice treat any cell whose first character is
+  // =, +, -, @, \t or \r as a formula. When an admin opens the CSV, the
+  // formula executes — a malicious subscriber name like `=cmd|'/c calc'!A0`
+  // can lead to arbitrary command execution on the admin's machine. We
+  // neutralise leading-formula characters by prefixing a single quote.
+  describe("formula-injection mitigation", () => {
+    function rowWithName(name: string) {
+      return {
+        registered_at: "2026-05-01T10:00:00Z",
+        source: "form",
+        subscriber: { email: "user@test.com", name, status: "confirmed", gender: "male" },
+      };
+    }
+
+    async function runWithName(name: string): Promise<string> {
+      state.listResponse = { data: [rowWithName(name)], error: null };
+      const res = await GET(req(), ctx());
+      expect(res.status).toBe(200);
+      return await res.text();
+    }
+
+    it("prefixes leading '=' [SEC-002]", async () => {
+      const text = await runWithName("=cmd|'/c calc'!A0");
+      expect(text).toContain("'=cmd|'/c calc'!A0");
+      expect(text).not.toMatch(/(^|,)=cmd/m);
+    });
+
+    it("prefixes leading '+' [SEC-002]", async () => {
+      const text = await runWithName("+SUM(A1:A2)");
+      expect(text).toContain("'+SUM(A1:A2)");
+    });
+
+    it("prefixes leading '-' [SEC-002]", async () => {
+      const text = await runWithName("-2+3");
+      expect(text).toContain("'-2+3");
+    });
+
+    it("prefixes leading '@' [SEC-002]", async () => {
+      const text = await runWithName("@SUM(A1)");
+      expect(text).toContain("'@SUM(A1)");
+    });
+
+    it("prefixes leading TAB [SEC-002]", async () => {
+      const text = await runWithName("\t=cmd");
+      expect(text).toContain("'\t=cmd");
+    });
+
+    it("prefixes leading CR [SEC-002]", async () => {
+      const text = await runWithName("\r=cmd");
+      // CR also triggers RFC 4180 quoting; the apostrophe must precede the CR.
+      expect(text).toContain('"\'\r=cmd"');
+    });
+
+    it("does not prefix safe leading characters", async () => {
+      const text = await runWithName("Mario Rossi");
+      expect(text).toContain("Mario Rossi");
+      expect(text).not.toContain("'Mario Rossi");
+    });
+
+    it("does not prefix '=' that appears mid-field", async () => {
+      const text = await runWithName("Mario=Rossi");
+      expect(text).toContain("Mario=Rossi");
+      expect(text).not.toContain("'Mario=Rossi");
+    });
+  });
 });
