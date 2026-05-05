@@ -1,27 +1,57 @@
 interface RateLimiterConfig {
   windowMs: number;
   maxRequests: number;
+  /**
+   * Cap on the number of distinct keys tracked at once. When exceeded the
+   * least-recently-used key is evicted. Defends against memory bloat from
+   * hostile traffic that fans out across many unique IPs (or a misbehaving
+   * proxy that produces unique x-forwarded-for chains). [SEC-007]
+   */
+  maxKeys?: number;
 }
 
-function createRateLimiter(config: RateLimiterConfig) {
+interface RateLimiter {
+  (key: string): boolean;
+  /** Number of distinct keys currently tracked in memory. Test/debug only. */
+  trackedKeys(): number;
+}
+
+const DEFAULT_MAX_KEYS = 10_000;
+
+function createRateLimiter(config: RateLimiterConfig): RateLimiter {
+  const windowMs = config.windowMs;
+  const maxRequests = config.maxRequests;
+  const maxKeys = config.maxKeys ?? DEFAULT_MAX_KEYS;
   const requests = new Map<string, number[]>();
 
-  return function check(ip: string): boolean {
+  function check(key: string): boolean {
     const now = Date.now();
-    const timestamps = requests.get(ip) ?? [];
+    const timestamps = requests.get(key) ?? [];
 
-    // Remove entries outside the window
-    const recent = timestamps.filter((t) => now - t < config.windowMs);
+    // Drop entries outside the window. Always do this — even on the blocked
+    // path — so expired timestamps don't pile up.
+    const recent = timestamps.filter((t) => now - t < windowMs);
+    const blocked = recent.length >= maxRequests;
+    if (!blocked) recent.push(now);
 
-    if (recent.length >= config.maxRequests) {
-      return false; // rate limited
+    // LRU touch: delete-then-set so the entry moves to the end of the Map's
+    // insertion-order iteration. Empty arrays are removed entirely.
+    requests.delete(key);
+    if (recent.length > 0) requests.set(key, recent);
+
+    // Evict the oldest tracked keys until we're within the cap. On a healthy
+    // workload this never fires; under hostile fan-out it bounds memory.
+    while (requests.size > maxKeys) {
+      const oldest = requests.keys().next().value;
+      if (oldest === undefined) break;
+      requests.delete(oldest);
     }
 
-    recent.push(now);
-    requests.set(ip, recent);
+    return !blocked;
+  }
 
-    return true; // allowed
-  };
+  (check as RateLimiter).trackedKeys = () => requests.size;
+  return check as RateLimiter;
 }
 
 // Subscribe endpoint: 3 requests per minute
@@ -68,4 +98,4 @@ export const rateLimitContactHelp = createRateLimiter({
 });
 
 export { createRateLimiter };
-export type { RateLimiterConfig };
+export type { RateLimiterConfig, RateLimiter };

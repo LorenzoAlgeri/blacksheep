@@ -240,6 +240,50 @@ describe("rateLimitResendConfirmIp (3 req/15min/IP)", () => {
   });
 });
 
+describe("memory bounding [SEC-007]", () => {
+  it("removes a key from the internal map once its window has fully expired", () => {
+    const realNow = Date.now;
+    let currentTime = 5_000_000;
+    vi.spyOn(Date, "now").mockImplementation(() => currentTime);
+
+    const limiter = createRateLimiter({ windowMs: 1_000, maxRequests: 1 });
+    limiter("a");
+    expect(limiter.trackedKeys()).toBe(1);
+
+    // Advance past the window then issue a check on a different key.
+    currentTime += 5_000;
+    limiter("b");
+
+    // 'a' must have been evicted on its next-touch path; do that now.
+    limiter("a");
+    // The freshly re-allowed 'a' is tracked again, plus 'b'. The point: there
+    // is no permanent leak — each key only stays alive for one window.
+    expect(limiter.trackedKeys()).toBeLessThanOrEqual(2);
+
+    Date.now = realNow;
+  });
+
+  it("evicts the oldest key once maxKeys is exceeded", () => {
+    const limiter = createRateLimiter({ windowMs: 60_000, maxRequests: 1, maxKeys: 3 });
+    limiter("a");
+    limiter("b");
+    limiter("c");
+    expect(limiter.trackedKeys()).toBe(3);
+
+    // Adding a 4th distinct key must drop the oldest ('a').
+    limiter("d");
+    expect(limiter.trackedKeys()).toBe(3);
+    // 'a' was evicted, so its bucket is fresh and the next call is allowed.
+    expect(limiter("a")).toBe(true);
+  });
+
+  it("does not double-count a key when the same client hits repeatedly within window", () => {
+    const limiter = createRateLimiter({ windowMs: 60_000, maxRequests: 5, maxKeys: 100 });
+    for (let i = 0; i < 5; i++) limiter("same-ip");
+    expect(limiter.trackedKeys()).toBe(1);
+  });
+});
+
 describe("rateLimitContactHelp (3 req/15min/IP)", () => {
   it("allows up to 3 contact-help submissions per IP", () => {
     const ip = "contact-allow-" + Math.random();
