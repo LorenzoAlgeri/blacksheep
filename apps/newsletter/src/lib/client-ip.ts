@@ -34,3 +34,23 @@ function normalize(ip: string): string {
   if (out.length > MAX_IP_LEN) out = out.slice(0, MAX_IP_LEN);
   return out;
 }
+
+/**
+ * Read and truncate the User-Agent header.
+ *
+ * [SEC-010] User-Agent strings are attacker-controlled and can be megabytes
+ * long. Without a cap, every audit-log INSERT (subscribers, registrations,
+ * contact-help, follow-ups) bloats the row and amplifies DoS pressure on the
+ * database. 500 bytes covers every real-world UA we've ever seen with margin.
+ *
+ * Returns "unknown" when the header is missing so callers can use the value
+ * directly as a non-empty DB column or log field.
+ */
+const MAX_USER_AGENT_LEN = 500;
+
+export function getUserAgent(request: Request): string {
+  const raw = request.headers.get("user-agent");
+  if (!raw) return "unknown";
+  const trimmed = raw.length > MAX_USER_AGENT_LEN ? raw.slice(0, MAX_USER_AGENT_LEN) : raw;
+  return trimmed;
+}

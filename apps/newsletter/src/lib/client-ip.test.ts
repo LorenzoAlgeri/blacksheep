@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { getClientIp } from "./client-ip";
+import { getClientIp, getUserAgent } from "./client-ip";
 
 function req(headers: Record<string, string> = {}): Request {
   return new Request("http://localhost/", { headers });
@@ -48,5 +48,22 @@ describe("getClientIp [SEC-008]", () => {
     expect(a).toBe("1.2.3.4");
     expect(b).toBe("1.2.3.4");
     expect(c).toBe("1.2.3.4");
+  });
+});
+
+describe("getUserAgent [SEC-010]", () => {
+  it("returns the User-Agent header verbatim when present and short", () => {
+    const ua = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)";
+    expect(getUserAgent(req({ "user-agent": ua }))).toBe(ua);
+  });
+
+  it("returns 'unknown' when the header is missing", () => {
+    expect(getUserAgent(req())).toBe("unknown");
+  });
+
+  it("truncates oversize User-Agent to <=500 characters [SEC-010]", () => {
+    const huge = "Mozilla/5.0 ".repeat(500); // ~6 KB
+    const result = getUserAgent(req({ "user-agent": huge }));
+    expect(result.length).toBeLessThanOrEqual(500);
   });
 });

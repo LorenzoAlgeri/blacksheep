@@ -4,7 +4,7 @@ import { getSupabase } from "@/lib/supabase";
 import { getResend } from "@/lib/resend";
 import { rateLimitContactHelp } from "@/lib/rate-limit";
 import { isAllowedOrigin } from "@/lib/origin-check";
-import { getClientIp } from "@/lib/client-ip";
+import { getClientIp, getUserAgent } from "@/lib/client-ip";
 import { CONTACT_HELP_RECIPIENTS, renderContactHelpEmail } from "@/lib/contact-help";
 
 /**
@@ -46,7 +46,7 @@ export async function POST(request: NextRequest) {
     return Response.json({ ok: true });
   }
 
-  const userAgent = request.headers.get("user-agent") ?? "unknown";
+  const userAgent = getUserAgent(request);
   const { email, phone, name, message } = parsed.data;
 
   // 1. Insert audit row (durable backup)

@@ -3,7 +3,7 @@ import { subscribeSchema } from "@/lib/validations";
 import { getSupabase } from "@/lib/supabase";
 import { getResend } from "@/lib/resend";
 import { rateLimit } from "@/lib/rate-limit";
-import { getClientIp } from "@/lib/client-ip";
+import { getClientIp, getUserAgent } from "@/lib/client-ip";
 import { renderConfirmationEmail } from "@/lib/emails/confirmation";
 
 export async function POST(request: NextRequest) {
@@ -37,7 +37,7 @@ export async function POST(request: NextRequest) {
 
   // GDPR: capture consent metadata for audit trail
   const subscribedIp = ip;
-  const subscribedUserAgent = request.headers.get("user-agent") ?? "unknown";
+  const subscribedUserAgent = getUserAgent(request);
   const consentVersion = "1.0";
 
   // Check if subscriber already exists

@@ -4,7 +4,7 @@ import { getSupabase } from "@/lib/supabase";
 import { getResend } from "@/lib/resend";
 import { rateLimitEventRegister } from "@/lib/rate-limit";
 import { isAllowedOrigin } from "@/lib/origin-check";
-import { getClientIp } from "@/lib/client-ip";
+import { getClientIp, getUserAgent } from "@/lib/client-ip";
 import { renderEventRegistrationEmail } from "@/lib/emails/event-registration";
 
 /**
@@ -51,7 +51,7 @@ export async function POST(request: NextRequest) {
   }
 
   const supabase = getSupabase();
-  const userAgent = request.headers.get("user-agent") ?? "unknown";
+  const userAgent = getUserAgent(request);
   const email = parsed.data.email.toLowerCase();
   const { eventId } = parsed.data;
 
