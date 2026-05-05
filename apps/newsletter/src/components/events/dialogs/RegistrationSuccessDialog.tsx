@@ -40,8 +40,8 @@ export function RegistrationSuccessDialog({
             {formattedDate}
           </p>
         ) : null}
-        {eventVenue ? <p className="mb-4 text-xs text-bs-cream/45">{eventVenue}</p> : null}
-        <p className="text-xs text-bs-cream/45">
+        {eventVenue ? <p className="mb-4 text-xs text-bs-cream/60">{eventVenue}</p> : null}
+        <p className="text-xs text-bs-cream/60">
           Riceverai un&rsquo;email di conferma e un promemoria il giorno dell&rsquo;evento.
         </p>
       </DialogContent>

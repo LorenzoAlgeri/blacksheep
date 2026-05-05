@@ -27,7 +27,7 @@ export function NoSubscriberDialog({ open, onClose, onSubscribeClick }: NoSubscr
         <p className="mb-4">
           Per accedere alla lista delle date BlackSheep devi essere iscritto alla newsletter.
         </p>
-        <p className="text-xs text-bs-cream/45">
+        <p className="text-xs text-bs-cream/60">
           Iscriviti ora — è veloce. Riceverai un&rsquo;email di conferma e poi potrai entrare in
           lista.
         </p>

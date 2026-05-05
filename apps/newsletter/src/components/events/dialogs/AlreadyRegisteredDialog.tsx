@@ -36,7 +36,7 @@ export function AlreadyRegisteredDialog({
           Sei già iscritto alla lista di <strong className="text-bs-cream">{eventTitle}</strong>
           {formatted ? <> il {formatted}</> : null}.
         </p>
-        <p className="text-xs text-bs-cream/45">Ci vediamo lì.</p>
+        <p className="text-xs text-bs-cream/60">Ci vediamo lì.</p>
       </DialogContent>
       <DialogFooter>
         <button

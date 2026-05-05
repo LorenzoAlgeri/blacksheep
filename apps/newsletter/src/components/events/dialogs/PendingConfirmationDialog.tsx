@@ -76,7 +76,7 @@ export function PendingConfirmationDialog({
           Per evitare problemi di consegna, dobbiamo essere sicuri che la tua email funzioni
           davvero. Hai un&rsquo;email di conferma in sospeso — controlla la posta.
         </p>
-        <p className="mb-4 text-xs text-bs-cream/45">
+        <p className="mb-4 text-xs text-bs-cream/60">
           Se non la trovi: cerca in <strong className="text-bs-cream/70">Spam</strong> o{" "}
           <strong className="text-bs-cream/70">Promozioni</strong>. Se la trovi lì, segnala
           &ldquo;Non è spam&rdquo; — ci aiuta a essere visibili ai prossimi iscritti.

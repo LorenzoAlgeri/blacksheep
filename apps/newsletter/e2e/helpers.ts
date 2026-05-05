@@ -102,29 +102,12 @@ export async function fillRegistrationForm(
   await dialog.getByRole("button", { name: /entra in lista/i }).click();
 }
 
-/**
- * Run axe-core against the currently-open dialog.
- *
- * TODO(a11y-contrast): `color-contrast` is intentionally disabled
- * because the brand uses `text-bs-cream/45` (≈ #787873 on #0a0a0a)
- * which sits at 4.46:1, just below WCAG 2 AA's 4.5:1 cutoff for body
- * text. Fixing it requires editing the dialog components themselves
- * (cross-track for this E2E deliverable) — bump the opacity to /55 or
- * tighten the cream token. Re-enable this rule once the brand fix
- * lands so further regressions are caught. Tracking issue:
- * <pending — file before merge to main>.
- *
- * Disabling the rule here keeps the suite green while still letting
- * every OTHER WCAG 2 A/AA rule (label, button-name, aria-required-attr,
- * heading-order, …) catch real regressions on the dialogs we touch.
- */
 export async function expectNoAxeViolationsInDialog(page: Page): Promise<void> {
   const dialog = openDialog(page);
   await expect(dialog).toBeVisible();
   const results = await new AxeBuilder({ page })
     .include("dialog[open]")
     .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"])
-    .disableRules(["color-contrast"])
     .analyze();
   expect(
     results.violations,
@@ -132,18 +115,9 @@ export async function expectNoAxeViolationsInDialog(page: Page): Promise<void> {
   ).toEqual([]);
 }
 
-/**
- * Run axe-core against the entire page (used for the email-link landing
- * page where there is no dialog).
- *
- * TODO(a11y-contrast): `color-contrast` is disabled for the same
- * reason as in `expectNoAxeViolationsInDialog`. See that helper for
- * the full explanation and tracking issue.
- */
 export async function expectNoAxeViolationsOnPage(page: Page): Promise<void> {
   const results = await new AxeBuilder({ page })
     .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa", "wcag22aa"])
-    .disableRules(["color-contrast"])
     .analyze();
   expect(
     results.violations,
