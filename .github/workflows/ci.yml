@@ -11,9 +11,24 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # [SEC-006] Hard gate: gitleaks scans the entire commit range for secrets.
+  # Runs before lint/test so a leak is rejected fast, in its own status check.
+  secret-scan:
+    name: Secret scan (gitleaks)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITLEAKS_CONFIG: .gitleaks.toml
+
   lint-typecheck-test:
     name: Lint → Typecheck → Test
     runs-on: ubuntu-latest
+    needs: secret-scan
 
     steps:
       - uses: actions/checkout@v4

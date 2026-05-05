@@ -1,1 +1,36 @@
+#!/usr/bin/env sh
+# [SEC-006] Block accidental secret leaks before they reach the remote.
+# We run gitleaks in "protect" mode against the staged diff. Any finding
+# aborts the commit; allowlist entries live in /.gitleaks.toml.
+#
+# Gitleaks is a Go binary distributed at https://github.com/gitleaks/gitleaks.
+# Install on macOS:        brew install gitleaks
+# Install on Windows:      winget install gitleaks
+# Install on Linux:        see release page for tarballs
+# CI:                      gitleaks/gitleaks-action@v2 (configure on the
+#                          repo before the next push to main).
+#
+# Local dev: soft-warn when gitleaks is missing so the existing flow is not
+# blocked for contributors who haven't installed it yet. The HARD gate is
+# the gitleaks-action job in .github/workflows/ci.yml — that runs on every
+# push/PR and refuses to merge a leak.
+if ! command -v gitleaks >/dev/null 2>&1; then
+  echo "⚠ pre-commit: gitleaks not installed — local secret scan skipped."
+  echo "  Install for early detection (CI will catch it either way):"
+  echo "    macOS:   brew install gitleaks"
+  echo "    Windows: winget install gitleaks"
+  echo "    Linux:   https://github.com/gitleaks/gitleaks#installing"
+  npx lint-staged
+  exit $?
+fi
+
+gitleaks protect --staged --no-banner --redact --config .gitleaks.toml
+gl_status=$?
+if [ "$gl_status" -ne 0 ]; then
+  echo "✘ pre-commit: gitleaks found potential secrets in the staged diff."
+  echo "  Review the redacted match above, remove the secret, and re-stage."
+  echo "  False positive? Add a narrow allowlist rule in .gitleaks.toml."
+  exit "$gl_status"
+fi
+
 npx lint-staged

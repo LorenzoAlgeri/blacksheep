@@ -1,0 +1,38 @@
+# gitleaks configuration — extends the bundled default ruleset
+# (https://github.com/gitleaks/gitleaks/blob/master/config/gitleaks.toml).
+# We keep ALL default rules and only add a minimal allowlist so well-known
+# benign artefacts don't trip the scanner. Anything that looks suspicious
+# but legitimate must be added to the allowlist with a short comment so a
+# reviewer can audit the exception later.
+#
+# [SEC-006] Used by .husky/pre-commit to block accidental secret leaks
+# before they reach the remote.
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Project-wide allowlist for known-safe patterns and paths"
+
+paths = [
+  # Lockfiles often contain integrity hashes that look entropy-rich
+  '''package-lock\.json$''',
+  '''yarn\.lock$''',
+
+  # Audit reports / planning docs reference example placeholders only
+  '''apps/newsletter/docs/security/.*\.md$''',
+
+  # The .env.example file documents env names with explicit "<placeholder>"
+  # markers — never real secrets. Keep it scannable in CI but allow here so
+  # the helpful "openssl rand …" hints don't false-match generic-secret rules.
+  '''apps/newsletter/\.env\.example$''',
+
+  # Source-tree .md files that quote example tokens in docs
+  '''apps/newsletter/docs/.*\.md$''',
+]
+
+regexes = [
+  # Documentation references such as `BLACK SHEEP <noreply@...>` which look
+  # like JWT prefixes to over-eager rules
+  '''noreply@blacksheep[-.]?community\.com''',
+]
