@@ -1,6 +1,7 @@
 import { NextRequest } from "next/server";
 import { getSupabase } from "@/lib/supabase";
 import { isSubscriberUnsubscribable } from "@/lib/subscriber-status";
+import { getClientIp, getUserAgent } from "@/lib/client-ip";
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -118,9 +119,20 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  // Audit log (server-side only — no personal data retained)
+  // [SEC-009] GDPR Art. 30 audit log of the erasure event itself.
+  // No personal data (email, name) is retained — only the surrogate id —
+  // but we capture WHO triggered it (IP / User-Agent) and WHEN, so a future
+  // dispute over an unauthorised deletion can be investigated. The record
+  // lives in the platform's stdout sink (Vercel Logs); ingest into a long-term
+  // store is the next hardening step (TODO).
   console.log(
-    `[SUBSCRIBE] GDPR erasure: subscriber ${subscriber.id} data deleted at ${new Date().toISOString()}`,
+    JSON.stringify({
+      event: "gdpr_erasure",
+      subscriberId: subscriber.id,
+      ip: getClientIp(request),
+      userAgent: getUserAgent(request),
+      at: new Date().toISOString(),
+    }),
   );
 
   return Response.json({ success: true, deleted: true });
