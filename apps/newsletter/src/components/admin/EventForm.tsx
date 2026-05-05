@@ -3,10 +3,11 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { useForm, type Resolver } from "react-hook-form";
+import { useForm, Controller, type Resolver } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { adminEventSchema } from "@/lib/validations";
 import { basePath } from "@/lib/base-path";
+import { BrandedDateTimePicker } from "./BrandedDateTimePicker";
 
 // Local form type matching zodResolver output (status required after .default("draft"))
 type EventFormValues = {
@@ -52,6 +53,7 @@ export function EventForm({ mode, defaultValues, eventId }: EventFormProps) {
     handleSubmit,
     setValue,
     watch,
+    control,
     formState: { errors },
   } = useForm<EventFormValues>({
     // Cast needed: zodResolver infers Zod input type (status optional via .default) but form type has status required
@@ -60,10 +62,6 @@ export function EventForm({ mode, defaultValues, eventId }: EventFormProps) {
     defaultValues: {
       status: "draft",
       ...defaultValues,
-      // datetime-local input needs YYYY-MM-DDTHH:MM format; setValueAs converts back to ISO on submit
-      event_date: defaultValues?.event_date
-        ? isoToDatetimeLocal(defaultValues.event_date)
-        : undefined,
     },
   });
 
@@ -185,15 +183,24 @@ export function EventForm({ mode, defaultValues, eventId }: EventFormProps) {
         <label htmlFor="event-date" className={labelClass}>
           DATA E ORA
         </label>
-        <input
-          id="event-date"
-          type="datetime-local"
-          className={inputClass}
-          {...register("event_date", {
-            setValueAs: (v: string) => (v ? new Date(v).toISOString() : v),
-          })}
+        <Controller
+          control={control}
+          name="event_date"
+          render={({ field, fieldState }) => (
+            <BrandedDateTimePicker
+              id="event-date"
+              value={field.value ? isoToDatetimeLocal(field.value) : ""}
+              onChange={(v) => field.onChange(v ? new Date(v).toISOString() : "")}
+              invalid={fieldState.invalid}
+              aria-describedby={fieldState.error ? "event-date-error" : undefined}
+            />
+          )}
         />
-        {errors.event_date && <p className={errorClass}>{errors.event_date.message}</p>}
+        {errors.event_date && (
+          <p id="event-date-error" className={errorClass}>
+            {errors.event_date.message}
+          </p>
+        )}
       </div>
 
       <div>
