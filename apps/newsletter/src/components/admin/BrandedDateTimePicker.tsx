@@ -308,7 +308,6 @@ export function BrandedDateTimePicker({
           role="dialog"
           aria-modal="false"
           aria-label="Selettore data e ora"
-          aria-labelledby={monthLabelId}
           className={`absolute left-0 right-0 top-full mt-2 z-50 bg-[#0a0a0a]/95 backdrop-blur border border-bs-cream/10 rounded-lg shadow-2xl p-4 ${
             reducedMotion ? "" : "animate-fade-in-scale"
           }`}
