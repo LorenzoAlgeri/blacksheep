@@ -1,6 +1,7 @@
 import { getResend } from "@/lib/resend";
 import { getSupabase } from "@/lib/supabase";
 import { buildListUnsubscribeHeaders } from "@/lib/unsubscribe-headers";
+import { escapeHtml } from "@/lib/html";
 
 export const CHUNK_SIZE = 100;
 export const DEFAULT_BUDGET_MS = 50_000;
@@ -16,6 +17,7 @@ export interface PendingRecipient {
 export interface SubscriberRecord {
   token: string;
   email: string;
+  name: string | null;
 }
 
 export interface RecipientFailure {
@@ -127,7 +129,7 @@ export async function sendCampaignBatch(args: SendCampaignBatchArgs): Promise<Ca
 
     const tokens = pending.map((p) => p.subscriberToken);
     const subscribers = await args.store.fetchSubscribers(tokens);
-    const subByToken = new Map(subscribers.map((s) => [s.token, s.email]));
+    const subByToken = new Map(subscribers.map((s) => [s.token, { email: s.email, name: s.name }]));
 
     const orphanTokens = pending
       .filter((p) => !subByToken.has(p.subscriberToken))
@@ -142,9 +144,11 @@ export async function sendCampaignBatch(args: SendCampaignBatchArgs): Promise<Ca
     sendable.forEach((p) => touchedInThisRun.add(p.subscriberToken));
     if (sendable.length === 0) continue;
 
-    const payload: BatchEmailPayload[] = sendable.map((p) =>
-      buildEmail({
-        to: subByToken.get(p.subscriberToken) as string,
+    const payload: BatchEmailPayload[] = sendable.map((p) => {
+      const sub = subByToken.get(p.subscriberToken)!;
+      return buildEmail({
+        to: sub.email,
+        name: sub.name,
         token: p.subscriberToken,
         campaignId: args.campaignId,
         subject: args.subject,
@@ -152,8 +156,8 @@ export async function sendCampaignBatch(args: SendCampaignBatchArgs): Promise<Ca
         appBaseUrl,
         fromEmail,
         replyTo,
-      }),
-    );
+      });
+    });
 
     const idempotencyKey = `campaign-${args.campaignId}-${sendable[0].subscriberToken}-${sendable.length}`;
     const outcome = await args.mailer.sendBatch(payload, idempotencyKey);
@@ -224,6 +228,7 @@ export async function sendCampaignBatch(args: SendCampaignBatchArgs): Promise<Ca
 
 interface BuildEmailArgs {
   to: string;
+  name: string | null | undefined;
   token: string;
   campaignId: string;
   subject: string;
@@ -236,11 +241,14 @@ interface BuildEmailArgs {
 function buildEmail(args: BuildEmailArgs): BatchEmailPayload {
   const unsubscribeUrl = `${args.appBaseUrl}/api/unsubscribe?token=${args.token}`;
   const unsubscribeLink = `<br><a href="${unsubscribeUrl}" style="color:rgba(255,255,243,0.25);text-decoration:underline;">Disiscriviti</a> &middot; <a href="${args.appBaseUrl}/privacy" style="color:rgba(255,255,243,0.25);text-decoration:underline;">Privacy Policy</a>`;
-  // Replace per-recipient placeholders. {{TOKEN}} is the subscriber UUID
-  // used by the single-click event registration link
-  // (/api/events/register-from-email?token={{TOKEN}}&event_slug=...).
-  // {{UNSUB}} is the One-Click List-Unsubscribe link footer.
+  // Extract first name and escape for safe HTML injection.
+  const firstName = escapeHtml(args.name?.trim().split(/\s+/)[0] ?? "");
+  // Replace per-recipient placeholders in order:
+  // 1. {{name}}  — first name (safe, cannot contain {{UNSUB}} or {{TOKEN}})
+  // 2. {{TOKEN}} — subscriber UUID for event single-click registration
+  // 3. {{UNSUB}} — unsubscribe link HTML
   const personalised = args.html
+    .replaceAll("{{name}}", firstName)
     .replaceAll("{{TOKEN}}", args.token)
     .replaceAll("{{UNSUB}}", unsubscribeLink);
   const trackedHtml = injectOpenTrackingPixel(
@@ -320,13 +328,14 @@ export function createSupabaseCampaignStore(supabase: SupabaseClientLike): Campa
       if (tokens.length === 0) return [];
       const { data, error } = await supabase
         .from("subscribers")
-        .select("token, email")
+        .select("token, email, name")
         .in("token", tokens)
         .eq("status", "confirmed");
       if (error) throw new Error(`fetchSubscribers failed: ${error.message}`);
       return (data ?? []).map((row) => ({
         token: String(row.token),
         email: String(row.email),
+        name: row.name != null ? String(row.name) : null,
       }));
     },
 

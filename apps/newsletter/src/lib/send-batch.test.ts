@@ -135,6 +135,7 @@ describe("sendCampaignBatch", () => {
     const subscribers: SubscriberRecord[] = recipients.map((r, i) => ({
       token: r.subscriberToken,
       email: `user${i}@test.com`,
+      name: null,
     }));
 
     const { store, markSentCalls } = buildStore({
@@ -168,8 +169,8 @@ describe("sendCampaignBatch", () => {
       { subscriberToken: "tok-pending-2", attempts: 0 },
     ];
     const subscribers: SubscriberRecord[] = [
-      { token: "tok-pending-1", email: "a@test.com" },
-      { token: "tok-pending-2", email: "b@test.com" },
+      { token: "tok-pending-1", email: "a@test.com", name: null },
+      { token: "tok-pending-2", email: "b@test.com", name: null },
     ];
 
     const { store, markSentCalls } = buildStore({
@@ -205,9 +206,9 @@ describe("sendCampaignBatch", () => {
       { subscriberToken: "tok-c", attempts: 0 },
     ];
     const subscribers: SubscriberRecord[] = [
-      { token: "tok-a", email: "a@test.com" },
-      { token: "tok-b", email: "b@test.com" },
-      { token: "tok-c", email: "c@test.com" },
+      { token: "tok-a", email: "a@test.com", name: null },
+      { token: "tok-b", email: "b@test.com", name: null },
+      { token: "tok-c", email: "c@test.com", name: null },
     ];
     const { store, markSentCalls, markFailedCalls } = buildStore({
       recipients,
@@ -257,7 +258,7 @@ describe("sendCampaignBatch", () => {
     const recipients: PendingRecipient[] = [
       { subscriberToken: "tok-a", attempts: MAX_ATTEMPTS - 1 },
     ];
-    const subscribers: SubscriberRecord[] = [{ token: "tok-a", email: "a@test.com" }];
+    const subscribers: SubscriberRecord[] = [{ token: "tok-a", email: "a@test.com", name: null }];
     const { store, markFailedCalls } = buildStore({
       recipients,
       subscribers,
@@ -296,6 +297,7 @@ describe("sendCampaignBatch", () => {
     const subscribers: SubscriberRecord[] = recipients.map((r, i) => ({
       token: r.subscriberToken,
       email: `u${i}@test.com`,
+      name: null,
     }));
     const { store, markFailedCalls } = buildStore({
       recipients,
@@ -332,7 +334,9 @@ describe("sendCampaignBatch", () => {
       { subscriberToken: "tok-orphan", attempts: 0 },
       { subscriberToken: "tok-active", attempts: 0 },
     ];
-    const subscribers: SubscriberRecord[] = [{ token: "tok-active", email: "active@test.com" }];
+    const subscribers: SubscriberRecord[] = [
+      { token: "tok-active", email: "active@test.com", name: null },
+    ];
     const { store, markOrphanedCalls, markSentCalls } = buildStore({
       recipients,
       subscribers,
@@ -364,6 +368,7 @@ describe("sendCampaignBatch", () => {
     const subscribers: SubscriberRecord[] = recipients.map((r, i) => ({
       token: r.subscriberToken,
       email: `u${i}@test.com`,
+      name: null,
     }));
     const { store, markSentCalls } = buildStore({
       recipients,
@@ -405,6 +410,7 @@ describe("sendCampaignBatch", () => {
     const subscribers: SubscriberRecord[] = recipients.map((r) => ({
       token: r.subscriberToken,
       email: `${r.subscriberToken}@test.com`,
+      name: null,
     }));
     const { store } = buildStore({ recipients, subscribers, totalRecipients: 2 });
 
@@ -444,6 +450,7 @@ describe("sendCampaignBatch", () => {
     const subscribers: SubscriberRecord[] = recipients.map((r) => ({
       token: r.subscriberToken,
       email: `${r.subscriberToken}@test.com`,
+      name: null,
     }));
     const { store } = buildStore({ recipients, subscribers, totalRecipients: 3 });
 
@@ -475,5 +482,138 @@ describe("sendCampaignBatch", () => {
       );
       expect(cap.html).not.toContain("{{TOKEN}}");
     }
+  });
+
+  it("replaces {{name}} with subscriber first name", async () => {
+    const recipients: PendingRecipient[] = [{ subscriberToken: "tok-1", attempts: 0 }];
+    const subscribers: SubscriberRecord[] = [
+      { token: "tok-1", email: "tok-1@test.com", name: "Marco" },
+    ];
+    const { store } = buildStore({ recipients, subscribers, totalRecipients: 1 });
+    const captured: { html: string }[] = [];
+    const mailer: MailSender = {
+      async sendBatch(payload) {
+        for (const p of payload) captured.push({ html: p.html });
+        return { successCount: payload.length, failedIndexes: [] };
+      },
+    };
+    await sendCampaignBatch({
+      campaignId: "c-name",
+      subject: "x",
+      html: "Ciao {{name}}, benvenuto!",
+      siteUrl: "https://example.com",
+      store,
+      mailer,
+    });
+    expect(captured[0].html).toContain("Ciao Marco, benvenuto!");
+    expect(captured[0].html).not.toContain("{{name}}");
+  });
+
+  it("uses empty string when subscriber name is null", async () => {
+    const recipients: PendingRecipient[] = [{ subscriberToken: "tok-null", attempts: 0 }];
+    const subscribers: SubscriberRecord[] = [
+      { token: "tok-null", email: "tok-null@test.com", name: null },
+    ];
+    const { store } = buildStore({ recipients, subscribers, totalRecipients: 1 });
+    const captured: { html: string }[] = [];
+    const mailer: MailSender = {
+      async sendBatch(payload) {
+        for (const p of payload) captured.push({ html: p.html });
+        return { successCount: payload.length, failedIndexes: [] };
+      },
+    };
+    await sendCampaignBatch({
+      campaignId: "c-null-name",
+      subject: "x",
+      html: "Ciao {{name}}, grazie.",
+      siteUrl: "https://example.com",
+      store,
+      mailer,
+    });
+    expect(captured[0].html).toContain("Ciao , grazie.");
+    expect(captured[0].html).not.toContain("{{name}}");
+  });
+
+  it("extracts only first name when name has multiple words", async () => {
+    const recipients: PendingRecipient[] = [{ subscriberToken: "tok-full", attempts: 0 }];
+    const subscribers: SubscriberRecord[] = [
+      { token: "tok-full", email: "tok-full@test.com", name: "Maria Giovanna Rossi" },
+    ];
+    const { store } = buildStore({ recipients, subscribers, totalRecipients: 1 });
+    const captured: { html: string }[] = [];
+    const mailer: MailSender = {
+      async sendBatch(payload) {
+        for (const p of payload) captured.push({ html: p.html });
+        return { successCount: payload.length, failedIndexes: [] };
+      },
+    };
+    await sendCampaignBatch({
+      campaignId: "c-firstname",
+      subject: "x",
+      html: "Salve {{name}}!",
+      siteUrl: "https://example.com",
+      store,
+      mailer,
+    });
+    expect(captured[0].html).toContain("Salve Maria!");
+    expect(captured[0].html).not.toContain("Giovanna");
+    expect(captured[0].html).not.toContain("Rossi");
+  });
+
+  it("escapes HTML in name to prevent XSS injection", async () => {
+    const recipients: PendingRecipient[] = [{ subscriberToken: "tok-xss", attempts: 0 }];
+    const subscribers: SubscriberRecord[] = [
+      { token: "tok-xss", email: "tok-xss@test.com", name: '<script>alert("x")</script>' },
+    ];
+    const { store } = buildStore({ recipients, subscribers, totalRecipients: 1 });
+    const captured: { html: string }[] = [];
+    const mailer: MailSender = {
+      async sendBatch(payload) {
+        for (const p of payload) captured.push({ html: p.html });
+        return { successCount: payload.length, failedIndexes: [] };
+      },
+    };
+    await sendCampaignBatch({
+      campaignId: "c-xss",
+      subject: "x",
+      html: "Ciao {{name}}!",
+      siteUrl: "https://example.com",
+      store,
+      mailer,
+    });
+    expect(captured[0].html).not.toContain("<script>");
+    expect(captured[0].html).toContain("&lt;script&gt;");
+  });
+
+  it("preserves {{UNSUB}} and {{TOKEN}} replacements alongside {{name}}", async () => {
+    const recipients: PendingRecipient[] = [{ subscriberToken: "tok-combo", attempts: 0 }];
+    const subscribers: SubscriberRecord[] = [
+      { token: "tok-combo", email: "tok-combo@test.com", name: "Luca" },
+    ];
+    const { store } = buildStore({ recipients, subscribers, totalRecipients: 1 });
+    const captured: { html: string }[] = [];
+    const mailer: MailSender = {
+      async sendBatch(payload) {
+        for (const p of payload) captured.push({ html: p.html });
+        return { successCount: payload.length, failedIndexes: [] };
+      },
+    };
+    const html =
+      '<body>Ciao {{name}}, <a href="/register?token={{TOKEN}}">iscriviti</a>{{UNSUB}}</body>';
+    await sendCampaignBatch({
+      campaignId: "c-combo",
+      subject: "x",
+      html,
+      siteUrl: "https://example.com",
+      store,
+      mailer,
+    });
+    const out = captured[0].html;
+    expect(out).toContain("Ciao Luca,");
+    expect(out).toContain("token=tok-combo");
+    expect(out).toContain("Disiscriviti");
+    expect(out).not.toContain("{{name}}");
+    expect(out).not.toContain("{{TOKEN}}");
+    expect(out).not.toContain("{{UNSUB}}");
   });
 });
