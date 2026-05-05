@@ -181,6 +181,64 @@ describe("BrandedDateTimePicker — time spinners", () => {
     await user.click(screen.getByRole("button", { name: /aumenta ore/i }));
     expect(screen.getByTestId("bdtp-hour-display")).toHaveTextContent("00");
   });
+
+  it("hour wraps from 00 to 23 on decrement", async () => {
+    const user = userEvent.setup();
+    render(<BrandedDateTimePicker value="2026-01-15T00:00" onChange={() => {}} />);
+    await user.click(screen.getByRole("button", { name: /apri selettore data/i }));
+    await user.click(screen.getByRole("button", { name: /diminuisci ore/i }));
+    expect(screen.getByTestId("bdtp-hour-display")).toHaveTextContent("23");
+  });
+
+  it("minute wraps from 00 to 55 on decrement", async () => {
+    const user = userEvent.setup();
+    render(<BrandedDateTimePicker value="2026-01-15T10:00" onChange={() => {}} />);
+    await user.click(screen.getByRole("button", { name: /apri selettore data/i }));
+    await user.click(screen.getByRole("button", { name: /diminuisci minuti/i }));
+    expect(screen.getByTestId("bdtp-minute-display")).toHaveTextContent("55");
+  });
+
+  it("selecting a day preserves the previously chosen time", async () => {
+    const onChange = vi.fn();
+    const user = userEvent.setup();
+    render(<BrandedDateTimePicker value="2026-01-15T22:45" onChange={onChange} />);
+    await user.click(screen.getByRole("button", { name: /apri selettore data/i }));
+    await user.click(screen.getByRole("gridcell", { name: /20 gennaio 2026/i }));
+    await user.click(screen.getByRole("button", { name: /conferma/i }));
+    expect(onChange).toHaveBeenCalledWith("2026-01-20T22:45");
+  });
+});
+
+describe("BrandedDateTimePicker — month navigation focus", () => {
+  it("clicking month arrow keeps a focusable day cell in the visible month", async () => {
+    const user = userEvent.setup();
+    render(<BrandedDateTimePicker value="2026-01-15T20:00" onChange={() => {}} />);
+    await user.click(screen.getByRole("button", { name: /apri selettore data/i }));
+    await user.click(screen.getByRole("button", { name: /mese successivo/i }));
+    // After paging to February, exactly one cell within the visible month must
+    // be tabbable so the roving tabindex never traps the user out of the grid.
+    const tabbableCells = screen
+      .getAllByRole("gridcell")
+      .filter((cell) => cell.getAttribute("tabindex") === "0");
+    expect(tabbableCells).toHaveLength(1);
+    // And it must be a February day, not a leftover January day.
+    const dataDay = tabbableCells[0].getAttribute("data-bdtp-day");
+    expect(dataDay).toMatch(/^2026-02-/);
+  });
+
+  it("clamps focused day when navigating to a shorter month", async () => {
+    const user = userEvent.setup();
+    // Jan 31 → click prev → December has 31 days, OK. Click prev again → November has 30.
+    // Use a clearer case: March 31 → prev → February (28 days in 2026).
+    render(<BrandedDateTimePicker value="2026-03-31T20:00" onChange={() => {}} />);
+    await user.click(screen.getByRole("button", { name: /apri selettore data/i }));
+    await user.click(screen.getByRole("button", { name: /mese precedente/i }));
+    const tabbableCells = screen
+      .getAllByRole("gridcell")
+      .filter((cell) => cell.getAttribute("tabindex") === "0");
+    expect(tabbableCells).toHaveLength(1);
+    expect(tabbableCells[0].getAttribute("data-bdtp-day")).toBe("2026-02-28");
+  });
 });
 
 describe("BrandedDateTimePicker — commit/cancel", () => {
@@ -205,6 +263,48 @@ describe("BrandedDateTimePicker — commit/cancel", () => {
     await user.click(screen.getByRole("button", { name: /annulla/i }));
     expect(onChange).not.toHaveBeenCalled();
     expect(screen.queryByRole("dialog")).toBeNull();
+  });
+});
+
+describe("BrandedDateTimePicker — focus restoration & visual state", () => {
+  it("restores focus to the trigger after Conferma", async () => {
+    const user = userEvent.setup();
+    render(<BrandedDateTimePicker value="2026-01-15T20:00" onChange={() => {}} />);
+    const trigger = screen.getByRole("button", { name: /apri selettore data/i });
+    await user.click(trigger);
+    await user.click(screen.getByRole("button", { name: /conferma/i }));
+    expect(trigger).toHaveFocus();
+  });
+
+  it("restores focus to the trigger after Annulla", async () => {
+    const user = userEvent.setup();
+    render(<BrandedDateTimePicker value="2026-01-15T20:00" onChange={() => {}} />);
+    const trigger = screen.getByRole("button", { name: /apri selettore data/i });
+    await user.click(trigger);
+    await user.click(screen.getByRole("button", { name: /annulla/i }));
+    expect(trigger).toHaveFocus();
+  });
+
+  it("invalid prop applies the burgundy error border on the trigger", () => {
+    render(<BrandedDateTimePicker value="" onChange={() => {}} invalid />);
+    const trigger = screen.getByRole("button", { name: /apri selettore data/i });
+    expect(trigger.className).toMatch(/border-bs-burgundy/);
+  });
+});
+
+describe("BrandedDateTimePicker — calendar grid ARIA structure", () => {
+  it("wraps every day cell in a role=row (ARIA grid pattern)", async () => {
+    const user = userEvent.setup();
+    render(<BrandedDateTimePicker value="2026-01-15T20:00" onChange={() => {}} />);
+    await user.click(screen.getByRole("button", { name: /apri selettore data/i }));
+    // 6 day-rows + 1 weekday-header row = 7
+    const rows = screen.getAllByRole("row");
+    expect(rows).toHaveLength(7);
+    // Every gridcell must descend from a row element
+    const cells = screen.getAllByRole("gridcell");
+    for (const cell of cells) {
+      expect(cell.closest("[role='row']")).not.toBeNull();
+    }
   });
 });
 

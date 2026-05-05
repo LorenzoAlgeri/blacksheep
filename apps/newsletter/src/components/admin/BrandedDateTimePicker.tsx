@@ -31,6 +31,10 @@ function pad2(n: number): string {
   return String(n).padStart(2, "0");
 }
 
+// Parses "YYYY-MM-DDTHH:MM" using local-time constructors. On DST boundaries
+// (e.g. Italy "fall back" 03:00→02:00) ambiguous local times resolve to one of
+// the two instants nondeterministically; non-existent "spring forward" times
+// shift forward. Same behavior as the native <input type="datetime-local">.
 function parseLocal(value: string): Date | null {
   if (!value) return null;
   const m = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/.exec(value);
@@ -128,8 +132,14 @@ export function BrandedDateTimePicker({
   }, [open]);
 
   const valueDate = parseLocal(value);
-  const today = useMemo(() => new Date(), []);
+  const today = new Date();
   const grid = useMemo(() => buildGrid(anchor), [anchor]);
+  // Chunk into 6 weeks of 7 days for ARIA grid pattern (gridcell must be inside row).
+  const weeks = useMemo(() => {
+    const out: { date: Date; inMonth: boolean }[][] = [];
+    for (let i = 0; i < grid.length; i += 7) out.push(grid.slice(i, i + 7));
+    return out;
+  }, [grid]);
   const monthLabel = monthLongFmt.format(anchor);
 
   // matchMedia is gated behind `open` so the check only runs once the popover mounts
@@ -155,7 +165,13 @@ export function BrandedDateTimePicker({
   }
 
   function gotoMonth(delta: number) {
-    setAnchor((prev) => new Date(prev.getFullYear(), prev.getMonth() + delta, 1));
+    const newAnchor = new Date(anchor.getFullYear(), anchor.getMonth() + delta, 1);
+    // Keep `focusedDay` inside the visible month so the roving tabindex always
+    // has a target — preserve day-of-month, clamping to the new month's length.
+    const lastDay = new Date(newAnchor.getFullYear(), newAnchor.getMonth() + 1, 0).getDate();
+    const day = Math.min(focusedDay.getDate(), lastDay);
+    setAnchor(newAnchor);
+    setFocusedDay(new Date(newAnchor.getFullYear(), newAnchor.getMonth(), day));
   }
 
   function bumpHour(delta: number) {
@@ -318,10 +334,14 @@ export function BrandedDateTimePicker({
             <span
               id={monthLabelId}
               data-testid="bdtp-month-label"
-              role="status"
-              aria-live="polite"
               className="font-[family-name:var(--font-brand)] text-sm tracking-[0.2em] uppercase text-bs-cream"
             >
+              {monthLabel}
+            </span>
+            {/* Sibling live region: a static container that exists for the
+             * popover's lifetime guarantees NVDA/JAWS re-announce the month
+             * label whenever its inner text changes. */}
+            <span aria-live="polite" aria-atomic="true" className="sr-only">
               {monthLabel}
             </span>
             <button
@@ -355,47 +375,48 @@ export function BrandedDateTimePicker({
                 </span>
               ))}
             </div>
-            <div className="grid grid-cols-7 gap-px">
-              {grid.map(({ date, inMonth }, idx) => {
-                const selected = isSameDay(draft, date);
-                const isToday = isSameDay(today, date);
-                const isFocused = isSameDay(focusedDay, date);
-                let cls =
-                  "min-h-[44px] flex items-center justify-center rounded font-[family-name:var(--font-brand)] text-sm transition-colors cursor-pointer focus:outline-none focus-visible:ring-1 focus-visible:ring-bs-cream/60";
-                if (selected) {
-                  cls += " bg-bs-cream text-[#0a0a0a]";
-                } else if (isToday) {
-                  cls += " border border-bs-cream/40 text-bs-cream hover:bg-bs-cream/5";
-                } else if (inMonth) {
-                  cls += " text-bs-cream hover:bg-bs-cream/5";
-                } else {
-                  cls += " text-bs-cream/20 hover:bg-bs-cream/5";
-                }
-                return (
-                  <button
-                    key={`${idx}-${dateKey(date)}`}
-                    type="button"
-                    role="gridcell"
-                    aria-selected={selected}
-                    aria-current={isToday ? "date" : undefined}
-                    aria-label={cellAriaFmt.format(date)}
-                    data-bdtp-day={dateKey(date)}
-                    tabIndex={isFocused ? 0 : -1}
-                    onClick={() => selectDay(date)}
-                    onKeyDown={(e) => onDayKeyDown(e, date)}
-                    className={cls}
-                  >
-                    {date.getDate()}
-                  </button>
-                );
-              })}
-            </div>
+            {weeks.map((week, weekIdx) => (
+              <div key={weekIdx} role="row" className="grid grid-cols-7 gap-px">
+                {week.map(({ date, inMonth }) => {
+                  const selected = isSameDay(draft, date);
+                  const isToday = isSameDay(today, date);
+                  const isFocused = isSameDay(focusedDay, date);
+                  let cls =
+                    "min-h-[44px] flex items-center justify-center rounded font-[family-name:var(--font-brand)] text-sm transition-colors cursor-pointer focus:outline-none focus-visible:ring-1 focus-visible:ring-bs-cream/60";
+                  if (selected) {
+                    cls += " bg-bs-cream text-[#0a0a0a]";
+                  } else if (isToday) {
+                    cls += " border border-bs-cream/40 text-bs-cream hover:bg-bs-cream/5";
+                  } else if (inMonth) {
+                    cls += " text-bs-cream hover:bg-bs-cream/5";
+                  } else {
+                    cls += " text-bs-cream/20 hover:bg-bs-cream/5";
+                  }
+                  return (
+                    <button
+                      key={dateKey(date)}
+                      type="button"
+                      role="gridcell"
+                      aria-selected={selected}
+                      aria-current={isToday ? "date" : undefined}
+                      aria-label={cellAriaFmt.format(date)}
+                      data-bdtp-day={dateKey(date)}
+                      tabIndex={isFocused ? 0 : -1}
+                      onClick={() => selectDay(date)}
+                      onKeyDown={(e) => onDayKeyDown(e, date)}
+                      className={cls}
+                    >
+                      {date.getDate()}
+                    </button>
+                  );
+                })}
+              </div>
+            ))}
           </div>
 
           {/* Time spinner */}
           <div className="mt-4 pt-4 border-t border-bs-cream/10 flex items-center justify-center gap-2">
             <TimeSpinner
-              label="ore"
               ariaUp="Aumenta ore"
               ariaDown="Diminuisci ore"
               testId="bdtp-hour-display"
@@ -407,7 +428,6 @@ export function BrandedDateTimePicker({
               :
             </span>
             <TimeSpinner
-              label="minuti"
               ariaUp="Aumenta minuti"
               ariaDown="Diminuisci minuti"
               testId="bdtp-minute-display"
@@ -443,7 +463,6 @@ export function BrandedDateTimePicker({
 }
 
 interface TimeSpinnerProps {
-  label: string;
   ariaUp: string;
   ariaDown: string;
   testId: string;
@@ -452,7 +471,7 @@ interface TimeSpinnerProps {
   onDown: () => void;
 }
 
-function TimeSpinner({ label, ariaUp, ariaDown, testId, value, onUp, onDown }: TimeSpinnerProps) {
+function TimeSpinner({ ariaUp, ariaDown, testId, value, onUp, onDown }: TimeSpinnerProps) {
   return (
     <div className="flex flex-col items-center gap-1">
       <button
@@ -467,14 +486,15 @@ function TimeSpinner({ label, ariaUp, ariaDown, testId, value, onUp, onDown }: T
       </button>
       <div
         data-testid={testId}
-        role="spinbutton"
-        aria-label={label}
-        aria-valuetext={value}
-        tabIndex={-1}
+        aria-hidden="true"
         className="font-[family-name:var(--font-brand)] text-3xl text-bs-cream tabular-nums leading-none px-2 select-none"
       >
         {value}
       </div>
+      {/* The spinbutton ARIA pattern requires keyboard arrow handling on the
+       * focusable element. Until that's wired, the visible value is decorative
+       * and the up/down buttons (with aria-labels including the current value
+       * via the action verb) are the AT-accessible interaction surface. */}
       <button
         type="button"
         aria-label={ariaDown}
