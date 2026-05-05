@@ -35,46 +35,37 @@ export async function gotoNewsletterHome(page: Page): Promise<void> {
 }
 
 /**
- * Open the registration flow for the event card whose slug matches —
- * we filter by the slug rather than by full title because EventCard
- * renders each title word in its own `<span>` (for the staggered
- * entry animation), which concatenates words without whitespace in
- * textContent and breaks straight `hasText` matches against the
- * full title string.
+ * Open the registration flow for the event card identified by `slug`.
+ *
+ * EventCard does not expose the slug as a DOM attribute (the rendering
+ * is purely visual), so we identify the card by a regex built from the
+ * first slug tokens uppercased. The regex tolerates the per-word
+ * `<span data-bs-word>` wrappers that EventCard uses for its staggered
+ * title animation — those collapse the textContent without spaces, so
+ * a literal title hasText match would not work.
+ *
+ * If the EventCard implementation later exposes a stable
+ * `data-event-slug` attribute (cross-track suggestion from the code
+ * review), this helper can be simplified to a single attribute query.
  */
 export async function openEventRegistration(page: Page, eventSlug: string): Promise<void> {
-  // The card body contains the title — match a leading distinctive
-  // substring (e.g. the slug-derived prefix) to keep the filter
-  // resilient to title cosmetic edits while still being unique on
-  // a page with multiple seeded events.
   const card = page
-    .locator("article", {
-      has: page.locator(`a[href*="${eventSlug}"], [data-event-slug="${eventSlug}"]`),
-    })
-    .first();
-  // If the EventCard does not expose a slug attribute / link (current
-  // implementation), fall back to title-prefix matching by the first
-  // distinctive word the slug encodes.
-  const fallbackCard = page
     .locator("article")
     .filter({ has: page.getByRole("button", { name: /entra in lista/i }) })
     .filter({ hasText: deriveTitlePrefix(eventSlug) })
     .first();
-
-  const target = (await card.count()) > 0 ? card : fallbackCard;
-  await target.scrollIntoViewIfNeeded();
-  await target.getByRole("button", { name: /entra in lista/i }).click();
+  await card.scrollIntoViewIfNeeded();
+  await card.getByRole("button", { name: /entra in lista/i }).click();
 }
 
 /**
- * Convert a slug like `e2e-monday-club-night` into a prefix that is
- * unique enough to identify the right card on a page that may also
- * include the dev-seed events (e.g. monday-club-night-may, summer-opening).
+ * Convert a slug like `e2e-monday-club-night` into a regex that
+ * matches the first three slug tokens uppercased, separated by an
+ * optional whitespace pattern so it survives both the visual
+ * rendering and the textContent (no-whitespace) form produced by
+ * the per-word `<span>` wrappers.
  */
 function deriveTitlePrefix(slug: string): RegExp {
-  // Take the first 3 slug tokens, uppercased, joined by a wildcard
-  // whitespace pattern so the matcher tolerates the per-word `<span>`
-  // wrappers in EventCard's title.
   const tokens = slug.split("-").slice(0, 3);
   const pattern = tokens.map((t) => escapeRegex(t.toUpperCase())).join("\\s*");
   return new RegExp(pattern, "i");
@@ -114,12 +105,16 @@ export async function fillRegistrationForm(
 /**
  * Run axe-core against the currently-open dialog.
  *
- * `color-contrast` is intentionally disabled here: the brand uses
- * `text-bs-cream/45` (≈ #787873 on #0a0a0a) which sits at 4.46:1, just
- * below WCAG 2 AA's 4.5:1 cutoff for body text. Fixing it requires
- * editing the dialog components themselves (cross-track for this E2E
- * deliverable). The finding is reported to the orchestrator separately
- * — disabling the rule here keeps the suite green while still letting
+ * TODO(a11y-contrast): `color-contrast` is intentionally disabled
+ * because the brand uses `text-bs-cream/45` (≈ #787873 on #0a0a0a)
+ * which sits at 4.46:1, just below WCAG 2 AA's 4.5:1 cutoff for body
+ * text. Fixing it requires editing the dialog components themselves
+ * (cross-track for this E2E deliverable) — bump the opacity to /55 or
+ * tighten the cream token. Re-enable this rule once the brand fix
+ * lands so further regressions are caught. Tracking issue:
+ * <pending — file before merge to main>.
+ *
+ * Disabling the rule here keeps the suite green while still letting
  * every OTHER WCAG 2 A/AA rule (label, button-name, aria-required-attr,
  * heading-order, …) catch real regressions on the dialogs we touch.
  */
@@ -141,10 +136,9 @@ export async function expectNoAxeViolationsInDialog(page: Page): Promise<void> {
  * Run axe-core against the entire page (used for the email-link landing
  * page where there is no dialog).
  *
- * `color-contrast` is disabled for the same reason as in the dialog
- * variant: brand tokens with low-opacity tints (text-bs-cream/45 etc.)
- * fall just below the WCAG 2 AA threshold and the fix lives in
- * cross-track CSS.
+ * TODO(a11y-contrast): `color-contrast` is disabled for the same
+ * reason as in `expectNoAxeViolationsInDialog`. See that helper for
+ * the full explanation and tracking issue.
  */
 export async function expectNoAxeViolationsOnPage(page: Page): Promise<void> {
   const results = await new AxeBuilder({ page })

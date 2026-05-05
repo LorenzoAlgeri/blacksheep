@@ -38,23 +38,27 @@ import { getE2EServiceClient } from "./seed";
  *  - shared Supabase dataset, seeded once in globalSetup;
  *  - in-memory rate limiter on the dev server (5 reg/min/IP).
  *
- * Each test pins a unique X-Forwarded-For header so the rate limiter
- * keys per-test rather than per-suite. Without this, repeated suite
- * runs against an already-running dev server (`reuseExistingServer:
- * true`) accumulate counters across runs and the 6th register call in
- * a 60-second window starts returning 429.
+ * Each test pins a unique X-Forwarded-For header so the in-memory
+ * rate limiter on the dev server keys per-test rather than per-suite.
+ * Without this, repeated runs against a long-lived dev process
+ * (`reuseExistingServer: true`) accumulate counters across runs and
+ * the 6th register call inside a 60-second window starts returning
+ * 429.
+ *
+ * The IP is a valid RFC 1918 (10/8) address rather than a synthetic
+ * string so the test stays robust to a future server change that
+ * actually parses x-forwarded-for. Two octets are sourced from a
+ * per-run nonce so consecutive suite runs do not reuse the same IP
+ * inside the rate limiter's 60-second window.
  */
-const RUN_NONCE = Math.floor(Math.random() * 0xffffff)
-  .toString(16)
-  .padStart(6, "0");
+const RUN_NONCE_LOW = Math.floor(Math.random() * 256);
+const RUN_NONCE_HIGH = Math.floor(Math.random() * 256);
 let testCounter = 0;
 test.beforeEach(async ({ context }) => {
   testCounter += 1;
-  // RFC 5737 reserves 192.0.2.0/24 for documentation — safe to use as a
-  // fake client IP without colliding with anything routable.
-  const ip = `192.0.2.${(testCounter % 250) + 1}`;
+  const ip = `10.${RUN_NONCE_HIGH}.${RUN_NONCE_LOW}.${(testCounter % 250) + 1}`;
   await context.setExtraHTTPHeaders({
-    "X-Forwarded-For": `${ip}-${RUN_NONCE}`.slice(0, 39),
+    "X-Forwarded-For": ip,
   });
 });
 

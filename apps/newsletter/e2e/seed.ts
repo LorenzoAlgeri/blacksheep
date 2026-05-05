@@ -34,6 +34,8 @@ interface SeedResult {
   inserted: { event: number; subscribers: number; registrations: number };
 }
 
+let cachedClient: SupabaseClient | undefined;
+
 function loadEnv(): void {
   // Re-uses the Next.js loader so .env.local picks up the same way as
   // `next dev`. The seed runs in a plain Node context (Playwright global
@@ -42,6 +44,7 @@ function loadEnv(): void {
 }
 
 function getServiceClient(): SupabaseClient {
+  if (cachedClient) return cachedClient;
   loadEnv();
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
@@ -55,7 +58,8 @@ function getServiceClient(): SupabaseClient {
       "[e2e seed] Missing SUPABASE_SERVICE_ROLE_KEY — set it in apps/newsletter/.env.local",
     );
   }
-  return createClient(url, key, { auth: { persistSession: false } });
+  cachedClient = createClient(url, key, { auth: { persistSession: false } });
+  return cachedClient;
 }
 
 export async function seedBlackSheepListE2E(): Promise<SeedResult> {

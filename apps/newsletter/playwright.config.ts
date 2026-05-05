@@ -45,6 +45,8 @@ export default defineConfig({
     video: "retain-on-failure",
     locale: "it-IT",
     timezoneId: "Europe/Rome",
+    // Skip the EventsListGate mascotte intro — the gate honors
+    // prefers-reduced-motion and mounts the events list immediately.
     contextOptions: { reducedMotion: "reduce" },
   },
   webServer: {
