@@ -13,10 +13,11 @@ interface FetchActiveEventsOptions {
  * malformed payload, or transport error — Server Component error boundaries
  * (`error.tsx`) catch and render the fallback.
  *
- * `next: { revalidate: 60 }` opts the fetch into Next.js ISR cache so the list
- * regenerates at most once per minute under static rendering. Pages with
- * `dynamic = "force-dynamic"` bypass the cache and refetch on every request,
- * which is also acceptable behaviour for this surface.
+ * `cache: "no-store"` opts the fetch out of Next.js Data Cache so updates
+ * to events are reflected on every page request, consistent with the parent
+ * page's `dynamic = "force-dynamic"`. If ISR is ever needed for production
+ * performance, switch to `{ next: { revalidate: 60 } }` and call
+ * `revalidatePath("/")` from the admin PATCH route.
  */
 export async function fetchActiveEvents(
   opts: FetchActiveEventsOptions = {},
@@ -24,7 +25,9 @@ export async function fetchActiveEvents(
   const baseUrl = opts.baseUrl ?? process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
   const url = `${baseUrl}/newsletter/api/events`;
 
-  const res = await fetch(url, { next: { revalidate: 60 } });
+  // `cache: "no-store"` opts out of Next.js Data Cache so every request hits
+  // the API fresh — consistent with the parent page's `dynamic = "force-dynamic"`.
+  const res = await fetch(url, { cache: "no-store" });
 
   if (!res.ok) {
     throw new Error(`fetchActiveEvents: API responded ${res.status}`);

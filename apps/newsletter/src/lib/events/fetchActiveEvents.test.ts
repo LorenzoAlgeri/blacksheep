@@ -78,10 +78,10 @@ describe("fetchActiveEvents", () => {
     );
   });
 
-  it("passes next.revalidate=60 option to fetch for ISR caching", async () => {
+  it("opts out of Next.js Data Cache so admin edits surface immediately", async () => {
     mockFetch.mockResolvedValueOnce(jsonResponse(200, { events: [] }));
     await fetchActiveEvents({ baseUrl: "http://test" });
     const [, init] = mockFetch.mock.calls[0];
-    expect(init).toMatchObject({ next: { revalidate: 60 } });
+    expect(init).toMatchObject({ cache: "no-store" });
   });
 });
