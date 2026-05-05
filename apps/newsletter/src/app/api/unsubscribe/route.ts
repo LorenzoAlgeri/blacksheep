@@ -1,5 +1,6 @@
 import { NextRequest } from "next/server";
 import { getSupabase } from "@/lib/supabase";
+import { isSubscriberUnsubscribable } from "@/lib/subscriber-status";
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -14,11 +15,15 @@ export async function GET(request: NextRequest) {
 
   const { data: subscriber } = await supabase
     .from("subscribers")
-    .select("id")
+    .select("id, status")
     .eq("token", token)
     .single();
 
   if (!subscriber) {
+    return Response.redirect(new URL("/newsletter/?error=invalid", request.url));
+  }
+
+  if (!isSubscriberUnsubscribable(subscriber.status)) {
     return Response.redirect(new URL("/newsletter/?error=invalid", request.url));
   }
 
@@ -61,11 +66,15 @@ export async function POST(request: NextRequest) {
   if (!shouldDelete) {
     const { data: subscriber } = await supabase
       .from("subscribers")
-      .select("id")
+      .select("id, status")
       .eq("token", token)
       .single();
 
     if (!subscriber) {
+      return Response.json({ success: true, unsubscribed: false }, { status: 200 });
+    }
+
+    if (!isSubscriberUnsubscribable(subscriber.status)) {
       return Response.json({ success: true, unsubscribed: false }, { status: 200 });
     }
 
