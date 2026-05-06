@@ -44,11 +44,18 @@ export function EventsList({ events }: EventsListProps) {
       </header>
 
       {isEmpty ? (
-        <div className="border border-bs-cream/[0.08] bg-bs-cream/[0.025] px-7 py-12 md:px-10 md:py-16">
+        <div className="animate-fade-in-up border border-bs-cream/[0.08] bg-[linear-gradient(180deg,rgba(255,255,243,0.045),rgba(255,255,243,0.018))] px-7 py-12 md:px-10 md:py-16">
+          {/* Editorial counter overline matching the populated cards —
+              keeps the empty state in the same visual register as a
+              real EventCard instead of dropping into a generic
+              "nothing to see here" panel. */}
+          <p className="mb-4 font-[family-name:var(--font-brand)] text-[10px] tracking-[0.42em] uppercase text-bs-cream/30">
+            00 / prossima uscita
+          </p>
           <p className="font-[family-name:var(--font-brand)] text-sm tracking-[0.25em] uppercase text-bs-cream/45">
             Nessun evento in lista
           </p>
-          <p className="font-body text-sm leading-relaxed text-bs-cream/35 mt-4 max-w-[40ch]">
+          <p className="font-body text-sm leading-relaxed text-bs-cream/40 mt-4 max-w-[44ch] [text-wrap:pretty]">
             Torna presto. Le prossime serate vengono annunciate qui per primi.
           </p>
         </div>

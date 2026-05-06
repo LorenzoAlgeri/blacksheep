@@ -36,7 +36,12 @@ async function getEvents(): Promise<EventCardData[]> {
   try {
     return await fetchActiveEvents({ baseUrl: `${protocol}://${host}` });
   } catch (error) {
-    console.error("[home] fetchActiveEvents failed:", error);
+    // Truncate to the message string so we never accidentally serialize
+    // an error object that might carry stack frames pointing at server
+    // file paths or wrapped objects with sensitive metadata into the
+    // structured logs.
+    const message = error instanceof Error ? error.message : String(error);
+    console.error("[home] fetchActiveEvents failed:", message);
     return [];
   }
 }

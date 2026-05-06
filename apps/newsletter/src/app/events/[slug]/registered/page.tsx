@@ -41,7 +41,7 @@ export default async function EventRegisteredPage({
   const mainSiteUrl = process.env.NEXT_PUBLIC_MAIN_SITE_URL ?? "/";
 
   return (
-    <main className="relative z-10 flex min-h-screen flex-1 flex-col items-center justify-center px-6 text-center">
+    <main className="relative z-10 flex min-h-dvh flex-1 flex-col items-center justify-center px-6 text-center">
       <div>
         <Image
           src="/bs-logo.svg"
@@ -57,7 +57,10 @@ export default async function EventRegisteredPage({
         />
       </div>
 
-      <h1 className="font-[family-name:var(--font-brand)] text-4xl tracking-wider text-bs-cream mt-8 confirm-title-glow">
+      <h1
+        className="font-[family-name:var(--font-brand)] text-4xl tracking-wider text-bs-cream mt-8 confirm-title-glow [text-wrap:balance]"
+        translate="no"
+      >
         {content.title}
       </h1>
 
@@ -65,13 +68,13 @@ export default async function EventRegisteredPage({
         <div className="h-px bg-gradient-to-r from-transparent via-bs-cream/15 to-transparent" />
       </div>
 
-      <p className="font-body text-sm text-bs-cream/60 max-w-xs leading-relaxed">
+      <p className="font-body text-sm text-bs-cream/60 max-w-xs leading-relaxed [text-wrap:pretty]">
         {content.subtitle}
       </p>
 
       <a
         href={mainSiteUrl}
-        className="font-body text-[10px] text-bs-cream/20 uppercase tracking-[0.2em] mt-10 hover:text-bs-cream/50 transition-colors duration-300"
+        className="rounded-sm font-body text-[10px] text-bs-cream/20 uppercase tracking-[0.2em] mt-10 hover:text-bs-cream/50 focus-visible:text-bs-cream/70 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-bs-cream/20 transition-colors duration-300"
       >
         Torna al sito
       </a>
