@@ -249,15 +249,17 @@ body::before {
        portrait viewport during the static greet. +5vw moves the
        container right enough to put the figure mid-screen without
        overshoot. */
-    transform: translateX(-3vw);
+    transform: translate3d(-3vw, 0, 0);
   }
 
   100% {
     /* Slide back to the natural object-position resting place (the
        same "left of the frame" anchor the mascot has on desktop) so
        the raised hand has room and the figure ends in its original
-       artwork-anchored spot. */
-    transform: translateX(-80vw);
+       artwork-anchored spot. translate3d (vs translateX) forces a
+       GPU compositing layer so the frame swap doesn't re-rasterize
+       on every paint — eliminates jitter on lower-end mobile GPUs. */
+    transform: translate3d(-80vw, 0, 0);
   }
 }
 
@@ -265,6 +267,25 @@ body::before {
   [data-mascotte-intro] {
     animation: bs-mascot-mobile-shift 3.333s cubic-bezier(0.65, 0, 0.35, 1) both;
   }
+}
+
+/* Promote the mascot container to its own GPU compositing layer so
+   the per-frame img.src swap (≈30 fps) doesn't tear with the
+   transform animation or the fade-out. `will-change` is set only on
+   this short-lived intro element — it unmounts once `done` flips, so
+   the GPU memory cost is bounded. `translateZ(0)` is the legacy hint
+   that pairs with will-change on Safari / older WebKit. The img
+   inside also gets its own layer to keep the frame swap from
+   triggering a repaint of siblings. */
+[data-mascotte-intro] {
+  will-change: transform, opacity;
+  transform: translateZ(0);
+}
+
+[data-mascotte-intro] img {
+  will-change: transform;
+  transform: translateZ(0);
+  backface-visibility: hidden;
 }
 
 @media (prefers-reduced-motion: reduce) {
