@@ -521,6 +521,7 @@ function TimeSpinner({
   if (prevValue !== value) {
     setPrevValue(value);
     setLocalDraft(null);
+    // eslint-disable-next-line react-hooks/refs -- React 19 "adjust state during render" idiom: https://react.dev/learn/you-might-not-need-an-effect#adjusting-some-state-when-a-prop-changes
     localDraftRef.current = null;
   }
 
