@@ -28,10 +28,15 @@ export function EventsList({ events }: EventsListProps) {
   return (
     <section
       aria-labelledby={HEADING_ID}
-      className="w-full max-w-3xl mx-auto px-6 min-h-dvh pt-12 md:pt-16 pb-24"
+      // Lift the section above the fixed `.site-bg` (z-index: 0) which
+      // would otherwise paint over the static section. Same `relative
+      // z-10` pattern used by the hero <main> in LandingMotion. Without
+      // this the heading and cards live "behind the wallpaper" — they
+      // exist in the DOM but the user never sees them.
+      className="relative z-10 w-full max-w-3xl mx-auto px-6 min-h-dvh pt-12 md:pt-16 pb-24"
       data-bs-list-section
     >
-      <header className="sticky top-6 md:top-8 z-10 mb-10 md:mb-14">
+      <header className="mb-10 md:mb-14">
         <p className="font-[family-name:var(--font-brand)] text-xs tracking-[0.5em] text-bs-cream/40 uppercase mb-3">
           La lista
         </p>

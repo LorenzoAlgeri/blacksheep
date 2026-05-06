@@ -49,6 +49,17 @@ export default function RootLayout({
   return (
     <html lang="it" className={`${arialBlack.variable} h-full antialiased`}>
       <body className="min-h-dvh flex flex-col">
+        {/* Disable browser scroll restoration BEFORE hydration. The
+            EventsListGate locks scroll during the mascotte intro;
+            without this, Chrome / Firefox try to snap back to the
+            previous scrollY the moment the lock is released, which
+            flashes the EventsList heading through the viewport for
+            ~1s before the layout settles. Inline script runs in the
+            same tick as the HTML parse, so the browser never
+            schedules an automatic restore in the first place. */}
+        <Script id="bs-scroll-restoration" strategy="beforeInteractive">
+          {`if(typeof history!=='undefined')history.scrollRestoration='manual';`}
+        </Script>
         <Script
           id="Cookiebot"
           src="https://consent.cookiebot.com/uc.js"

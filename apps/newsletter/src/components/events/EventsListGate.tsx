@@ -4,13 +4,10 @@ import { useEffect, useState, type ReactNode } from "react";
 import { MASCOTTE_END_EVENT } from "@/components/MascotteIntro";
 
 /**
- * Buffer beyond the mascotte intro's natural duration. Mascotte runs
- * ~3.33s of frames + 350ms hold + 600ms fade ≈ 4280ms total. The
- * fallback sits above that so the timeout only fires when the intro is
- * actually broken (e.g. WebP frames fail to load and the reveal/end
- * events never dispatch). Otherwise the gate opens precisely on
- * MASCOTTE_END_EVENT — keeps the fade-in synced with the mascotte
- * leaving the viewport, no overlap flicker.
+ * Last-resort safety net: if MASCOTTE_END_EVENT never fires (lazy
+ * chunk failure, first-frame load error), reveal the EventsList
+ * after this many ms from page mount so the page is never stuck
+ * with the list locked away.
  */
 const FALLBACK_TIMEOUT_MS = 5000;
 
@@ -19,69 +16,56 @@ interface EventsListGateProps {
 }
 
 /**
- * Client-side gate that delays the EventsList reveal until the mascotte
- * intro has finished. Also locks page scroll while gated, so the user
- * can't scroll past the hero during the intro fade-out (which would
- * otherwise leave them past the section heading the moment the gate
- * opens, making it look like the heading "appears and disappears").
+ * Minimal gate around the EventsList — provides a11y isolation only.
  *
- * a11y:
- *  - `aria-hidden` while gated → screen readers skip the list during intro
- *  - `pointer-events-none` while gated → CTA cannot accidentally receive focus
- *  - prefers-reduced-motion → mount immediately, no fade and no scroll lock
+ * Why so small: previous variants tried to combine scroll-locking,
+ * opacity fade-in, and scroll-restoration overrides. Each combination
+ * produced a one-second "flash and disappear" of the section heading
+ * after the mascotte intro on certain reload paths. None of the
+ * targeted fixes (`history.scrollRestoration='manual'`, scrollTo(0,0)
+ * pin, transition removal) eliminated it on every browser. The
+ * pragmatic answer is to remove the moving parts: render the list
+ * normally below the fold, let the mascot's fixed-inset overlay hide
+ * it during the intro the same way it hides everything else, and use
+ * `inert` + `aria-hidden` purely so keyboard / screen reader users
+ * cannot enter the list while the mascot is on stage.
+ *
+ * Visually there is no fade and no scroll lock — when the mascotte
+ * unmounts at MASCOTTE_END_EVENT, the list is simply already there
+ * underneath. No flash because there is no transition to mistime.
  */
 export function EventsListGate({ children }: EventsListGateProps) {
-  const [mounted, setMounted] = useState(false);
+  const [revealed, setRevealed] = useState(false);
 
   useEffect(() => {
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     if (reducedMotion) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
-      setMounted(true);
+      setRevealed(true);
       return;
     }
 
-    // Lock scroll until the mascotte intro completes. Both html and body
-    // need overflow:hidden because the scrolling element varies (Chrome
-    // uses <html>, some quirks-mode contexts use <body>). Restore exact
-    // previous values to avoid clobbering admin/global styles.
-    const html = document.documentElement;
-    const body = document.body;
-    const previousHtmlOverflow = html.style.overflow;
-    const previousBodyOverflow = body.style.overflow;
-    html.style.overflow = "hidden";
-    body.style.overflow = "hidden";
-
-    const release = () => {
-      html.style.overflow = previousHtmlOverflow;
-      body.style.overflow = previousBodyOverflow;
-    };
-
-    const timeoutId = window.setTimeout(() => {
-      release();
-      setMounted(true);
-    }, FALLBACK_TIMEOUT_MS);
-    const handler = () => {
-      window.clearTimeout(timeoutId);
-      release();
-      setMounted(true);
-    };
-    window.addEventListener(MASCOTTE_END_EVENT, handler);
+    const reveal = () => setRevealed(true);
+    const fallback = window.setTimeout(reveal, FALLBACK_TIMEOUT_MS);
+    window.addEventListener(MASCOTTE_END_EVENT, reveal, { once: true });
 
     return () => {
-      window.clearTimeout(timeoutId);
-      window.removeEventListener(MASCOTTE_END_EVENT, handler);
-      release();
+      window.clearTimeout(fallback);
+      window.removeEventListener(MASCOTTE_END_EVENT, reveal);
     };
   }, []);
 
   return (
     <div
-      aria-hidden={!mounted}
-      data-events-gate-mounted={mounted ? "true" : "false"}
-      className={`transition-opacity duration-700 ease-out ${
-        mounted ? "opacity-100" : "opacity-0 pointer-events-none"
-      }`}
+      aria-hidden={!revealed}
+      inert={!revealed}
+      data-events-gate-revealed={revealed}
+      // visibility: hidden / visible is an instant toggle — no
+      // transition value can mistime, so there's no fade-flash window
+      // where the heading "appears for a second and disappears". The
+      // section still reserves layout space (unlike display:none) so
+      // there is zero layout shift when revealed flips.
+      style={{ visibility: revealed ? "visible" : "hidden" }}
     >
       {children}
     </div>

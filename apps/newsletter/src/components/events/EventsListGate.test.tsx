@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { render, screen, cleanup, act } from "@testing-library/react";
+import { render, cleanup, act } from "@testing-library/react";
 import { EventsListGate } from "./EventsListGate";
 import { MASCOTTE_END_EVENT } from "@/components/MascotteIntro";
 
@@ -27,117 +27,88 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-describe("EventsListGate", () => {
-  it("renders children with opacity-0 (gated) on initial mount", () => {
-    render(
+describe("EventsListGate (minimal a11y-only gate)", () => {
+  it("starts hidden from a11y (inert + aria-hidden) until the mascot finishes", () => {
+    const { container } = render(
       <EventsListGate>
-        <p>child content</p>
+        <p>Lista eventi</p>
       </EventsListGate>,
     );
-    const wrapper = screen.getByText("child content").parentElement!;
-    expect(wrapper.className).toContain("opacity-0");
+
+    const wrapper = container.firstElementChild as HTMLElement;
     expect(wrapper.getAttribute("aria-hidden")).toBe("true");
-    expect(wrapper.getAttribute("data-events-gate-mounted")).toBe("false");
+    expect(wrapper.hasAttribute("inert")).toBe(true);
+    expect(wrapper.dataset.eventsGateRevealed).toBe("false");
   });
 
-  it("opens (opacity-100) when MASCOTTE_END_EVENT is dispatched", () => {
-    render(
+  it("reveals (drops inert + aria-hidden) when MASCOTTE_END_EVENT fires", () => {
+    const { container } = render(
       <EventsListGate>
-        <p>child content</p>
+        <p>Lista eventi</p>
       </EventsListGate>,
     );
+
     act(() => {
       window.dispatchEvent(new CustomEvent(MASCOTTE_END_EVENT));
     });
-    const wrapper = screen.getByText("child content").parentElement!;
-    expect(wrapper.className).toContain("opacity-100");
+
+    const wrapper = container.firstElementChild as HTMLElement;
     expect(wrapper.getAttribute("aria-hidden")).toBe("false");
-    expect(wrapper.getAttribute("data-events-gate-mounted")).toBe("true");
+    expect(wrapper.hasAttribute("inert")).toBe(false);
+    expect(wrapper.dataset.eventsGateRevealed).toBe("true");
   });
 
-  it("opens immediately when prefers-reduced-motion is set", () => {
-    matchMediaMatches = true;
-    render(
+  it("falls back to revealing after 5 seconds if MASCOTTE_END_EVENT never fires", () => {
+    const { container } = render(
       <EventsListGate>
-        <p>child content</p>
+        <p>Lista eventi</p>
       </EventsListGate>,
     );
-    const wrapper = screen.getByText("child content").parentElement!;
-    expect(wrapper.getAttribute("data-events-gate-mounted")).toBe("true");
-    expect(wrapper.className).toContain("opacity-100");
-  });
 
-  it("opens via fallback timeout if MASCOTTE_END_EVENT never fires", () => {
-    render(
-      <EventsListGate>
-        <p>child content</p>
-      </EventsListGate>,
-    );
-    // Pre-timeout: still gated.
-    expect(
-      screen.getByText("child content").parentElement!.getAttribute("data-events-gate-mounted"),
-    ).toBe("false");
-    // Advance past the 5000ms fallback window.
     act(() => {
-      vi.advanceTimersByTime(5000);
+      vi.advanceTimersByTime(5_000);
     });
-    expect(
-      screen.getByText("child content").parentElement!.getAttribute("data-events-gate-mounted"),
-    ).toBe("true");
+
+    const wrapper = container.firstElementChild as HTMLElement;
+    expect(wrapper.dataset.eventsGateRevealed).toBe("true");
   });
 
-  it("removes the listener and clears timeout on unmount (no late-fire crash)", () => {
-    const { unmount } = render(
-      <EventsListGate>
-        <p>child content</p>
-      </EventsListGate>,
-    );
-    unmount();
-    // After unmount, dispatching the event should not throw (listener removed)
-    // and advancing timers should not call setState on an unmounted component.
-    expect(() => {
-      window.dispatchEvent(new CustomEvent(MASCOTTE_END_EVENT));
-      vi.advanceTimersByTime(10000);
-    }).not.toThrow();
-  });
-
-  it("locks html and body scroll while gated, restores both when the gate opens", () => {
-    document.documentElement.style.overflow = "";
-    document.body.style.overflow = "";
-    render(
-      <EventsListGate>
-        <p>child content</p>
-      </EventsListGate>,
-    );
-    expect(document.documentElement.style.overflow).toBe("hidden");
-    expect(document.body.style.overflow).toBe("hidden");
-    act(() => {
-      window.dispatchEvent(new CustomEvent(MASCOTTE_END_EVENT));
-    });
-    expect(document.documentElement.style.overflow).toBe("");
-    expect(document.body.style.overflow).toBe("");
-  });
-
-  it("does NOT lock scroll when prefers-reduced-motion is set", () => {
+  it("reveals immediately when prefers-reduced-motion is on", () => {
     matchMediaMatches = true;
-    document.documentElement.style.overflow = "";
-    document.body.style.overflow = "";
-    render(
+
+    const { container } = render(
       <EventsListGate>
-        <p>child content</p>
+        <p>Lista eventi</p>
       </EventsListGate>,
     );
-    expect(document.documentElement.style.overflow).toBe("");
-    expect(document.body.style.overflow).toBe("");
+
+    const wrapper = container.firstElementChild as HTMLElement;
+    expect(wrapper.dataset.eventsGateRevealed).toBe("true");
   });
 
-  it("applies pointer-events-none when gated to block focus on hidden CTAs", () => {
+  it("does NOT lock html/body scroll (the mascot fixed overlay hides the list visually)", () => {
+    const previousHtmlOverflow = document.documentElement.style.overflow;
+    const previousBodyOverflow = document.body.style.overflow;
+
     render(
       <EventsListGate>
-        <button>cta</button>
+        <p>Lista eventi</p>
       </EventsListGate>,
     );
-    const wrapper = screen.getByText("cta").parentElement!;
-    expect(wrapper.className).toContain("pointer-events-none");
+
+    expect(document.documentElement.style.overflow).toBe(previousHtmlOverflow);
+    expect(document.body.style.overflow).toBe(previousBodyOverflow);
+  });
+
+  it("does NOT apply any opacity transition class (no fade flash)", () => {
+    const { container } = render(
+      <EventsListGate>
+        <p>Lista eventi</p>
+      </EventsListGate>,
+    );
+
+    const wrapper = container.firstElementChild as HTMLElement;
+    expect(wrapper.className).not.toMatch(/opacity-/);
+    expect(wrapper.className).not.toMatch(/transition-/);
   });
 });

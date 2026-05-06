@@ -221,6 +221,39 @@ body::before {
   }
 }
 
+/* EventsList reveal — runs once when the EventsListGate flips
+   data-events-gate-revealed from "false" to "true" at the end of the
+   mascot intro. The wrapper itself stays a plain visibility:
+   hidden → visible toggle (no transition, no flash); the animation
+   is on the section's content with a stagger between the heading and
+   the cards (or empty state) so the section eases in similarly to
+   the EventCard scroll-driven entrance. */
+@keyframes bs-list-item-rise {
+  from {
+    opacity: 0;
+    transform: translateY(28px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+[data-events-gate-revealed="true"] [data-bs-list-section] > header {
+  animation: bs-list-item-rise 1100ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+[data-events-gate-revealed="true"] [data-bs-list-section] > *:not(header) {
+  animation: bs-list-item-rise 1100ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation-delay: 240ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-events-gate-revealed="true"] [data-bs-list-section] > * {
+    animation: none;
+  }
+}
+
 /* Logo-specific fallback also clears the clip-path / blur applied as
    the initial hidden state above. Without this the logo would stay
    wiped/blurred forever if GSAP never runs. Note: keyframe properties
@@ -596,14 +629,14 @@ dialog::backdrop {
 }
 
 @keyframes bs-num-fill {
+  /* Per Lorenzo: the number now appears already filled solid cream
+     from the first frame — no outline/transparent stage. We keep a
+     subtle letter-spacing animation as an editorial micro-detail
+     without the stroke morph that flashed at entry. */
   from {
-    -webkit-text-fill-color: transparent;
-    -webkit-text-stroke: 1px rgba(255, 255, 243, 0.45);
     letter-spacing: -0.04em;
   }
   to {
-    -webkit-text-fill-color: rgba(255, 255, 243, 1);
-    -webkit-text-stroke: 0 transparent;
     letter-spacing: -0.06em;
   }
 }
@@ -677,11 +710,9 @@ dialog::backdrop {
     animation-range: entry 0% cover 18%;
     animation-delay: calc(var(--card-i, 0) * 80ms);
   }
-  [data-bs-card][data-fallback="false"] [data-bs-day] {
-    animation: bs-num-fill linear both;
-    animation-timeline: view();
-    animation-range: cover 4% cover 12%;
-  }
+  /* [data-bs-day] animation removed per Lorenzo: the kerning shift
+     was visible as a "second digit sliding left" when the card came
+     into view. Number stays at its static letter-spacing instead. */
   [data-bs-card][data-fallback="false"] [data-bs-word] {
     animation: bs-word-rise linear both;
     animation-timeline: view();
@@ -720,10 +751,8 @@ dialog::backdrop {
   animation: bs-rise 700ms var(--bs-ease-out) both;
   animation-delay: calc(var(--card-i, 0) * 80ms);
 }
-[data-bs-card][data-ready="true"][data-fallback="true"][data-animated="true"] [data-bs-day] {
-  animation: bs-num-fill 600ms var(--bs-ease-out) both;
-  animation-delay: calc(var(--card-i, 0) * 80ms + 100ms);
-}
+/* [data-bs-day] animation removed per Lorenzo (see scroll-driven tier
+   above for rationale). Static letter-spacing — no entry shift. */
 [data-bs-card][data-ready="true"][data-fallback="true"][data-animated="true"] [data-bs-word] {
   animation: bs-word-rise 500ms var(--bs-ease-out) both;
   animation-delay: calc(var(--card-i, 0) * 80ms + 150ms + var(--word-i, 0) * 60ms);
