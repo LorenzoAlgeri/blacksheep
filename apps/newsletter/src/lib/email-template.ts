@@ -78,6 +78,20 @@ function sanitizeUrl(url: string): string {
   }
 }
 
+// Accepted protocols for the event CTA href: http: and https: only. [SEC-MED-06]
+// {{TOKEN}} is substituted before parsing so Node.js URL can process the value;
+// the original (with placeholder) is embedded in the output untouched.
+// Any other scheme (javascript:, data:, mailto:, ftp:) or malformed input is
+// rejected and the event CTA block is omitted entirely.
+function isEventCtaUrlAllowed(url: string): boolean {
+  try {
+    const parsed = new URL(url.replace("{{TOKEN}}", "placeholder"));
+    return parsed.protocol === "http:" || parsed.protocol === "https:";
+  } catch {
+    return false;
+  }
+}
+
 function nl2br(text: string): string {
   return text.replace(/\n/g, "<br>");
 }
@@ -140,9 +154,13 @@ export function buildEmailHtml(data: EmailTemplateData): string {
   </div>`
     : "";
 
-  // Event registration CTA: URL is used as-is (not sanitized) so {{TOKEN}} survives for per-recipient substitution.
+  // Event registration CTA: URL passes protocol allowlist (isEventCtaUrlAllowed) then
+  // is embedded as-is so {{TOKEN}} survives for per-recipient substitution. [SEC-MED-06]
   const eventCtaBlock =
-    data.showEventCta && data.eventCtaUrl?.startsWith("http") && data.eventCtaTitle
+    data.showEventCta &&
+    data.eventCtaUrl &&
+    isEventCtaUrlAllowed(data.eventCtaUrl) &&
+    data.eventCtaTitle
       ? `
   <div style="padding:32px 24px 8px;text-align:center;">
     <a href="${data.eventCtaUrl}" style="display:inline-block;background:${p.accent};color:${p.bg};font-family:'Arial Black',sans-serif;font-size:13px;letter-spacing:0.15em;padding:14px 32px;text-decoration:none;">${escapeHtml(data.eventCtaTitle)}</a>
