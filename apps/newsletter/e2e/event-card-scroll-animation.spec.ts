@@ -59,6 +59,14 @@ test.describe("EventCard scroll-driven entrance — IO path", () => {
     // IO fired: the card is in the locked 1280x800 viewport, so the
     // observer should have intersected within a frame or two of mount.
     // The 5s timeout absorbs any GSAP-driven gate fade-in delay.
+    //
+    // Note on geometry-through-inert: while the EventsListGate is closed
+    // (~5.2s of page life under the boot fallback), it sits at opacity:0
+    // with `inert={true}`. IntersectionObserver cares about layout
+    // geometry only — it fires through opacity:0 wrappers and is not
+    // affected by `inert` (which gates input + AT, not intersection).
+    // If this spec ever flakes against a slow CI dev-server cold-start,
+    // bump the timeout before debugging the IO path.
     await expect(firstCard).toHaveAttribute("data-animated", "true", { timeout: 5_000 });
   });
 });

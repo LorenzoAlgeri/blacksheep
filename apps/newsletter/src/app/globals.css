@@ -22,13 +22,13 @@
   --bs-duration-cinematic: 1200ms;
   /* Power-3-out feel — the brand's default deceleration curve, used for
      reveals, fades-in, and "settle" motions. */
-  --bs-ease-out: var(--bs-ease-out);
+  --bs-ease-out: cubic-bezier(0.16, 1, 0.3, 1);
   /* Slightly softer than --bs-ease-out — lighter touch for ambient /
      repeating motions (e.g. the scroll cue chevron pulse). */
-  --bs-ease-soft: var(--bs-ease-soft);
+  --bs-ease-soft: cubic-bezier(0.22, 1, 0.36, 1);
   /* Tiny overshoot for "pop" moments (CTA reveal, success state). Keep
      overshoot small so it reads as confidence, not bounce. */
-  --bs-ease-spring: var(--bs-ease-spring);
+  --bs-ease-spring: cubic-bezier(0.34, 1.4, 0.64, 1);
   /* Symmetric ease for transitions where direction matters less than
      the smooth start + end (toggles, slide-overs). */
   --bs-ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
