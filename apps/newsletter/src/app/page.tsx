@@ -1,7 +1,7 @@
 import { headers } from "next/headers";
 import { SubscribeForm } from "@/components/SubscribeForm";
-import { LandingMotionLazy as LandingMotion } from "@/components/LandingMotionLazy";
-import { MascotteIntroLazy } from "@/components/MascotteIntroLazy";
+import { LandingMotion } from "@/components/LandingMotion";
+import { MascotteIntro } from "@/components/MascotteIntro";
 import { EventsList } from "@/components/events/EventsList";
 import { EventsListGate } from "@/components/events/EventsListGate";
 import { fetchActiveEvents } from "@/lib/events/fetchActiveEvents";
@@ -36,7 +36,12 @@ async function getEvents(): Promise<EventCardData[]> {
   try {
     return await fetchActiveEvents({ baseUrl: `${protocol}://${host}` });
   } catch (error) {
-    console.error("[home] fetchActiveEvents failed:", error);
+    // Truncate to the message string so we never accidentally serialize
+    // an error object that might carry stack frames pointing at server
+    // file paths or wrapped objects with sensitive metadata into the
+    // structured logs.
+    const message = error instanceof Error ? error.message : String(error);
+    console.error("[home] fetchActiveEvents failed:", message);
     return [];
   }
 }
@@ -45,11 +50,17 @@ export default async function Home() {
   const [config, events] = await Promise.all([getSiteConfig(), getEvents()]);
   return (
     <>
-      <MascotteIntroLazy />
+      <MascotteIntro />
       <LandingMotion>
         <main className="relative z-10 flex flex-1 flex-col items-center justify-center px-6 space-main-y">
           {/* 1. Logo — brand hero */}
-          <div className="brand-hero" role="heading" aria-level={1} aria-label="BLACK SHEEP">
+          <div
+            className="brand-hero"
+            role="heading"
+            aria-level={1}
+            aria-label="BLACK SHEEP"
+            translate="no"
+          >
             <div data-motion="logo">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -115,7 +126,7 @@ export default async function Home() {
               target="_blank"
               rel="noopener noreferrer"
               aria-label="Seguici su Instagram"
-              className="p-3 text-bs-cream opacity-25 hover:opacity-50 transition-opacity duration-300"
+              className="rounded-full p-3 text-bs-cream opacity-25 hover:opacity-50 focus-visible:opacity-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-bs-cream/30 transition-opacity duration-300"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -138,7 +149,7 @@ export default async function Home() {
               target="_blank"
               rel="noopener noreferrer"
               aria-label="Seguici su TikTok"
-              className="p-3 text-bs-cream opacity-25 hover:opacity-50 transition-opacity duration-300"
+              className="rounded-full p-3 text-bs-cream opacity-25 hover:opacity-50 focus-visible:opacity-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-bs-cream/30 transition-opacity duration-300"
             >
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -160,7 +171,7 @@ export default async function Home() {
             target="_blank"
             rel="noopener noreferrer"
             aria-label="Lorenzo Algeri su Instagram"
-            className="flex items-center gap-1.5 opacity-[0.08] hover:opacity-20 transition-opacity duration-500 text-bs-cream no-underline"
+            className="flex items-center gap-1.5 opacity-[0.08] hover:opacity-20 focus-visible:opacity-40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-bs-cream/20 rounded-sm transition-opacity duration-500 text-bs-cream no-underline"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -182,6 +193,26 @@ export default async function Home() {
             </span>
           </a>
         </footer>
+
+        {/* Scroll cue — wayfinding affordance pinned to the viewport
+            bottom. Hidden until LandingMotion reveals it after the hero
+            entrance completes; hides again the moment the user scrolls
+            past ~50px. Decorative only (aria-hidden). */}
+        <div aria-hidden="true" data-motion="scroll-cue" data-state="hidden" className="scroll-cue">
+          <span className="scroll-cue__label">Scorri</span>
+          <svg
+            className="scroll-cue__chevron"
+            viewBox="0 0 16 16"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+          >
+            <path d="M3 6l5 5 5-5" />
+          </svg>
+        </div>
       </LandingMotion>
       <EventsListGate>
         <EventsList events={events} />

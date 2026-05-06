@@ -15,7 +15,7 @@ export function SuccessMessage() {
       <p className="font-[family-name:var(--font-brand)] text-2xl tracking-wider text-bs-cream">
         CI SEI
       </p>
-      <p className="font-body text-sm text-bs-cream/50 text-center max-w-[260px]">
+      <p className="font-body text-sm text-bs-cream/50 text-center max-w-[260px] [text-wrap:pretty]">
         Controlla la tua email e conferma l&apos;iscrizione.
       </p>
     </div>

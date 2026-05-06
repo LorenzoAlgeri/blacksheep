@@ -61,6 +61,8 @@ export default function RootLayout({
             src={`${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/sfondo.png`}
             alt=""
             draggable={false}
+            loading="eager"
+            fetchPriority="high"
           />
         </div>
         {children}

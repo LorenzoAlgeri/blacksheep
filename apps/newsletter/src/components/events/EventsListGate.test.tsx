@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { render, screen, cleanup, act } from "@testing-library/react";
 import { EventsListGate } from "./EventsListGate";
-import { MASCOTTE_END_EVENT } from "@/components/MascotteIntro";
+import { MASCOTTE_END_EVENT, MASCOTTE_START_EVENT } from "@/components/MascotteIntro";
 
 let matchMediaMatches = false;
 
@@ -67,7 +67,7 @@ describe("EventsListGate", () => {
     expect(wrapper.className).toContain("opacity-100");
   });
 
-  it("opens via fallback timeout if MASCOTTE_END_EVENT never fires", () => {
+  it("opens via boot fallback if MASCOTTE_START_EVENT never fires", () => {
     render(
       <EventsListGate>
         <p>child content</p>
@@ -77,31 +77,62 @@ describe("EventsListGate", () => {
     expect(
       screen.getByText("child content").parentElement!.getAttribute("data-events-gate-mounted"),
     ).toBe("false");
-    // Advance past the 5000ms fallback window.
+    // Advance past the 5200ms boot fallback window — covers the case
+    // where the mascot never even reports a start (lazy chunk failure).
     act(() => {
-      vi.advanceTimersByTime(5000);
+      vi.advanceTimersByTime(5200);
     });
     expect(
       screen.getByText("child content").parentElement!.getAttribute("data-events-gate-mounted"),
     ).toBe("true");
   });
 
-  it("removes the listener and clears timeout on unmount (no late-fire crash)", () => {
+  it("once MASCOTTE_START fires, the gate waits for END (or the from-start fallback)", () => {
+    render(
+      <EventsListGate>
+        <p>child content</p>
+      </EventsListGate>,
+    );
+    // Mascot signals it really started — boot fallback should be
+    // cleared and the gate stays closed waiting for END.
+    act(() => {
+      window.dispatchEvent(new CustomEvent(MASCOTTE_START_EVENT));
+    });
+    // Short of the 5000ms from-start fallback: gate must still be
+    // closed even though we've now passed the 5200ms boot deadline.
+    act(() => {
+      vi.advanceTimersByTime(4000);
+    });
+    expect(
+      screen.getByText("child content").parentElement!.getAttribute("data-events-gate-mounted"),
+    ).toBe("false");
+    // Cross the from-start fallback — gate opens.
+    act(() => {
+      vi.advanceTimersByTime(1100);
+    });
+    expect(
+      screen.getByText("child content").parentElement!.getAttribute("data-events-gate-mounted"),
+    ).toBe("true");
+  });
+
+  it("removes the listeners and clears timers on unmount (no late-fire crash)", () => {
     const { unmount } = render(
       <EventsListGate>
         <p>child content</p>
       </EventsListGate>,
     );
     unmount();
-    // After unmount, dispatching the event should not throw (listener removed)
-    // and advancing timers should not call setState on an unmounted component.
+    // After unmount, dispatching the events should not throw (listeners
+    // removed) and advancing timers should not call setState on an
+    // unmounted component.
     expect(() => {
+      window.dispatchEvent(new CustomEvent(MASCOTTE_START_EVENT));
       window.dispatchEvent(new CustomEvent(MASCOTTE_END_EVENT));
-      vi.advanceTimersByTime(10000);
+      vi.advanceTimersByTime(20000);
     }).not.toThrow();
   });
 
-  it("locks html and body scroll while gated, restores both when the gate opens", () => {
+  it("does NOT lock html/body scroll while gated (revised: scroll is allowed during the intro)", () => {
     document.documentElement.style.overflow = "";
     document.body.style.overflow = "";
     render(
@@ -109,35 +140,30 @@ describe("EventsListGate", () => {
         <p>child content</p>
       </EventsListGate>,
     );
-    expect(document.documentElement.style.overflow).toBe("hidden");
-    expect(document.body.style.overflow).toBe("hidden");
-    act(() => {
-      window.dispatchEvent(new CustomEvent(MASCOTTE_END_EVENT));
-    });
+    // Prior implementation locked overflow:hidden on both html and body
+    // until MASCOTTE_END. The intro-only mascot strategy lifts that
+    // restriction so the user can scroll the page even while the
+    // mascotte is still playing on top of it.
     expect(document.documentElement.style.overflow).toBe("");
     expect(document.body.style.overflow).toBe("");
   });
 
-  it("does NOT lock scroll when prefers-reduced-motion is set", () => {
-    matchMediaMatches = true;
-    document.documentElement.style.overflow = "";
-    document.body.style.overflow = "";
-    render(
-      <EventsListGate>
-        <p>child content</p>
-      </EventsListGate>,
-    );
-    expect(document.documentElement.style.overflow).toBe("");
-    expect(document.body.style.overflow).toBe("");
-  });
-
-  it("applies pointer-events-none when gated to block focus on hidden CTAs", () => {
+  it("applies inert={!mounted} so descendants stay out of the tab order while gated", () => {
     render(
       <EventsListGate>
         <button>cta</button>
       </EventsListGate>,
     );
     const wrapper = screen.getByText("cta").parentElement!;
-    expect(wrapper.className).toContain("pointer-events-none");
+    // While gated, inert keeps focus / mouse / pointer events away from
+    // the children even though they're still in the accessibility tree
+    // hierarchy. Replaces the older `pointer-events-none` approach,
+    // which only blocked the mouse and let keyboard tab into invisible
+    // content.
+    expect(wrapper.hasAttribute("inert")).toBe(true);
+    act(() => {
+      window.dispatchEvent(new CustomEvent(MASCOTTE_END_EVENT));
+    });
+    expect(wrapper.hasAttribute("inert")).toBe(false);
   });
 });

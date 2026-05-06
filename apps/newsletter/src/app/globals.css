@@ -9,6 +9,41 @@
   --bs-green: #334b31;
   --bs-purple: #65305c;
   --bs-burgundy: #731022;
+  /* === Motion design tokens =====================================
+     Centralized timing + easing + stagger primitives. Use var()
+     references in CSS animations / transitions; mirror the values in
+     src/lib/motion-tokens.ts when consuming from GSAP timelines so
+     the brand pacing stays consistent across CSS and JS animation
+     surfaces. ============================================== */
+  --bs-duration-instant: 100ms;
+  --bs-duration-quick: 200ms;
+  --bs-duration-base: 300ms;
+  --bs-duration-slow: 600ms;
+  --bs-duration-cinematic: 1200ms;
+  /* Power-3-out feel — the brand's default deceleration curve, used for
+     reveals, fades-in, and "settle" motions. */
+  --bs-ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  /* Slightly softer than --bs-ease-out — lighter touch for ambient /
+     repeating motions (e.g. the scroll cue chevron pulse). */
+  --bs-ease-soft: cubic-bezier(0.22, 1, 0.36, 1);
+  /* Tiny overshoot for "pop" moments (CTA reveal, success state). Keep
+     overshoot small so it reads as confidence, not bounce. */
+  --bs-ease-spring: cubic-bezier(0.34, 1.4, 0.64, 1);
+  /* Symmetric ease for transitions where direction matters less than
+     the smooth start + end (toggles, slide-overs). */
+  --bs-ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  /* Per-item stagger budget — tight for small lists (≤8 items), base
+     for everything else. */
+  --bs-stagger-base: 80ms;
+  --bs-stagger-tight: 60ms;
+  /* Brand-coherent slim scrollbar — sized down from the browser default
+     12-17px chrome to a 8px chromeless rail that disappears into the
+     page. Track / thumb colors stay in the cream family at low alpha so
+     the rail reads as part of the page, not a UI affordance bolted on. */
+  --bs-scrollbar-width: 8px;
+  --bs-scrollbar-track: rgba(255, 255, 243, 0.04);
+  --bs-scrollbar-thumb: rgba(255, 255, 243, 0.22);
+  --bs-scrollbar-thumb-hover: rgba(255, 255, 243, 0.38);
   --font-brand: "Arial Black", "Arial Bold", sans-serif;
   --font-body: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
@@ -26,8 +61,30 @@
 }
 
 html {
-  overflow-x: hidden;
+  /* overflow-x: hidden intentionally removed — CSS spec §3.3 coerces the
+     other axis from visible to auto when one axis is non-visible, so
+     `overflow-x: hidden` implicitly set `overflow-y: auto`. That made
+     <html> the scroll container, causing Chrome to position fixed
+     elements relative to html's content-box (y=0 absolute) instead of
+     the viewport. As html.scrollTop increased, the mascot and other
+     position:fixed elements scrolled with the document despite having
+     inline position:fixed set. Horizontal overflow is already clipped
+     by `body { overflow-x: hidden }` so removing it from html is safe.
+     overflow-x: clip was evaluated but rejected — clip on one axis
+     forces clip on the other (spec), preventing vertical document
+     scrolling entirely. */
   background: #03124a;
+  /* color-scheme: dark surfaces native UI in their dark variants
+     (autofill flash, native scrollbar in macOS Safari, form widgets)
+     so they don't pop a light affordance into the brand palette. */
+  color-scheme: dark;
+  /* Reserve scrollbar gutters on both edges so the page never shifts
+     horizontally when overflow appears (e.g. dialog opens, content
+     grows). Pairs with the custom scrollbar styles below. */
+  scrollbar-gutter: stable both-edges;
+  /* Firefox scrollbar styling — both colors must be set together; the
+     `thin` width is set per-element below for the html scrollbar. */
+  scrollbar-color: var(--bs-scrollbar-thumb) var(--bs-scrollbar-track);
 }
 
 body {
@@ -38,7 +95,57 @@ body {
   -moz-osx-font-smoothing: grayscale;
   min-height: 100dvh;
   position: relative;
-  overflow-x: hidden;
+  /* overflow-x: clip instead of hidden — CSS spec §3.3 converts the
+     other axis from visible to auto only for scroll/auto values, NOT
+     for clip. Using hidden here was coercing overflow-y to auto, making
+     body the scroll container and breaking position:fixed elements
+     (mascot, site-bg, scroll-cue). clip still prevents horizontal
+     scrollbar without creating a scroll container. */
+  overflow-x: clip;
+}
+
+/* WebKit / Blink custom scrollbar — Chrome, Edge, Safari. Firefox
+   handles its scrollbar via the `scrollbar-color` declaration above. */
+html::-webkit-scrollbar {
+  width: var(--bs-scrollbar-width);
+}
+html::-webkit-scrollbar-track {
+  background: var(--bs-scrollbar-track);
+}
+html::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, var(--bs-scrollbar-thumb), var(--bs-scrollbar-thumb-hover));
+  border-radius: 999px;
+  /* 2px transparent border + background-clip:padding-box leaves visual
+     space around the thumb so the rail feels chromeless at the edges. */
+  border: 2px solid transparent;
+  background-clip: padding-box;
+  transition: background 200ms ease-out;
+}
+html::-webkit-scrollbar-thumb:hover {
+  background: var(--bs-scrollbar-thumb-hover);
+  background-clip: padding-box;
+}
+html::-webkit-scrollbar-thumb:active {
+  background: var(--bs-cream);
+  background-clip: padding-box;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html::-webkit-scrollbar-thumb {
+    transition: none;
+  }
+}
+
+/* Brand-coherent tap highlight on touch devices — replaces the default
+   blue/grey iOS / Android tap flash with a cream-tinted highlight that
+   reads as part of the brand palette. */
+a,
+button,
+input,
+label,
+select,
+textarea {
+  -webkit-tap-highlight-color: rgba(255, 255, 243, 0.08);
 }
 
 /* === Sfondo fisso del sito (gradient blu → nero, full viewport) === */
@@ -114,14 +221,27 @@ body::before {
   }
 }
 
+/* Logo-specific fallback also clears the clip-path / blur applied as
+   the initial hidden state above. Without this the logo would stay
+   wiped/blurred forever if GSAP never runs. Note: keyframe properties
+   (vs static rule overrides) keep the static initial state visible
+   to the first paint, preventing the flash bug where a static
+   `clip-path: none` would show the logo for one frame before GSAP
+   can apply its hidden gsap.set(). */
+@keyframes motion-fallback-logo {
+  to {
+    clip-path: none;
+    filter: none;
+    opacity: 1;
+  }
+}
+
 @media (prefers-reduced-motion: no-preference) {
   [data-motion] {
     animation: motion-fallback 0s 4s forwards;
   }
   [data-motion="logo"] {
-    animation: motion-fallback 0s 4s forwards;
-    clip-path: none;
-    filter: none;
+    animation: motion-fallback-logo 0s 4s forwards;
   }
 }
 
@@ -229,7 +349,7 @@ body::before {
 
 @media (prefers-reduced-motion: no-preference) {
   .animate-fade-in-up {
-    animation: fade-in-up 500ms cubic-bezier(0.16, 1, 0.3, 1) both;
+    animation: fade-in-up 500ms var(--bs-ease-out) both;
   }
   .animate-fade-in {
     animation: fade-in 200ms ease-out both;
@@ -256,7 +376,7 @@ body::before {
 
 @media (prefers-reduced-motion: no-preference) {
   .animate-fade-in-scale {
-    animation: fade-in-scale 800ms cubic-bezier(0.16, 1, 0.3, 1) both;
+    animation: fade-in-scale 800ms var(--bs-ease-out) both;
   }
   .animate-checkmark {
     stroke-dasharray: 24;
@@ -346,9 +466,15 @@ body::before {
 /* CTA button */
 .cta-btn {
   box-shadow: 0 4px 30px rgba(255, 255, 243, 0.1);
+  /* touch-action: manipulation suppresses the 300ms double-tap-to-zoom
+     delay on touch devices, so the CTA feels as responsive on mobile
+     Safari as it does with a mouse. */
+  touch-action: manipulation;
   transition:
-    box-shadow 200ms ease,
-    transform 200ms ease;
+    box-shadow var(--bs-duration-quick) var(--bs-ease-out),
+    transform var(--bs-duration-quick) var(--bs-ease-out),
+    background-color var(--bs-duration-quick) var(--bs-ease-out),
+    color var(--bs-duration-quick) var(--bs-ease-out);
 }
 .cta-btn:hover {
   box-shadow: 0 4px 40px rgba(255, 255, 243, 0.18);
@@ -364,6 +490,71 @@ body::before {
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+/* === Scroll cue — "Scorri" lettering + pulsing chevron, fixed bottom-center
+   Decorative-only (aria-hidden=true). Hidden by default; revealed by
+   LandingMotion once the hero entrance completes, hidden again the
+   moment the user scrolls past SCROLL_CUE_HIDE_OFFSET (~50px). On
+   prefers-reduced-motion the chevron pulse is disabled but the cue
+   itself still appears so reduced-motion users still get the
+   wayfinding affordance. */
+.scroll-cue {
+  position: fixed;
+  left: 50%;
+  bottom: max(1.5rem, env(safe-area-inset-bottom));
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.45rem;
+  opacity: 0;
+  pointer-events: none;
+  color: rgba(255, 255, 243, 0.55);
+  transform: translate3d(-50%, 8px, 0);
+  transition:
+    opacity 400ms var(--bs-ease-out),
+    transform 400ms var(--bs-ease-out);
+}
+.scroll-cue[data-state="visible"] {
+  opacity: 1;
+  transform: translate3d(-50%, 0, 0);
+}
+.scroll-cue[data-state="hidden"] {
+  opacity: 0;
+  transform: translate3d(-50%, 8px, 0);
+  /* Faster fade-out so the cue gets out of the way of the user's
+     in-progress scroll instead of lingering behind them. */
+  transition-duration: 200ms;
+}
+.scroll-cue__label {
+  font-family: var(--font-brand);
+  font-size: 9px;
+  letter-spacing: 0.42em;
+  text-transform: uppercase;
+}
+.scroll-cue__chevron {
+  width: 14px;
+  height: 14px;
+  animation: scroll-cue-pulse 1.6s var(--bs-ease-soft) infinite;
+}
+
+@keyframes scroll-cue-pulse {
+  0%,
+  100% {
+    transform: translateY(0);
+    opacity: 0.55;
+  }
+  50% {
+    transform: translateY(4px);
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .scroll-cue__chevron {
+    animation: none;
+  }
 }
 
 /* === Autofill override — mantieni sfondo dark su autofill === */
@@ -472,72 +663,82 @@ dialog::backdrop {
   }
 }
 
-/* Tier 1: native scroll-timeline (Chrome 115+, Edge 115+, Safari 26+) */
+/* Tier 1: native scroll-timeline. Kept opt-in only because
+   `animation-timeline: view()` proved unreliable on first-load downward
+   scroll — cards stayed stuck in their before-range state until a hard
+   refresh past the start of the range. Runtime always sets
+   `data-fallback="true"` so the IO-driven Tier 2 below is the active
+   path. Future progressive enhancement can flip a card to Tier 1 by
+   setting `data-fallback="false"` once browser support stabilises. */
 @supports (animation-timeline: view()) {
-  [data-bs-card] {
+  [data-bs-card][data-fallback="false"] {
     animation: bs-rise linear both;
     animation-timeline: view();
     animation-range: entry 0% cover 18%;
     animation-delay: calc(var(--card-i, 0) * 80ms);
   }
-  [data-bs-card] [data-bs-day] {
+  [data-bs-card][data-fallback="false"] [data-bs-day] {
     animation: bs-num-fill linear both;
     animation-timeline: view();
     animation-range: cover 4% cover 12%;
   }
-  [data-bs-card] [data-bs-word] {
+  [data-bs-card][data-fallback="false"] [data-bs-word] {
     animation: bs-word-rise linear both;
     animation-timeline: view();
     animation-range: cover 6% cover 16%;
     animation-delay: calc(var(--word-i, 0) * 60ms);
   }
-  [data-bs-card] [data-bs-rule] {
+  [data-bs-card][data-fallback="false"] [data-bs-rule] {
     animation: bs-rule-draw linear both;
     animation-timeline: view();
     animation-range: cover 10% cover 16%;
   }
-  [data-bs-card] [data-bs-cta] {
-    animation: bs-cta-pop cubic-bezier(0.34, 1.4, 0.64, 1) both;
+  [data-bs-card][data-fallback="false"] [data-bs-cta] {
+    animation: bs-cta-pop var(--bs-ease-spring) both;
     animation-timeline: view();
     animation-range: cover 14% cover 20%;
   }
-  [data-bs-card] [data-bs-line] {
+  [data-bs-card][data-fallback="false"] [data-bs-line] {
     animation: bs-line-draw linear both;
     animation-timeline: view();
     animation-range: cover 18% cover 24%;
   }
 }
 
-/* Tier 2: IntersectionObserver fallback (Safari < 26 / older Chromium) */
-@supports not (animation-timeline: view()) {
-  [data-bs-card][data-fallback="true"] {
-    opacity: 0;
-    transform: translateY(28px);
-  }
-  [data-bs-card][data-fallback="true"][data-animated="true"] {
-    animation: bs-rise 700ms cubic-bezier(0.16, 1, 0.3, 1) both;
-    animation-delay: calc(var(--card-i, 0) * 80ms);
-  }
-  [data-bs-card][data-fallback="true"][data-animated="true"] [data-bs-day] {
-    animation: bs-num-fill 600ms cubic-bezier(0.16, 1, 0.3, 1) both;
-    animation-delay: calc(var(--card-i, 0) * 80ms + 100ms);
-  }
-  [data-bs-card][data-fallback="true"][data-animated="true"] [data-bs-word] {
-    animation: bs-word-rise 500ms cubic-bezier(0.16, 1, 0.3, 1) both;
-    animation-delay: calc(var(--card-i, 0) * 80ms + 150ms + var(--word-i, 0) * 60ms);
-  }
-  [data-bs-card][data-fallback="true"][data-animated="true"] [data-bs-rule] {
-    animation: bs-rule-draw 500ms cubic-bezier(0.16, 1, 0.3, 1) both;
-    animation-delay: calc(var(--card-i, 0) * 80ms + 250ms);
-  }
-  [data-bs-card][data-fallback="true"][data-animated="true"] [data-bs-cta] {
-    animation: bs-cta-pop 400ms cubic-bezier(0.34, 1.4, 0.64, 1) both;
-    animation-delay: calc(var(--card-i, 0) * 80ms + 300ms);
-  }
-  [data-bs-card][data-fallback="true"][data-animated="true"] [data-bs-line] {
-    animation: bs-line-draw 500ms cubic-bezier(0.16, 1, 0.3, 1) both;
-    animation-delay: calc(var(--card-i, 0) * 80ms + 400ms);
-  }
+/* Tier 2: IntersectionObserver-driven entrance — the active path.
+   The `data-ready="true"` gate ensures the no-JS scenario never traps
+   the card in a hidden state: SSR ships with `data-ready="false"`, so
+   the rules below do not apply until the EventCard effect flips ready
+   to true. Once ready, the card sits at opacity:0 / translateY(28px)
+   until the IO observer flips `data-animated="true"`, at which point
+   the staggered keyframe chain plays. */
+[data-bs-card][data-ready="true"][data-fallback="true"] {
+  opacity: 0;
+  transform: translateY(28px);
+}
+[data-bs-card][data-ready="true"][data-fallback="true"][data-animated="true"] {
+  animation: bs-rise 700ms var(--bs-ease-out) both;
+  animation-delay: calc(var(--card-i, 0) * 80ms);
+}
+[data-bs-card][data-ready="true"][data-fallback="true"][data-animated="true"] [data-bs-day] {
+  animation: bs-num-fill 600ms var(--bs-ease-out) both;
+  animation-delay: calc(var(--card-i, 0) * 80ms + 100ms);
+}
+[data-bs-card][data-ready="true"][data-fallback="true"][data-animated="true"] [data-bs-word] {
+  animation: bs-word-rise 500ms var(--bs-ease-out) both;
+  animation-delay: calc(var(--card-i, 0) * 80ms + 150ms + var(--word-i, 0) * 60ms);
+}
+[data-bs-card][data-ready="true"][data-fallback="true"][data-animated="true"] [data-bs-rule] {
+  animation: bs-rule-draw 500ms var(--bs-ease-out) both;
+  animation-delay: calc(var(--card-i, 0) * 80ms + 250ms);
+}
+[data-bs-card][data-ready="true"][data-fallback="true"][data-animated="true"] [data-bs-cta] {
+  animation: bs-cta-pop 400ms var(--bs-ease-spring) both;
+  animation-delay: calc(var(--card-i, 0) * 80ms + 300ms);
+}
+[data-bs-card][data-ready="true"][data-fallback="true"][data-animated="true"] [data-bs-line] {
+  animation: bs-line-draw 500ms var(--bs-ease-out) both;
+  animation-delay: calc(var(--card-i, 0) * 80ms + 400ms);
 }
 
 /* prefers-reduced-motion: opacity-only fade — disables transforms,
