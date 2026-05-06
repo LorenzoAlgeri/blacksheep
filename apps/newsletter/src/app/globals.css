@@ -221,6 +221,58 @@ body::before {
   }
 }
 
+/* Mascot mobile-portrait reframing.
+   On narrow viewports the mascot's webp frames get cropped on the
+   sides by `object-cover`, so the right-arm wave at the end of the
+   intro slides off-screen. We start with the mascot centered (the
+   greet reads at the middle of the screen) and gently translate the
+   container leftward around the moment the arm rises so the raised
+   hand stays in frame.
+
+   Animation is on the wrapper `<div>` (transform), NOT on the <img>:
+   the JS frame loop swaps img.src ~30 times/second and an animation
+   on the image itself can reset on src change in some browsers.
+   The wrapper is a stable element so transform progresses smoothly.
+
+   Duration matches the frame loop (≈3.33s = 100 frames * 33.3ms) so
+   the slide is synchronized with the wave gesture. Hold position
+   through the first 60% (static greet) and ease to translated
+   position during the last 40% (wave). cubic-bezier(0.65, 0, 0.35, 1)
+   gives a smooth in-out ease so it never reads as a "snap". `both`
+   fill keeps the end state through the fade-out. Limited to viewports
+   <= 768px so the desktop layout (wide enough to fit the wave) is
+   untouched. */
+@keyframes bs-mascot-mobile-shift {
+  0%,
+  60% {
+    /* Start shifted right so the mascot appears centered in the
+       portrait viewport during the static greet. +5vw moves the
+       container right enough to put the figure mid-screen without
+       overshoot. */
+    transform: translateX(-3vw);
+  }
+
+  100% {
+    /* Slide back to the natural object-position resting place (the
+       same "left of the frame" anchor the mascot has on desktop) so
+       the raised hand has room and the figure ends in its original
+       artwork-anchored spot. */
+    transform: translateX(-80vw);
+  }
+}
+
+@media (max-width: 768px) {
+  [data-mascotte-intro] {
+    animation: bs-mascot-mobile-shift 3.333s cubic-bezier(0.65, 0, 0.35, 1) both;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-mascotte-intro] {
+    animation: none;
+  }
+}
+
 /* EventsList reveal — runs once when the EventsListGate flips
    data-events-gate-revealed from "false" to "true" at the end of the
    mascot intro. The wrapper itself stays a plain visibility:

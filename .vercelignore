@@ -1,7 +1,42 @@
+# Build/cache exclusions (heavy, regenerable)
 node_modules
 .next
-brand-assets
-/smoke-test-*.png
-/screenshot-*.png
-/landing-*.png
-/ambient-*.png
+.turbo
+.git
+.vercel
+
+# Repo-level dev junk and large media at root only (NOT in apps/*/public/)
+/brand-assets
+/docs
+/test-results
+/playwright-report
+/playwright/.cache
+/coverage
+/*.log
+/*.png
+/*.jpg
+/*.jpeg
+/*.gif
+/*.webm
+/*.mp4
+/*.har
+/*.bak
+/lighthouserc.json
+/lighthouse-*.json
+/.env.local
+/.env.*.local
+/.env.production.backup
+/desktop.ini
+
+# Markdown / docs in root and subdirs (keep apps/*/docs/ for build docs)
+/README.md
+/RESOCONTO-*.md
+/PROMPT-*.md
+/GUIDA-*.md
+/CLAUDE.md
+/AGENTS.md
+/START-HERE.md
+/PROCEDURA-*.md
+/BIBBIA*.txt
+/guides
+/projects

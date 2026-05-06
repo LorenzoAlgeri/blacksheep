@@ -159,7 +159,7 @@ export function MascotteIntro() {
         draggable={false}
         loading="eager"
         fetchPriority="high"
-        className="absolute inset-0 h-full w-full object-cover object-[center_bottom] select-none"
+        className="absolute inset-0 h-full w-full object-cover object-[36%_bottom] select-none"
       />
     </div>
   );
