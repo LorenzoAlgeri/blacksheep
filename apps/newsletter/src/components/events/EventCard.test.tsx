@@ -170,27 +170,42 @@ describe("EventCard V1 Editorial Drama", () => {
     expect(screen.queryByText(/cap ·/i)).not.toBeInTheDocument();
   });
 
-  it("when CSS.supports('animation-timeline: view()') is false, fallback chain activates (data-fallback=true, data-animated=true after IO)", () => {
-    Object.defineProperty(CSS, "supports", {
-      configurable: true,
-      writable: true,
-      value: () => false,
-    });
+  it("ships data-fallback='true' from SSR — IO is the active animation path", () => {
     render(<EventCard event={event} onRegisterClick={() => {}} />);
     const article = screen.getByRole("article");
+    // Native scroll-timeline (animation-timeline: view()) is intentionally
+    // gated behind data-fallback="false" in CSS, which we never set at
+    // runtime. Both browsers that support and don't support view() take
+    // the IO path here.
     expect(article.getAttribute("data-fallback")).toBe("true");
+  });
+
+  it("flips data-ready to 'true' after mount so the entrance CSS rules apply", () => {
+    render(<EventCard event={event} onRegisterClick={() => {}} />);
+    const article = screen.getByRole("article");
+    // Without data-ready="true", the no-JS scenario must keep the card
+    // visible (the hidden initial state requires both data-ready and
+    // data-fallback to be "true").
+    expect(article.getAttribute("data-ready")).toBe("true");
+  });
+
+  it("IntersectionObserver intersection flips data-animated='true'", () => {
+    // The MockIO in beforeEach calls the callback with isIntersecting=true
+    // synchronously inside observe(), so by the time render returns the
+    // article should already be animated.
+    render(<EventCard event={event} onRegisterClick={() => {}} />);
+    const article = screen.getByRole("article");
     expect(article.getAttribute("data-animated")).toBe("true");
   });
 
-  it("when CSS.supports('animation-timeline: view()') is true, native scroll-timeline path is taken (data-fallback=false)", () => {
-    Object.defineProperty(CSS, "supports", {
-      configurable: true,
-      writable: true,
-      value: () => true,
-    });
+  it("falls back to immediate data-animated='true' when IntersectionObserver is unavailable", () => {
+    const originalIO = global.IntersectionObserver;
+    // @ts-expect-error — intentionally remove IO to exercise the fallback branch
+    delete global.IntersectionObserver;
     render(<EventCard event={event} onRegisterClick={() => {}} />);
     const article = screen.getByRole("article");
-    expect(article.getAttribute("data-fallback")).toBe("false");
+    expect(article.getAttribute("data-animated")).toBe("true");
+    global.IntersectionObserver = originalIO;
   });
 
   it("exposes --card-i CSS custom property derived from index", () => {

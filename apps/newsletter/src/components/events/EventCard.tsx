@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useId, useRef, useState } from "react";
+import { useEffect, useId, useRef } from "react";
 import { formatEventDate } from "@/lib/dates";
 
 export interface EventCardData {
@@ -48,18 +48,34 @@ function counterLabel(index: number) {
   return String(index + 1).padStart(2, "0");
 }
 
-function supportsViewTimeline() {
-  if (typeof CSS === "undefined" || typeof CSS.supports !== "function") return false;
-  return CSS.supports("animation-timeline: view()");
-}
-
 /**
  * EventCard — V1 "Editorial Drama".
  *
  * Design language deliberately diverges from the homepage's GSAP-driven
- * orchestration (LandingMotion / MascotteIntro): native CSS scroll-driven
- * entrance via `animation-timeline: view()` with an IntersectionObserver
- * fallback for browsers below Baseline 2024-newly-available.
+ * orchestration (LandingMotion / MascotteIntro): a viewport-enter reveal
+ * driven by IntersectionObserver, so cards animate reliably on normal
+ * downward scrolling across current Chromium / Safari variants.
+ *
+ * Why IO and not animation-timeline:view():
+ * native scroll-timeline appeared promising on paper but the
+ * `animation-range: entry 0% cover N%` ranges only fired consistently on
+ * a hard refresh after the cards were already past the start of their
+ * range — first-load downward scroll left the cards stuck in their
+ * before-range state. We keep the CSS for both tiers (IO and
+ * scroll-timeline) but the runtime opts into IO unconditionally by
+ * setting `data-fallback="true"`. Future progressive enhancement can
+ * flip a card to native scroll-timeline by setting
+ * `data-fallback="false"` once the browser story stabilises.
+ *
+ * SSR contract: the article ships with `data-ready="false"`, so the
+ * "hidden initial state" CSS rules (which require `data-ready="true"`)
+ * do NOT apply — the card is fully visible if JS never hydrates. After
+ * mount, the effect flips `data-ready="true"` (entrance animation
+ * armed), then either marks it animated immediately
+ * (prefers-reduced-motion or no IO support) or arms an
+ * IntersectionObserver that flips `data-animated="true"` when the card
+ * enters the viewport. No React state → no hydration mismatch, no
+ * unnecessary rerender during the entrance.
  *
  * Composition: 12-column asymmetric grid (5 / 7) anchored by the day
  * number as poster element (clamp 5rem → 11rem). Counter overline
@@ -69,44 +85,42 @@ function supportsViewTimeline() {
  *
  * Keyframes (in globals.css): bs-rise, bs-num-fill, bs-word-rise,
  * bs-rule-draw, bs-line-draw, bs-cta-pop. All targeted via
- * `[data-bs-*]` selectors; orchestration via animation-timeline
- * scroll ranges (Tier 1) or animation-delay chain on data-animated
- * (Tier 2 fallback).
+ * `[data-bs-*]` selectors; orchestration via the IO-triggered
+ * `data-animated` chain gated on `data-ready="true"
+ * data-fallback="true"`.
  */
 export function EventCard({ event, onRegisterClick, index = 0 }: EventCardProps) {
   const titleId = useId();
   const parts = dateParts(event.event_date);
   const titleWords = event.title.split(/\s+/).filter(Boolean);
   const articleRef = useRef<HTMLElement>(null);
-  // useFallback === true means we need the IO-based animation chain
-  // because animation-timeline: view() isn't supported.
-  const [useFallback, setUseFallback] = useState(false);
-  const [animated, setAnimated] = useState(false);
 
   useEffect(() => {
-    if (supportsViewTimeline()) {
-      // Native scroll-timeline path: CSS @supports drives animation, JS just
-      // flips the data attributes once for downstream selectors / SR signal.
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setUseFallback(false);
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setAnimated(true);
-      return;
-    }
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setUseFallback(true);
     const node = articleRef.current;
     if (!node) return;
-    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    if (reduced) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setAnimated(true);
+
+    // Arm the entrance: CSS gates the "hidden initial state" rules on
+    // data-ready="true", so flipping this here both enables the animation
+    // and prevents the no-JS scenario from showing a permanently-hidden
+    // card.
+    node.dataset.ready = "true";
+
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      node.dataset.animated = "true";
       return;
     }
+
+    if (typeof IntersectionObserver === "undefined") {
+      // Very old browsers without IO — no scroll-driven reveal possible,
+      // mark animated immediately so the content is visible.
+      node.dataset.animated = "true";
+      return;
+    }
+
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry?.isIntersecting) {
-          setAnimated(true);
+          node.dataset.animated = "true";
           observer.disconnect();
         }
       },
@@ -121,8 +135,9 @@ export function EventCard({ event, onRegisterClick, index = 0 }: EventCardProps)
       ref={articleRef}
       aria-labelledby={titleId}
       data-bs-card
-      data-fallback={useFallback ? "true" : "false"}
-      data-animated={animated ? "true" : "false"}
+      data-ready="false"
+      data-fallback="true"
+      data-animated="false"
       style={{ "--card-i": index } as React.CSSProperties}
       className="relative bg-bs-cream/[0.025] border border-bs-cream/[0.08] hover:border-bs-cream/30 transition-colors duration-300 motion-reduce:transition-none"
     >
