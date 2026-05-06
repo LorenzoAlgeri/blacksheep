@@ -61,7 +61,18 @@
 }
 
 html {
-  overflow-x: hidden;
+  /* overflow-x: hidden intentionally removed — CSS spec §3.3 coerces the
+     other axis from visible to auto when one axis is non-visible, so
+     `overflow-x: hidden` implicitly set `overflow-y: auto`. That made
+     <html> the scroll container, causing Chrome to position fixed
+     elements relative to html's content-box (y=0 absolute) instead of
+     the viewport. As html.scrollTop increased, the mascot and other
+     position:fixed elements scrolled with the document despite having
+     inline position:fixed set. Horizontal overflow is already clipped
+     by `body { overflow-x: hidden }` so removing it from html is safe.
+     overflow-x: clip was evaluated but rejected — clip on one axis
+     forces clip on the other (spec), preventing vertical document
+     scrolling entirely. */
   background: #03124a;
   /* color-scheme: dark surfaces native UI in their dark variants
      (autofill flash, native scrollbar in macOS Safari, form widgets)
@@ -84,7 +95,13 @@ body {
   -moz-osx-font-smoothing: grayscale;
   min-height: 100dvh;
   position: relative;
-  overflow-x: hidden;
+  /* overflow-x: clip instead of hidden — CSS spec §3.3 converts the
+     other axis from visible to auto only for scroll/auto values, NOT
+     for clip. Using hidden here was coercing overflow-y to auto, making
+     body the scroll container and breaking position:fixed elements
+     (mascot, site-bg, scroll-cue). clip still prevents horizontal
+     scrollbar without creating a scroll container. */
+  overflow-x: clip;
 }
 
 /* WebKit / Blink custom scrollbar — Chrome, Edge, Safari. Firefox
@@ -204,14 +221,27 @@ body::before {
   }
 }
 
+/* Logo-specific fallback also clears the clip-path / blur applied as
+   the initial hidden state above. Without this the logo would stay
+   wiped/blurred forever if GSAP never runs. Note: keyframe properties
+   (vs static rule overrides) keep the static initial state visible
+   to the first paint, preventing the flash bug where a static
+   `clip-path: none` would show the logo for one frame before GSAP
+   can apply its hidden gsap.set(). */
+@keyframes motion-fallback-logo {
+  to {
+    clip-path: none;
+    filter: none;
+    opacity: 1;
+  }
+}
+
 @media (prefers-reduced-motion: no-preference) {
   [data-motion] {
     animation: motion-fallback 0s 4s forwards;
   }
   [data-motion="logo"] {
-    animation: motion-fallback 0s 4s forwards;
-    clip-path: none;
-    filter: none;
+    animation: motion-fallback-logo 0s 4s forwards;
   }
 }
 

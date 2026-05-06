@@ -49,13 +49,31 @@ export function LandingMotion({ children }: { children: React.ReactNode }) {
         if (!scrollCue) return;
         scrollCue.dataset.state = "hidden";
       };
-      const handleScrollDismiss = () => {
-        if (window.scrollY > SCROLL_CUE_HIDE_OFFSET) {
-          hideScrollCue();
-          window.removeEventListener("scroll", handleScrollDismiss);
+      // We dismiss on the user's *intent* to scroll (wheel / touch / key)
+      // rather than on the actual `scroll` event, because during the
+      // intro the events list is gated (inert, no extra page height) so
+      // the document doesn't actually scroll — `window.scrollY` stays at
+      // 0 and the cue would never dismiss. Listening for the input
+      // signals fires even when the document is "stuck" at top.
+      const dismissOnIntent = () => {
+        hideScrollCue();
+        window.removeEventListener("scroll", dismissOnScroll);
+        window.removeEventListener("wheel", dismissOnIntent);
+        window.removeEventListener("touchstart", dismissOnIntent);
+        window.removeEventListener("keydown", dismissOnKey);
+      };
+      const dismissOnScroll = () => {
+        if (window.scrollY > SCROLL_CUE_HIDE_OFFSET) dismissOnIntent();
+      };
+      const dismissOnKey = (e: globalThis.KeyboardEvent) => {
+        if (e.key === "ArrowDown" || e.key === "PageDown" || e.key === "End" || e.key === " ") {
+          dismissOnIntent();
         }
       };
-      window.addEventListener("scroll", handleScrollDismiss, { passive: true });
+      window.addEventListener("scroll", dismissOnScroll, { passive: true });
+      window.addEventListener("wheel", dismissOnIntent, { passive: true });
+      window.addEventListener("touchstart", dismissOnIntent, { passive: true });
+      window.addEventListener("keydown", dismissOnKey);
 
       // Cancel the no-JS CSS fallback once GSAP takes over.
       document.querySelectorAll("[data-motion]").forEach((el) => {
@@ -292,14 +310,17 @@ export function LandingMotion({ children }: { children: React.ReactNode }) {
         if (revealFallbackTimer) clearTimeout(revealFallbackTimer);
         window.removeEventListener(MASCOTTE_START_EVENT, handleMascotteStart);
         window.removeEventListener(MASCOTTE_REVEAL_EVENT, startEntrance);
-        window.removeEventListener("scroll", handleScrollDismiss);
+        window.removeEventListener("scroll", dismissOnScroll);
+        window.removeEventListener("wheel", dismissOnIntent);
+        window.removeEventListener("touchstart", dismissOnIntent);
+        window.removeEventListener("keydown", dismissOnKey);
       };
     },
     { scope: containerRef },
   );
 
   return (
-    <div ref={containerRef} className="page-column relative overflow-x-hidden">
+    <div ref={containerRef} className="page-column relative overflow-x-clip">
       {/* Animated background gradient */}
       <div
         data-motion="gradient"

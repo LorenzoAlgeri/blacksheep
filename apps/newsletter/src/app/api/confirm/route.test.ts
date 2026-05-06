@@ -4,7 +4,7 @@ const { state } = vi.hoisted(() => ({
   state: {
     subscriberResult: { data: null as unknown, error: null as unknown },
     updateError: null as unknown,
-    updateSpy: null as ReturnType<typeof vi.fn> | null,
+    updateSpy: null as ((...args: unknown[]) => unknown) | null,
   },
 }));
 
