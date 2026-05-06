@@ -31,7 +31,7 @@ export function EventsList({ events }: EventsListProps) {
       className="w-full max-w-3xl mx-auto px-6 min-h-dvh pt-12 md:pt-16 pb-24"
       data-bs-list-section
     >
-      <header className="sticky top-0 z-10 mb-10 md:mb-14 bg-[#03124a] pt-6 md:pt-8 pb-4">
+      <header className="mb-10 md:mb-14">
         <p className="font-[family-name:var(--font-brand)] text-xs tracking-[0.5em] text-bs-cream/40 uppercase mb-3">
           La lista
         </p>
