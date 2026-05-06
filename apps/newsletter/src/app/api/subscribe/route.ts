@@ -47,18 +47,32 @@ export async function POST(request: NextRequest) {
     .eq("email", email)
     .single();
 
+  // Anti-enumeration timing normalization [SEC-MED-05]: early-exit paths run
+  // the same async DB work as the new-subscriber path so response time cannot
+  // be used to distinguish subscriber states. Parallel queries match the cost
+  // of the upsert + site_config fetch performed for new subscribers.
+  async function timingNormalize(): Promise<void> {
+    await Promise.all([
+      supabase.from("subscribers").select("id").eq("email", email).maybeSingle(),
+      supabase.from("site_config").select("tagline, venue").eq("id", "main").maybeSingle(),
+    ]);
+  }
+
   // If blocked by admin, silently reject (don't reveal blocked state)
   if (existing?.status === "blocked") {
+    await timingNormalize();
     return Response.json({ success: true });
   }
 
   // If already confirmed, return success silently (no-op)
   if (existing?.status === "confirmed") {
+    await timingNormalize();
     return Response.json({ success: true });
   }
 
   // If already pending, don't resend confirmation (prevents subscription bombing)
   if (existing?.status === "pending") {
+    await timingNormalize();
     return Response.json({ success: true });
   }
 
