@@ -119,6 +119,18 @@ html::-webkit-scrollbar-thumb:active {
   }
 }
 
+/* Brand-coherent tap highlight on touch devices — replaces the default
+   blue/grey iOS / Android tap flash with a cream-tinted highlight that
+   reads as part of the brand palette. */
+a,
+button,
+input,
+label,
+select,
+textarea {
+  -webkit-tap-highlight-color: rgba(255, 255, 243, 0.08);
+}
+
 /* === Sfondo fisso del sito (gradient blu → nero, full viewport) === */
 .site-bg {
   position: fixed;
