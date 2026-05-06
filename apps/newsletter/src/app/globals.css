@@ -9,6 +9,33 @@
   --bs-green: #334b31;
   --bs-purple: #65305c;
   --bs-burgundy: #731022;
+  /* === Motion design tokens =====================================
+     Centralized timing + easing + stagger primitives. Use var()
+     references in CSS animations / transitions; mirror the values in
+     src/lib/motion-tokens.ts when consuming from GSAP timelines so
+     the brand pacing stays consistent across CSS and JS animation
+     surfaces. ============================================== */
+  --bs-duration-instant: 100ms;
+  --bs-duration-quick: 200ms;
+  --bs-duration-base: 300ms;
+  --bs-duration-slow: 600ms;
+  --bs-duration-cinematic: 1200ms;
+  /* Power-3-out feel — the brand's default deceleration curve, used for
+     reveals, fades-in, and "settle" motions. */
+  --bs-ease-out: var(--bs-ease-out);
+  /* Slightly softer than --bs-ease-out — lighter touch for ambient /
+     repeating motions (e.g. the scroll cue chevron pulse). */
+  --bs-ease-soft: var(--bs-ease-soft);
+  /* Tiny overshoot for "pop" moments (CTA reveal, success state). Keep
+     overshoot small so it reads as confidence, not bounce. */
+  --bs-ease-spring: var(--bs-ease-spring);
+  /* Symmetric ease for transitions where direction matters less than
+     the smooth start + end (toggles, slide-overs). */
+  --bs-ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  /* Per-item stagger budget — tight for small lists (≤8 items), base
+     for everything else. */
+  --bs-stagger-base: 80ms;
+  --bs-stagger-tight: 60ms;
   /* Brand-coherent slim scrollbar — sized down from the browser default
      12-17px chrome to a 8px chromeless rail that disappears into the
      page. Track / thumb colors stay in the cream family at low alpha so
@@ -280,7 +307,7 @@ body::before {
 
 @media (prefers-reduced-motion: no-preference) {
   .animate-fade-in-up {
-    animation: fade-in-up 500ms cubic-bezier(0.16, 1, 0.3, 1) both;
+    animation: fade-in-up 500ms var(--bs-ease-out) both;
   }
   .animate-fade-in {
     animation: fade-in 200ms ease-out both;
@@ -307,7 +334,7 @@ body::before {
 
 @media (prefers-reduced-motion: no-preference) {
   .animate-fade-in-scale {
-    animation: fade-in-scale 800ms cubic-bezier(0.16, 1, 0.3, 1) both;
+    animation: fade-in-scale 800ms var(--bs-ease-out) both;
   }
   .animate-checkmark {
     stroke-dasharray: 24;
@@ -438,8 +465,8 @@ body::before {
   color: rgba(255, 255, 243, 0.55);
   transform: translate3d(-50%, 8px, 0);
   transition:
-    opacity 400ms cubic-bezier(0.16, 1, 0.3, 1),
-    transform 400ms cubic-bezier(0.16, 1, 0.3, 1);
+    opacity 400ms var(--bs-ease-out),
+    transform 400ms var(--bs-ease-out);
 }
 .scroll-cue[data-state="visible"] {
   opacity: 1;
@@ -461,7 +488,7 @@ body::before {
 .scroll-cue__chevron {
   width: 14px;
   height: 14px;
-  animation: scroll-cue-pulse 1.6s cubic-bezier(0.22, 1, 0.36, 1) infinite;
+  animation: scroll-cue-pulse 1.6s var(--bs-ease-soft) infinite;
 }
 
 @keyframes scroll-cue-pulse {
@@ -619,7 +646,7 @@ dialog::backdrop {
     animation-range: cover 10% cover 16%;
   }
   [data-bs-card][data-fallback="false"] [data-bs-cta] {
-    animation: bs-cta-pop cubic-bezier(0.34, 1.4, 0.64, 1) both;
+    animation: bs-cta-pop var(--bs-ease-spring) both;
     animation-timeline: view();
     animation-range: cover 14% cover 20%;
   }
@@ -642,27 +669,27 @@ dialog::backdrop {
   transform: translateY(28px);
 }
 [data-bs-card][data-ready="true"][data-fallback="true"][data-animated="true"] {
-  animation: bs-rise 700ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation: bs-rise 700ms var(--bs-ease-out) both;
   animation-delay: calc(var(--card-i, 0) * 80ms);
 }
 [data-bs-card][data-ready="true"][data-fallback="true"][data-animated="true"] [data-bs-day] {
-  animation: bs-num-fill 600ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation: bs-num-fill 600ms var(--bs-ease-out) both;
   animation-delay: calc(var(--card-i, 0) * 80ms + 100ms);
 }
 [data-bs-card][data-ready="true"][data-fallback="true"][data-animated="true"] [data-bs-word] {
-  animation: bs-word-rise 500ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation: bs-word-rise 500ms var(--bs-ease-out) both;
   animation-delay: calc(var(--card-i, 0) * 80ms + 150ms + var(--word-i, 0) * 60ms);
 }
 [data-bs-card][data-ready="true"][data-fallback="true"][data-animated="true"] [data-bs-rule] {
-  animation: bs-rule-draw 500ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation: bs-rule-draw 500ms var(--bs-ease-out) both;
   animation-delay: calc(var(--card-i, 0) * 80ms + 250ms);
 }
 [data-bs-card][data-ready="true"][data-fallback="true"][data-animated="true"] [data-bs-cta] {
-  animation: bs-cta-pop 400ms cubic-bezier(0.34, 1.4, 0.64, 1) both;
+  animation: bs-cta-pop 400ms var(--bs-ease-spring) both;
   animation-delay: calc(var(--card-i, 0) * 80ms + 300ms);
 }
 [data-bs-card][data-ready="true"][data-fallback="true"][data-animated="true"] [data-bs-line] {
-  animation: bs-line-draw 500ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation: bs-line-draw 500ms var(--bs-ease-out) both;
   animation-delay: calc(var(--card-i, 0) * 80ms + 400ms);
 }
 
