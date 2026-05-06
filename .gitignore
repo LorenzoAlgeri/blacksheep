@@ -51,6 +51,8 @@ npm-debug.log*
 
 # Screenshots (dev artifacts)
 *.png
+# Production PNG assets that must be committed despite the *.png rule above
+!apps/newsletter/public/sfondo.png
 
 # Lighthouse reports (dev artifacts)
 lighthouse-*.json

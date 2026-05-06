@@ -47,7 +47,11 @@ async function getEvents(): Promise<EventCardData[]> {
 }
 
 export default async function Home() {
-  const [config, events] = await Promise.all([getSiteConfig(), getEvents()]);
+  const isListEnabled = process.env.BLACKSHEEP_LIST_ENABLED === "true";
+  const [config, events] = await Promise.all([
+    getSiteConfig(),
+    isListEnabled ? getEvents() : Promise.resolve<EventCardData[]>([]),
+  ]);
   return (
     <>
       <MascotteIntro />
@@ -214,13 +218,11 @@ export default async function Home() {
           </svg>
         </div>
       </LandingMotion>
-      {/* Gated by visibility: hidden → visible (instant toggle, no
-          transition) so the EventsList is invisible during the mascot
-          intro even if the user scrolls past the hero. Reveals at
-          MASCOTTE_END_EVENT. No fade = no flash window. */}
-      <EventsListGate>
-        <EventsList events={events} />
-      </EventsListGate>
+      {isListEnabled && (
+        <EventsListGate>
+          <EventsList events={events} />
+        </EventsListGate>
+      )}
     </>
   );
 }
