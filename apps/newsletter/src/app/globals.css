@@ -436,9 +436,15 @@ body::before {
 /* CTA button */
 .cta-btn {
   box-shadow: 0 4px 30px rgba(255, 255, 243, 0.1);
+  /* touch-action: manipulation suppresses the 300ms double-tap-to-zoom
+     delay on touch devices, so the CTA feels as responsive on mobile
+     Safari as it does with a mouse. */
+  touch-action: manipulation;
   transition:
-    box-shadow 200ms ease,
-    transform 200ms ease;
+    box-shadow var(--bs-duration-quick) var(--bs-ease-out),
+    transform var(--bs-duration-quick) var(--bs-ease-out),
+    background-color var(--bs-duration-quick) var(--bs-ease-out),
+    color var(--bs-duration-quick) var(--bs-ease-out);
 }
 .cta-btn:hover {
   box-shadow: 0 4px 40px rgba(255, 255, 243, 0.18);

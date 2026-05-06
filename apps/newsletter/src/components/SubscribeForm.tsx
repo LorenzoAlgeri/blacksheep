@@ -124,7 +124,7 @@ export function SubscribeForm() {
           autoComplete="email"
           aria-invalid={!!errors.email || !!emailDisposable}
           aria-describedby={errors.email || emailDisposable ? emailErrorId : undefined}
-          className="w-full bg-transparent border-0 border-b border-bs-cream/10 rounded-none px-2 input-responsive input-field font-body text-sm text-bs-cream placeholder:text-bs-cream/30 focus:outline-none focus:border-b-bs-cream/30 focus:ring-0 transition-all duration-200"
+          className="w-full bg-transparent border-0 border-b border-bs-cream/10 rounded-none px-2 input-responsive input-field font-body text-sm text-bs-cream placeholder:text-bs-cream/30 focus:outline-none focus:border-b-bs-cream/70 focus-visible:border-b-bs-cream focus:ring-0 transition-colors duration-200"
           {...emailReg}
           onBlur={(e) => {
             emailReg.onBlur(e);
@@ -175,7 +175,7 @@ export function SubscribeForm() {
           aria-describedby={
             errors.emailConfirmation || confirmDisposable ? confirmErrorId : undefined
           }
-          className="w-full bg-transparent border-0 border-b border-bs-cream/10 rounded-none px-2 input-responsive input-field font-body text-sm text-bs-cream placeholder:text-bs-cream/30 focus:outline-none focus:border-b-bs-cream/30 focus:ring-0 transition-all duration-200"
+          className="w-full bg-transparent border-0 border-b border-bs-cream/10 rounded-none px-2 input-responsive input-field font-body text-sm text-bs-cream placeholder:text-bs-cream/30 focus:outline-none focus:border-b-bs-cream/70 focus-visible:border-b-bs-cream focus:ring-0 transition-colors duration-200"
           {...confirmReg}
           onBlur={(e) => {
             confirmReg.onBlur(e);
@@ -242,7 +242,7 @@ export function SubscribeForm() {
           type="text"
           placeholder="Nome"
           autoComplete="given-name"
-          className="w-full bg-transparent border-0 border-b border-bs-cream/10 rounded-none px-2 input-responsive input-field font-body text-sm text-bs-cream placeholder:text-bs-cream/30 focus:outline-none focus:border-b-bs-cream/30 focus:ring-0 transition-all duration-200"
+          className="w-full bg-transparent border-0 border-b border-bs-cream/10 rounded-none px-2 input-responsive input-field font-body text-sm text-bs-cream placeholder:text-bs-cream/30 focus:outline-none focus:border-b-bs-cream/70 focus-visible:border-b-bs-cream focus:ring-0 transition-colors duration-200"
           {...register("name")}
         />
       </div>

@@ -37,7 +37,7 @@ export function EventsList({ events }: EventsListProps) {
         </p>
         <h2
           id={HEADING_ID}
-          className="font-[family-name:var(--font-brand)] text-4xl md:text-5xl tracking-[0.02em] text-bs-cream uppercase leading-[0.95]"
+          className="font-[family-name:var(--font-brand)] text-4xl md:text-5xl tracking-[0.02em] text-bs-cream uppercase leading-[0.95] [text-wrap:balance]"
         >
           BLACKSHEEP LIST
         </h2>
