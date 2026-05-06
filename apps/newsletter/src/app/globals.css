@@ -417,6 +417,71 @@ body::before {
   justify-content: center;
 }
 
+/* === Scroll cue — "Scorri" lettering + pulsing chevron, fixed bottom-center
+   Decorative-only (aria-hidden=true). Hidden by default; revealed by
+   LandingMotion once the hero entrance completes, hidden again the
+   moment the user scrolls past SCROLL_CUE_HIDE_OFFSET (~50px). On
+   prefers-reduced-motion the chevron pulse is disabled but the cue
+   itself still appears so reduced-motion users still get the
+   wayfinding affordance. */
+.scroll-cue {
+  position: fixed;
+  left: 50%;
+  bottom: max(1.5rem, env(safe-area-inset-bottom));
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.45rem;
+  opacity: 0;
+  pointer-events: none;
+  color: rgba(255, 255, 243, 0.55);
+  transform: translate3d(-50%, 8px, 0);
+  transition:
+    opacity 400ms cubic-bezier(0.16, 1, 0.3, 1),
+    transform 400ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+.scroll-cue[data-state="visible"] {
+  opacity: 1;
+  transform: translate3d(-50%, 0, 0);
+}
+.scroll-cue[data-state="hidden"] {
+  opacity: 0;
+  transform: translate3d(-50%, 8px, 0);
+  /* Faster fade-out so the cue gets out of the way of the user's
+     in-progress scroll instead of lingering behind them. */
+  transition-duration: 200ms;
+}
+.scroll-cue__label {
+  font-family: var(--font-brand);
+  font-size: 9px;
+  letter-spacing: 0.42em;
+  text-transform: uppercase;
+}
+.scroll-cue__chevron {
+  width: 14px;
+  height: 14px;
+  animation: scroll-cue-pulse 1.6s cubic-bezier(0.22, 1, 0.36, 1) infinite;
+}
+
+@keyframes scroll-cue-pulse {
+  0%,
+  100% {
+    transform: translateY(0);
+    opacity: 0.55;
+  }
+  50% {
+    transform: translateY(4px);
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .scroll-cue__chevron {
+    animation: none;
+  }
+}
+
 /* === Autofill override — mantieni sfondo dark su autofill === */
 input:-webkit-autofill,
 input:-webkit-autofill:hover,

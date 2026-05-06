@@ -182,6 +182,26 @@ export default async function Home() {
             </span>
           </a>
         </footer>
+
+        {/* Scroll cue — wayfinding affordance pinned to the viewport
+            bottom. Hidden until LandingMotion reveals it after the hero
+            entrance completes; hides again the moment the user scrolls
+            past ~50px. Decorative only (aria-hidden). */}
+        <div aria-hidden="true" data-motion="scroll-cue" data-state="hidden" className="scroll-cue">
+          <span className="scroll-cue__label">Scorri</span>
+          <svg
+            className="scroll-cue__chevron"
+            viewBox="0 0 16 16"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+          >
+            <path d="M3 6l5 5 5-5" />
+          </svg>
+        </div>
       </LandingMotion>
       <EventsListGate>
         <EventsList events={events} />

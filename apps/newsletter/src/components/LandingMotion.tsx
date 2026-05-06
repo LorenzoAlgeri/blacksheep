@@ -20,6 +20,11 @@ const INTRO_BOOT_FALLBACK_MS = 1800;
 // it gets there, this fallback measured from the real start signal
 // plays the entrance anyway so the form stays usable.
 const REVEAL_FALLBACK_FROM_START_MS = 2500;
+// Scroll distance past which the "Scorri" cue is treated as
+// acknowledged and hidden. 50px is enough to filter out small touch
+// jitter / trackpad inertia while still reacting before the user has
+// moved meaningfully into the content.
+const SCROLL_CUE_HIDE_OFFSET = 50;
 
 function bypassMascotteIntro() {
   const runtimeWindow = window as Window & { __bsSkipMascotte__?: boolean };
@@ -33,6 +38,24 @@ export function LandingMotion({ children }: { children: React.ReactNode }) {
   useGSAP(
     () => {
       const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      const scrollCue =
+        containerRef.current?.querySelector<HTMLElement>("[data-motion='scroll-cue']") ?? null;
+
+      const revealScrollCue = () => {
+        if (!scrollCue || window.scrollY > SCROLL_CUE_HIDE_OFFSET) return;
+        scrollCue.dataset.state = "visible";
+      };
+      const hideScrollCue = () => {
+        if (!scrollCue) return;
+        scrollCue.dataset.state = "hidden";
+      };
+      const handleScrollDismiss = () => {
+        if (window.scrollY > SCROLL_CUE_HIDE_OFFSET) {
+          hideScrollCue();
+          window.removeEventListener("scroll", handleScrollDismiss);
+        }
+      };
+      window.addEventListener("scroll", handleScrollDismiss, { passive: true });
 
       // Cancel the no-JS CSS fallback once GSAP takes over.
       document.querySelectorAll("[data-motion]").forEach((el) => {
@@ -118,6 +141,11 @@ export function LandingMotion({ children }: { children: React.ReactNode }) {
         gsap.set("[data-motion='microcopy']", { opacity: 1 });
         gsap.set("[data-motion='consent']", { opacity: 1 });
         gsap.set("[data-motion='socials']", { opacity: 1 });
+        // Reveal the scroll cue immediately — reduced-motion users
+        // still get the wayfinding affordance, just without the
+        // entrance fade and without the chevron pulse (CSS handles
+        // the latter via @media query).
+        revealScrollCue();
         return;
       }
 
@@ -185,6 +213,7 @@ export function LandingMotion({ children }: { children: React.ReactNode }) {
       function playEntranceTimeline() {
         const tl = gsap.timeline({
           onComplete: () => {
+            revealScrollCue();
             startAmbientMotion();
           },
         });
@@ -263,6 +292,7 @@ export function LandingMotion({ children }: { children: React.ReactNode }) {
         if (revealFallbackTimer) clearTimeout(revealFallbackTimer);
         window.removeEventListener(MASCOTTE_START_EVENT, handleMascotteStart);
         window.removeEventListener(MASCOTTE_REVEAL_EVENT, startEntrance);
+        window.removeEventListener("scroll", handleScrollDismiss);
       };
     },
     { scope: containerRef },
