@@ -1,18 +1,24 @@
 "use client";
 
 import { useEffect, useState, type ReactNode } from "react";
-import { MASCOTTE_END_EVENT } from "@/components/MascotteIntro";
+import { MASCOTTE_END_EVENT, MASCOTTE_START_EVENT } from "@/components/MascotteIntro";
 
 /**
- * Buffer beyond the mascotte intro's natural duration. Mascotte runs
- * ~3.33s of frames + 350ms hold + 600ms fade ≈ 4280ms total. The
- * fallback sits above that so the timeout only fires when the intro is
- * actually broken (e.g. WebP frames fail to load and the reveal/end
- * events never dispatch). Otherwise the gate opens precisely on
- * MASCOTTE_END_EVENT — keeps the fade-in synced with the mascotte
- * leaving the viewport, no overlap flicker.
+ * If the mascotte never starts (lazy chunk / first-frame failure),
+ * recover the events list after this many ms from page mount. Generous
+ * because the bypass path in LandingMotion will already have fired
+ * MASCOTTE_END synthetically by then in most failure modes — this is
+ * the last-ditch safety net.
  */
-const FALLBACK_TIMEOUT_MS = 5000;
+const INTRO_BOOT_FALLBACK_MS = 5200;
+
+/**
+ * Once the mascot intro has actually started, the END event should fire
+ * after ~3.33s of frames + 0.35s hold + 0.6s fade ≈ 4.28s. This buffer
+ * keeps the gate closed while the real intro plays out and only opens
+ * synthetically if a slow device drops frames late in the sequence.
+ */
+const END_FALLBACK_FROM_START_MS = 5000;
 
 interface EventsListGateProps {
   children: ReactNode;
@@ -20,15 +26,23 @@ interface EventsListGateProps {
 
 /**
  * Client-side gate that delays the EventsList reveal until the mascotte
- * intro has finished. Also locks page scroll while gated, so the user
- * can't scroll past the hero during the intro fade-out (which would
- * otherwise leave them past the section heading the moment the gate
- * opens, making it look like the heading "appears and disappears").
+ * intro has finished. The gate is now purely visual: it does NOT lock
+ * page scroll, so the user can read the form / hero copy / scroll the
+ * page freely while the mascot completes its intro independently.
+ *
+ * Two-stage fallback timer mirrors LandingMotion: a generous "did the
+ * intro ever start" boot timeout kicks in if MASCOTTE_START_EVENT never
+ * fires, and a tighter "did the intro ever finish" stage measured from
+ * the real start signal protects against a stalled rAF loop. Both
+ * collapse to a no-op if MASCOTTE_END_EVENT arrives normally.
  *
  * a11y:
- *  - `aria-hidden` while gated → screen readers skip the list during intro
- *  - `pointer-events-none` while gated → CTA cannot accidentally receive focus
- *  - prefers-reduced-motion → mount immediately, no fade and no scroll lock
+ *  - `inert={!mounted}` → descendants stay out of the tab order while
+ *    gated (better than `pointer-events-none`, which only stops the
+ *    mouse and lets keyboard tab into invisible content);
+ *  - `aria-hidden={!mounted}` → screen readers skip the list until it's
+ *    visible;
+ *  - prefers-reduced-motion → mount immediately, no fade.
  */
 export function EventsListGate({ children }: EventsListGateProps) {
   const [mounted, setMounted] = useState(false);
@@ -41,46 +55,49 @@ export function EventsListGate({ children }: EventsListGateProps) {
       return;
     }
 
-    // Lock scroll until the mascotte intro completes. Both html and body
-    // need overflow:hidden because the scrolling element varies (Chrome
-    // uses <html>, some quirks-mode contexts use <body>). Restore exact
-    // previous values to avoid clobbering admin/global styles.
-    const html = document.documentElement;
-    const body = document.body;
-    const previousHtmlOverflow = html.style.overflow;
-    const previousBodyOverflow = body.style.overflow;
-    html.style.overflow = "hidden";
-    body.style.overflow = "hidden";
-
-    const release = () => {
-      html.style.overflow = previousHtmlOverflow;
-      body.style.overflow = previousBodyOverflow;
-    };
-
-    const timeoutId = window.setTimeout(() => {
-      release();
+    let started = false;
+    let opened = false;
+    let bootFallbackId: number | null = window.setTimeout(() => {
       setMounted(true);
-    }, FALLBACK_TIMEOUT_MS);
-    const handler = () => {
-      window.clearTimeout(timeoutId);
-      release();
+    }, INTRO_BOOT_FALLBACK_MS);
+    let endFallbackId: number | null = null;
+
+    const openGate = () => {
+      if (opened) return;
+      opened = true;
+      if (bootFallbackId) window.clearTimeout(bootFallbackId);
+      if (endFallbackId) window.clearTimeout(endFallbackId);
       setMounted(true);
     };
-    window.addEventListener(MASCOTTE_END_EVENT, handler);
+
+    const handleMascotteStart = () => {
+      if (started || opened) return;
+      started = true;
+      if (bootFallbackId) {
+        window.clearTimeout(bootFallbackId);
+        bootFallbackId = null;
+      }
+      endFallbackId = window.setTimeout(openGate, END_FALLBACK_FROM_START_MS);
+    };
+
+    window.addEventListener(MASCOTTE_START_EVENT, handleMascotteStart);
+    window.addEventListener(MASCOTTE_END_EVENT, openGate);
 
     return () => {
-      window.clearTimeout(timeoutId);
-      window.removeEventListener(MASCOTTE_END_EVENT, handler);
-      release();
+      if (bootFallbackId) window.clearTimeout(bootFallbackId);
+      if (endFallbackId) window.clearTimeout(endFallbackId);
+      window.removeEventListener(MASCOTTE_START_EVENT, handleMascotteStart);
+      window.removeEventListener(MASCOTTE_END_EVENT, openGate);
     };
   }, []);
 
   return (
     <div
       aria-hidden={!mounted}
+      inert={!mounted}
       data-events-gate-mounted={mounted ? "true" : "false"}
       className={`transition-opacity duration-700 ease-out ${
-        mounted ? "opacity-100" : "opacity-0 pointer-events-none"
+        mounted ? "opacity-100" : "opacity-0"
       }`}
     >
       {children}

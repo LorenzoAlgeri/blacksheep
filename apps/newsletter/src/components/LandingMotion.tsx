@@ -3,13 +3,29 @@
 import { useRef } from "react";
 import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
-import { MASCOTTE_REVEAL_EVENT } from "@/components/MascotteIntro";
+import {
+  MASCOTTE_BYPASS_EVENT,
+  MASCOTTE_REVEAL_EVENT,
+  MASCOTTE_START_EVENT,
+} from "@/components/MascotteIntro";
 
 gsap.registerPlugin(useGSAP);
 
-// Safety fallback: if the mascotte event never fires (e.g. WebP load failure),
-// the entrance still plays after this many ms.
-const REVEAL_FALLBACK_MS = 5000;
+// If the mascot intro never fires its START event (lazy chunk failure,
+// first-frame load error, hostile network), bypass it and play the hero
+// entrance after this many ms from page mount.
+const INTRO_BOOT_FALLBACK_MS = 1800;
+// Once the intro has actually started, the REVEAL_EVENT should fire at
+// frame 50 (~1.67s in at 30fps). If something stops the rAF loop before
+// it gets there, this fallback measured from the real start signal
+// plays the entrance anyway so the form stays usable.
+const REVEAL_FALLBACK_FROM_START_MS = 2500;
+
+function bypassMascotteIntro() {
+  const runtimeWindow = window as Window & { __bsSkipMascotte__?: boolean };
+  runtimeWindow.__bsSkipMascotte__ = true;
+  window.dispatchEvent(new CustomEvent(MASCOTTE_BYPASS_EVENT));
+}
 
 export function LandingMotion({ children }: { children: React.ReactNode }) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -18,7 +34,7 @@ export function LandingMotion({ children }: { children: React.ReactNode }) {
     () => {
       const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-      // Cancel CSS fallback — GSAP is now in control
+      // Cancel the no-JS CSS fallback once GSAP takes over.
       document.querySelectorAll("[data-motion]").forEach((el) => {
         (el as HTMLElement).style.animation = "none";
       });
@@ -109,7 +125,7 @@ export function LandingMotion({ children }: { children: React.ReactNode }) {
       // ENTRANCE — synced with the mascotte intro
       // ===================================================
 
-      // --- Initial hidden states (everything off-screen until mascotte hits frame 100) ---
+      // --- Initial hidden states ---
       gsap.set("[data-motion='gradient']", { opacity: 0 });
       gsap.set("[data-motion='logo']", {
         clipPath: "inset(0 100% 0 0)",
@@ -129,19 +145,42 @@ export function LandingMotion({ children }: { children: React.ReactNode }) {
       gsap.set("[data-motion='consent']", { opacity: 0 });
       gsap.set("[data-motion='spotlight']", { opacity: 0 });
 
+      // Two-stage fallback. The boot stage protects against the intro
+      // never starting at all (chunk download failure, first-frame
+      // load error). Once the intro signals it really did start, switch
+      // to a stage measured from that real start signal so a slower
+      // device just gets a slightly delayed entrance instead of being
+      // bypassed mid-play.
       let started = false;
-      let fallbackTimer: ReturnType<typeof setTimeout> | null = null;
+      let introStarted = false;
+      let bootFallbackTimer: number | null = null;
+      let revealFallbackTimer: number | null = null;
 
       const startEntrance = () => {
         if (started) return;
         started = true;
-        if (fallbackTimer) clearTimeout(fallbackTimer);
+        if (bootFallbackTimer) clearTimeout(bootFallbackTimer);
+        if (revealFallbackTimer) clearTimeout(revealFallbackTimer);
+        window.removeEventListener(MASCOTTE_START_EVENT, handleMascotteStart);
         window.removeEventListener(MASCOTTE_REVEAL_EVENT, startEntrance);
         playEntranceTimeline();
       };
 
+      const handleMascotteStart = () => {
+        if (introStarted || started) return;
+        introStarted = true;
+        if (bootFallbackTimer) clearTimeout(bootFallbackTimer);
+        revealFallbackTimer = window.setTimeout(startEntrance, REVEAL_FALLBACK_FROM_START_MS);
+      };
+
+      window.addEventListener(MASCOTTE_START_EVENT, handleMascotteStart, { once: true });
       window.addEventListener(MASCOTTE_REVEAL_EVENT, startEntrance, { once: true });
-      fallbackTimer = setTimeout(startEntrance, REVEAL_FALLBACK_MS);
+      bootFallbackTimer = window.setTimeout(() => {
+        // The intro never confirmed it started — assume the mascot is
+        // broken and free the rest of the page.
+        bypassMascotteIntro();
+        startEntrance();
+      }, INTRO_BOOT_FALLBACK_MS);
 
       function playEntranceTimeline() {
         const tl = gsap.timeline({
@@ -153,14 +192,10 @@ export function LandingMotion({ children }: { children: React.ReactNode }) {
         // PHASE 1: gradient emerges
         tl.to("[data-motion='gradient']", { opacity: 1, duration: 0.8, ease: "power2.inOut" }, 0);
 
-        // PHASE 2: brand reveals
+        // PHASE 2: brand reveals (logo wipes in, blur clears, glow settles)
         tl.to(
           "[data-motion='logo']",
-          {
-            clipPath: "inset(0 0% 0 0)",
-            duration: 0.8,
-            ease: "power3.out",
-          },
+          { clipPath: "inset(0 0% 0 0)", duration: 0.8, ease: "power3.out" },
           0.8,
         );
         tl.to(
@@ -189,13 +224,7 @@ export function LandingMotion({ children }: { children: React.ReactNode }) {
         tl.to("[data-motion='divider']", { opacity: 0.2, duration: 0.3, ease: "power2.out" }, 2.3);
         tl.to(
           "[data-motion='input']",
-          {
-            opacity: 1,
-            y: 0,
-            duration: 0.4,
-            stagger: 0.1,
-            ease: "power2.out",
-          },
+          { opacity: 1, y: 0, duration: 0.4, stagger: 0.1, ease: "power2.out" },
           2.4,
         );
         tl.to(
@@ -230,7 +259,9 @@ export function LandingMotion({ children }: { children: React.ReactNode }) {
 
       return () => {
         mm.revert();
-        if (fallbackTimer) clearTimeout(fallbackTimer);
+        if (bootFallbackTimer) clearTimeout(bootFallbackTimer);
+        if (revealFallbackTimer) clearTimeout(revealFallbackTimer);
+        window.removeEventListener(MASCOTTE_START_EVENT, handleMascotteStart);
         window.removeEventListener(MASCOTTE_REVEAL_EVENT, startEntrance);
       };
     },
