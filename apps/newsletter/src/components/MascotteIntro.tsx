@@ -15,9 +15,18 @@ export {
   MASCOTTE_START_EVENT,
 } from "./mascot/shared";
 
-const VARIANTS = ["v0", "v9", "v9d", "video"] as const;
+const VARIANTS = [
+  "v0",
+  "v9",
+  "v9d",
+  "video",
+  "video-lit",
+  "video-glow",
+  "video-sharp",
+  "video-bloom",
+] as const;
 type Variant = (typeof VARIANTS)[number];
-const DEFAULT: Variant = "v9d"; // leading hypothesis: downsample → glow
+const DEFAULT: Variant = "video-bloom";
 
 function isVariant(v: string | null): v is Variant {
   return !!v && (VARIANTS as readonly string[]).includes(v);
@@ -25,12 +34,14 @@ function isVariant(v: string | null): v is Variant {
 
 /** URL switcher for A/B testing intro implementations.
  *
- *  - `?mascot=v0`    → <img> src loop (production deployed baseline)
- *  - `?mascot=v9`    → canvas + DPR×2 backing UPSAMPLE (current rotto)
- *  - `?mascot=v9d`   → canvas + 0.5× backing DOWNSAMPLE (glow hypothesis)
- *  - `?mascot=video` → <video> with VP9 alpha webm (hardware decode)
+ *  - `?mascot=v0`         → <img> src loop (production deployed baseline)
+ *  - `?mascot=v9`         → canvas + DPR×2 backing UPSAMPLE (broken)
+ *  - `?mascot=v9d`        → canvas + 0.5× backing DOWNSAMPLE
+ *  - `?mascot=video`      → VP9 webm alpha (hardware decode, flat look)
+ *  - `?mascot=video-lit`  → VP9 + CSS contrast/saturate boost
+ *  - `?mascot=video-glow` → VP9 + boost + mix-blend-mode screen (default)
  *
- *  Default: v9d. Lifecycle events identical across variants. */
+ *  Lifecycle events identical across variants. */
 export function MascotteIntro() {
   const [variant, setVariant] = useState<Variant | null>(null);
 
@@ -48,6 +59,14 @@ export function MascotteIntro() {
     case "v9d":
       return <MascotteIntroV9CanvasDown />;
     case "video":
-      return <MascotteIntroVideoAlpha />;
+      return <MascotteIntroVideoAlpha look="flat" />;
+    case "video-lit":
+      return <MascotteIntroVideoAlpha look="lit" />;
+    case "video-glow":
+      return <MascotteIntroVideoAlpha look="glow" />;
+    case "video-sharp":
+      return <MascotteIntroVideoAlpha look="sharp" />;
+    case "video-bloom":
+      return <MascotteIntroVideoAlpha look="bloom" />;
   }
 }
