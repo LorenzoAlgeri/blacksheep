@@ -38,11 +38,13 @@ const LOOK_STYLE: Record<VideoLook, React.CSSProperties> = {
   sharp: {
     filter: "url(#bs-mascot-sharpen) contrast(1.18) saturate(1.08) brightness(1.05)",
   },
-  // Glare bloom — designer-canonical "shiny metal" post-fx on bracelet
-  // pearls + necklace chain. Outer brightness/contrast lift compensates
-  // for any palette darkening introduced by the WebP encoder.
+  // Glare bloom — pre-baked into the source asset by
+  // scripts/bake-bloom.mjs (offline). The WebP frames already contain
+  // the bracelet/necklace/cap-text glow — runtime cost = 0. Only a
+  // tiny CSS palette-compensation filter remains (matches what the
+  // SVG version added on top: brightness/contrast lift).
   bloom: {
-    filter: "brightness(1.04) contrast(1.2) url(#bs-mascot-bloom)",
+    filter: "brightness(1.04) contrast(1.05) saturate(1.05)",
   },
 };
 
@@ -148,66 +150,23 @@ export function MascotteIntroVideoAlpha({ look = "flat" }: { look?: VideoLook } 
       data-mascotte-intro
       className={`pointer-events-none fixed inset-0 z-[2] overflow-hidden transition-opacity duration-[600ms] ease-out ${fading ? "opacity-0" : "opacity-100"}`}
     >
-      {look === "sharp" || look === "bloom" ? (
+      {look === "sharp" ? (
         <svg
           aria-hidden="true"
           className="absolute h-0 w-0 overflow-hidden"
           xmlns="http://www.w3.org/2000/svg"
         >
           <defs>
-            {/* Sharpen — Laplacian edge kernel */}
+            {/* Sharpen — Laplacian edge kernel (kept for the optional
+                ?mascot=video-sharp variant; the default video-bloom
+                no longer needs an SVG filter — bloom is pre-baked
+                into intro-mascot.webp by scripts/bake-bloom.mjs). */}
             <filter id="bs-mascot-sharpen" x="0" y="0" width="100%" height="100%">
               <feConvolveMatrix
                 order="3"
                 preserveAlpha="true"
                 kernelMatrix="0 -1 0 -1 5 -1 0 -1 0"
               />
-            </filter>
-            {/* Glare bloom — physical-render shiny-metal post-fx.
-                Threshold tuned so only near-white pixels survive:
-                bracelet pearls + necklace chain + cap text — NOT the
-                body sweater (~0.85) or eye whites.
-                1. ColorMatrix: alpha = R+G+B - 1.40, gates pixels.
-                2. ComponentTransfer slope 10: amplifies the small
-                   surviving alpha so the bloom is visible without
-                   widening the threshold band.
-                3. feFlood white → composite "in" → pure white bright
-                   layer with the gated alpha.
-                4. Erode 0.67 — kills isolated 1-2px dots.
-                5. Two gaussian blurs for a tight "shine".
-                6. feMerge stacks the layers over the original. */}
-            <filter id="bs-mascot-bloom" x="-10%" y="-10%" width="120%" height="120%">
-              <feColorMatrix
-                in="SourceGraphic"
-                type="matrix"
-                values="0 0 0 0 0
-                        0 0 0 0 0
-                        0 0 0 0 0
-                        1 1 1 0 -1.55"
-                result="brightAlpha"
-              />
-              <feComponentTransfer in="brightAlpha" result="brightAlphaSteep">
-                <feFuncA type="linear" slope="8" intercept="0" />
-              </feComponentTransfer>
-              <feFlood floodColor="#ffffff" result="white" />
-              <feComposite in="white" in2="brightAlphaSteep" operator="in" result="brightOnly" />
-              {/* Tentativo 2: tight filter chain.
-                  - Threshold raised (-1.40 → -1.55) so fewer pixels
-                    enter the bloom path = less chain artwork picks up
-                    a halo on the cap text edges.
-                  - Slope reduced (10 → 8) for softer transition.
-                  - Erode back, but smaller radius (0.4 vs 0.67) to
-                    kill stray hot pixels without thinning real
-                    pearls/chain.
-                  - Single blur stdDev 1.5 (vs prev 2.5) for tighter
-                    "shine" rather than wide halo. */}
-              <feMorphology in="brightOnly" operator="erode" radius="0.4" result="brightCleaned" />
-              <feGaussianBlur in="brightCleaned" stdDeviation="1.5" result="blurShine" />
-              <feMerge>
-                <feMergeNode in="SourceGraphic" />
-                <feMergeNode in="blurShine" />
-                <feMergeNode in="brightCleaned" />
-              </feMerge>
             </filter>
           </defs>
         </svg>
