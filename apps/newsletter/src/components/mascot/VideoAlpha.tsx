@@ -38,14 +38,13 @@ const LOOK_STYLE: Record<VideoLook, React.CSSProperties> = {
   sharp: {
     filter: "url(#bs-mascot-sharpen) contrast(1.18) saturate(1.08) brightness(1.05)",
   },
-  // Glare bloom — pre-baked into the source asset by
-  // scripts/bake-bloom.mjs (offline). The WebP frames already contain
-  // the bracelet/necklace/cap-text glow — runtime cost = 0. Only a
-  // tiny CSS palette-compensation filter remains (matches what the
-  // SVG version added on top: brightness/contrast lift).
-  bloom: {
-    filter: "brightness(1.04) contrast(1.05) saturate(1.05)",
-  },
+  // bloom — TEST PURO: nessun filter, nessun bake, nessun effetto.
+  // Asset = render originale dei PNG source (clean), encodato in
+  // animated WebP. Serve a misurare la fluidità *intrinseca* del
+  // decode WebP nel browser, senza alcun overhead di filter SVG né
+  // CSS filter. Se è fluido qui → si potrà aggiungere un bloom
+  // mirato (solo collana + bracciale) in step successivo.
+  bloom: {},
 };
 
 /** Animated-WebP intro variant.
