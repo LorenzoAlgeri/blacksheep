@@ -243,13 +243,22 @@ body::before {
    <= 768px so the desktop layout (wide enough to fit the wave) is
    untouched. */
 @keyframes bs-mascot-mobile-shift {
-  0%,
-  60% {
+  0% {
+    transform: translate3d(5vw, 0, 0); /* start */
+  }
+  35% {
     /* Start shifted right so the mascot appears centered in the
        portrait viewport during the static greet. +5vw moves the
        container right enough to put the figure mid-screen without
        overshoot. */
-    transform: translate3d(-3vw, 0, 0);
+    transform: translate3d(5vw, 0, 0);
+  }
+  80% {
+    /* Start shifted right so the mascot appears centered in the
+       portrait viewport during the static greet. +5vw moves the
+       container right enough to put the figure mid-screen without
+       overshoot. */
+    transform: translate3d(-25vw, 0, 0);
   }
 
   100% {
@@ -259,13 +268,13 @@ body::before {
        artwork-anchored spot. translate3d (vs translateX) forces a
        GPU compositing layer so the frame swap doesn't re-rasterize
        on every paint — eliminates jitter on lower-end mobile GPUs. */
-    transform: translate3d(-80vw, 0, 0);
+    transform: translate3d(-25vw, 0, 0);
   }
 }
 
 @media (max-width: 768px) {
   [data-mascotte-intro] {
-    animation: bs-mascot-mobile-shift 3.333s cubic-bezier(0.65, 0, 0.35, 1) both;
+    animation: bs-mascot-mobile-shift 3.6s cubic-bezier(0.65, 0, 0.35, 1) both;
   }
 }
 
