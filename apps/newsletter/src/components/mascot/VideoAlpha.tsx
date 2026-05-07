@@ -22,13 +22,6 @@ import {
 // is decoded as an image and works uniformly on Safari iOS 14+,
 // Chrome / Firefox / Edge desktop + mobile, and Android browsers.
 const ANIM_SRC = `${BASE_PATH}/intro-mascot.webp`;
-// Static image of frame 100 (the final pose). When the lifecycle
-// timer reaches TOTAL_TIME_MS we swap <img> src from the animated
-// webp (which loops infinitely thanks to loop=0 — needed so mobile
-// browsers don't get stuck on a partially-downloaded asset) to this
-// static frame. Result: animation visibly stops on the final pose,
-// the hold + fade-out plays over a still image, no loop restart.
-const END_SRC = `${BASE_PATH}/intro-mascot-end.webp`;
 const REVEAL_TIME_MS = (REVEAL_FRAME / FPS) * 1000;
 const TOTAL_TIME_MS = (PLAY_UNTIL / FPS) * 1000;
 
@@ -103,10 +96,6 @@ export function MascotteIntroVideoAlpha({ look = "flat" }: { look?: VideoLook } 
       timeouts.push(
         window.setTimeout(() => {
           if (cancelled) return;
-          // Swap src to the static end frame so the animated webp
-          // (which is loop=0 = infinite, needed for partial-download
-          // robustness on mobile) visibly stops on the final pose.
-          if (imgRef.current) imgRef.current.src = END_SRC;
           timeouts.push(
             window.setTimeout(() => {
               if (!cancelled) setFading(true);
