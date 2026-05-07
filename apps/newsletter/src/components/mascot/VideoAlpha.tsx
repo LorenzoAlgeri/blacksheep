@@ -5,7 +5,6 @@ import {
   BASE_PATH,
   FADE_OUT_MS,
   FPS,
-  FRAME_DURATION_MS,
   HOLD_AFTER_END_MS,
   MASCOTTE_BYPASS_EVENT,
   MascotteBypassWindow,
@@ -93,10 +92,14 @@ export function MascotteIntroVideoAlpha({ look = "flat" }: { look?: VideoLook } 
     let revealed = false;
     let started = false;
 
-    const onPlay = () => {
+    // Build the per-frame tick. Called once `play()` resolves so the
+    // first visible frame is guaranteed to be frame 0 (the placeholder
+    // <img> stays up until then) — fixes the "intro looks accelerated"
+    // bug where autoPlay started decoding/advancing before the
+    // crossfade swapped img→video.
+    const startTick = () => {
       if (started) return;
       started = true;
-      setVideoReady(true);
       fireStart();
       const tick = () => {
         if (isBypassed() || !videoRef.current) return;
@@ -124,24 +127,62 @@ export function MascotteIntroVideoAlpha({ look = "flat" }: { look?: VideoLook } 
       rafRef.current = requestAnimationFrame(tick);
     };
 
+    // canplay = first frame decoded & ready to render. The <video>
+    // element has NO autoPlay attribute, so the browser hasn't started
+    // playback yet. Sequence:
+    //   1. pause() + currentTime=0 (defensive, in case browser
+    //      heuristic auto-played anyway).
+    //   2. setVideoReady(true) → React schedules a re-render that
+    //      flips opacity (video 0→1, img 1→0).
+    //   3. Double rAF waits for two paints: by the second callback
+    //      the opacity transition has begun on a video element that
+    //      is *paused at frame 0* (identical to the placeholder img).
+    //   4. play() starts the actual playback exactly at frame 0, so
+    //      the first moving frame the user sees is genuinely frame 0
+    //      — no apparent acceleration.
+    //   5. play() resolve → startTick() begins the rAF lifecycle
+    //      tick that fires reveal/end events.
+    const onCanPlay = () => {
+      if (!videoRef.current || started || cancelled) return;
+      const v = videoRef.current;
+      v.pause();
+      v.currentTime = 0;
+      setVideoReady(true);
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          if (!videoRef.current || started || cancelled) return;
+          videoRef.current
+            .play()
+            .then(startTick)
+            .catch(() => {
+              window.dispatchEvent(new CustomEvent(MASCOTTE_BYPASS_EVENT));
+            });
+        });
+      });
+    };
+
     const onError = () => {
       window.dispatchEvent(new CustomEvent(MASCOTTE_BYPASS_EVENT));
     };
 
-    video.addEventListener("playing", onPlay, { once: true });
+    let cancelled = false;
+    video.addEventListener("canplay", onCanPlay, { once: true });
     video.addEventListener("error", onError, { once: true });
 
-    // Fallback for browsers that don't fire "playing" reliably.
+    // Fallback if "canplay" never fires (rare, but defensive). Uses
+    // a longer timeout than the framerate since canplay can take
+    // ~500ms+ on a fresh page load even with cached video.
     const fallbackBoot = window.setTimeout(() => {
-      if (!started) onPlay();
-    }, FRAME_DURATION_MS * 2);
+      if (!started) onCanPlay();
+    }, 1500);
     timeouts.push(fallbackBoot);
 
     return () => {
+      cancelled = true;
       cancelAnimationFrame(rafRef.current);
       timeouts.forEach(window.clearTimeout);
       window.removeEventListener(MASCOTTE_BYPASS_EVENT, handleBypass);
-      video.removeEventListener("playing", onPlay);
+      video.removeEventListener("canplay", onCanPlay);
       video.removeEventListener("error", onError);
     };
   }, []);
@@ -221,12 +262,10 @@ export function MascotteIntroVideoAlpha({ look = "flat" }: { look?: VideoLook } 
         </svg>
       ) : null}
       {/* Frame 0 placeholder — visible from first paint while the
-          6.5MB lossless VP9 webm downloads + decodes (1-2s). Same
-          pattern as the production V0 <img> loop on feat/blacksheep-list:
-          eliminates the gradient-only flash before the intro starts.
-          Uses the same LOOK_STYLE filter so the bloom/sharpen visuals
-          are already correct on the still frame and the cross-fade
-          to <video> at "playing" event is invisible. */}
+          ~950KB VP9 alpha webm (CRF 24) downloads + decodes the
+          first frame. Same LOOK_STYLE filter as the video so the
+          opacity crossfade at play() resolution is invisible.
+          Eliminates the gradient-only flash before the intro starts. */}
       <img
         src={framePath(0)}
         alt=""
@@ -240,12 +279,15 @@ export function MascotteIntroVideoAlpha({ look = "flat" }: { look?: VideoLook } 
       <video
         ref={videoRef}
         src={VIDEO_SRC}
-        autoPlay
         muted
         playsInline
         preload="auto"
-        style={{ ...LOOK_STYLE[look], opacity: videoReady ? 1 : 0 }}
-        className="absolute inset-x-0 bottom-0 h-[65%] w-full object-cover object-[36%_bottom] select-none transition-opacity duration-200"
+        style={{
+          ...LOOK_STYLE[look],
+          opacity: videoReady ? 1 : 0,
+          willChange: "opacity, filter",
+        }}
+        className="absolute inset-x-0 bottom-0 h-[65%] w-full object-cover object-[36%_bottom] select-none transition-opacity duration-100"
       />
     </div>
   );
