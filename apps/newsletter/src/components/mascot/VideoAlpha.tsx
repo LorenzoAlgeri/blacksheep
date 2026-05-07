@@ -191,14 +191,16 @@ export function MascotteIntroVideoAlpha({ look = "flat" }: { look?: VideoLook } 
               </feComponentTransfer>
               <feFlood floodColor="#ffffff" result="white" />
               <feComposite in="white" in2="brightAlphaSteep" operator="in" result="brightOnly" />
-              <feMorphology in="brightOnly" operator="erode" radius="0.67" result="brightCleaned" />
-              <feGaussianBlur in="brightCleaned" stdDeviation="3" result="blurNear" />
-              <feGaussianBlur in="brightCleaned" stdDeviation="2" result="blurFar" />
+              {/* Tentativo 1: simplified filter chain.
+                  Removed feMorphology erode + one of the two
+                  feGaussianBlur. The remaining single blur (stdDev
+                  2.5) gives a "shine" close enough to the previous
+                  two-pass without the per-frame morphology cost. */}
+              <feGaussianBlur in="brightOnly" stdDeviation="2.5" result="blurShine" />
               <feMerge>
                 <feMergeNode in="SourceGraphic" />
-                <feMergeNode in="blurFar" />
-                <feMergeNode in="blurNear" />
-                <feMergeNode in="brightCleaned" />
+                <feMergeNode in="blurShine" />
+                <feMergeNode in="brightOnly" />
               </feMerge>
             </filter>
           </defs>
