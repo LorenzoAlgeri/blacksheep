@@ -179,7 +179,15 @@ export function MascotteIntroVideoAlpha({ look = "flat" }: { look?: VideoLook } 
         fetchPriority="high"
         style={{
           ...LOOK_STYLE[look],
-          willChange: "filter",
+          // Promote the <img> to its own GPU compositing layer so the
+          // animated WebP decode + paint stay isolated from any other
+          // repaint on the page (cookiebot banner, hero entrance,
+          // scroll). translateZ(0) is the legacy hint; will-change
+          // is the modern declarative form. Both together max out the
+          // chance the browser hardware-composites the layer.
+          transform: "translateZ(0)",
+          willChange: "transform, opacity",
+          backfaceVisibility: "hidden",
         }}
         className="absolute inset-x-0 bottom-0 h-[65%] w-full object-cover object-[36%_bottom] select-none"
       />
