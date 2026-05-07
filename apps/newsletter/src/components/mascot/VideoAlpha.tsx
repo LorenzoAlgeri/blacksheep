@@ -183,24 +183,30 @@ export function MascotteIntroVideoAlpha({ look = "flat" }: { look?: VideoLook } 
                 values="0 0 0 0 0
                         0 0 0 0 0
                         0 0 0 0 0
-                        1 1 1 0 -1.40"
+                        1 1 1 0 -1.55"
                 result="brightAlpha"
               />
               <feComponentTransfer in="brightAlpha" result="brightAlphaSteep">
-                <feFuncA type="linear" slope="10" intercept="0" />
+                <feFuncA type="linear" slope="8" intercept="0" />
               </feComponentTransfer>
               <feFlood floodColor="#ffffff" result="white" />
               <feComposite in="white" in2="brightAlphaSteep" operator="in" result="brightOnly" />
-              {/* Tentativo 1: simplified filter chain.
-                  Removed feMorphology erode + one of the two
-                  feGaussianBlur. The remaining single blur (stdDev
-                  2.5) gives a "shine" close enough to the previous
-                  two-pass without the per-frame morphology cost. */}
-              <feGaussianBlur in="brightOnly" stdDeviation="2.5" result="blurShine" />
+              {/* Tentativo 2: tight filter chain.
+                  - Threshold raised (-1.40 → -1.55) so fewer pixels
+                    enter the bloom path = less chain artwork picks up
+                    a halo on the cap text edges.
+                  - Slope reduced (10 → 8) for softer transition.
+                  - Erode back, but smaller radius (0.4 vs 0.67) to
+                    kill stray hot pixels without thinning real
+                    pearls/chain.
+                  - Single blur stdDev 1.5 (vs prev 2.5) for tighter
+                    "shine" rather than wide halo. */}
+              <feMorphology in="brightOnly" operator="erode" radius="0.4" result="brightCleaned" />
+              <feGaussianBlur in="brightCleaned" stdDeviation="1.5" result="blurShine" />
               <feMerge>
                 <feMergeNode in="SourceGraphic" />
                 <feMergeNode in="blurShine" />
-                <feMergeNode in="brightOnly" />
+                <feMergeNode in="brightCleaned" />
               </feMerge>
             </filter>
           </defs>
