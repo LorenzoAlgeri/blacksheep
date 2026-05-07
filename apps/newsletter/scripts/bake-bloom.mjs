@@ -57,6 +57,15 @@ const BLUR_SIGMA = parseFloat(flags.blur ?? "2.5");
 const AMP = parseFloat(flags.amp ?? "8");
 const SRC_OFFSET = parseInt(flags.srcOffset ?? "0", 10);
 const COUNT = parseInt(flags.count ?? "101", 10);
+// Optional rectangular mask in source-pixel coords (1920x1080).
+// Pixels outside the rect get bloom alpha forced to 0.
+// All four required to enable masking; otherwise full-frame bloom.
+const MASK_X = flags.maskX !== undefined ? parseInt(flags.maskX, 10) : null;
+const MASK_Y = flags.maskY !== undefined ? parseInt(flags.maskY, 10) : null;
+const MASK_W = flags.maskW !== undefined ? parseInt(flags.maskW, 10) : null;
+const MASK_H = flags.maskH !== undefined ? parseInt(flags.maskH, 10) : null;
+const MASK_ENABLED =
+  MASK_X !== null && MASK_Y !== null && MASK_W !== null && MASK_H !== null;
 
 if (!existsSync(srcDir)) {
   console.error(`Source dir not found: ${srcDir}`);
@@ -66,6 +75,9 @@ mkdirSync(dstDir, { recursive: true });
 
 console.log(`bake-bloom: threshold=${THRESHOLD} blur=${BLUR_SIGMA} amp=${AMP}`);
 console.log(`            srcOffset=${SRC_OFFSET} count=${COUNT}`);
+if (MASK_ENABLED) {
+  console.log(`            mask=rect(${MASK_X},${MASK_Y},${MASK_W}x${MASK_H})`);
+}
 console.log(`            ${srcDir} → ${dstDir}`);
 
 const t0 = Date.now();
@@ -88,8 +100,21 @@ for (let i = 0; i < COUNT; i++) {
   //    - alpha_lum = R + G + B - threshold (clamped 0..1, then × amp)
   //    - RGB = pure white (255,255,255)
   //    - alpha_out = alpha_lum × source_alpha (preserve transparency)
+  //    - if a mask rect is set, pixels outside the rect get alpha 0
   const brightBuf = Buffer.alloc(rawRGBA.length);
   for (let p = 0; p < rawRGBA.length; p += 4) {
+    const px = (p / 4) % width;
+    const py = Math.floor(p / 4 / width);
+    const inMask =
+      !MASK_ENABLED ||
+      (px >= MASK_X && px < MASK_X + MASK_W && py >= MASK_Y && py < MASK_Y + MASK_H);
+    if (!inMask) {
+      brightBuf[p] = 0;
+      brightBuf[p + 1] = 0;
+      brightBuf[p + 2] = 0;
+      brightBuf[p + 3] = 0;
+      continue;
+    }
     const r = rawRGBA[p] / 255;
     const g = rawRGBA[p + 1] / 255;
     const b = rawRGBA[p + 2] / 255;
@@ -114,12 +139,14 @@ for (let i = 0; i < COUNT; i++) {
     .png()
     .toBuffer();
 
-  // 4. Composite the blur over the original with screen blend
-  //    so dark pixels under the glow lift but max-bright pixels stay
-  //    clamped at 1 (no over-saturation).
+  // 4. Composite the blur over the original with additive blend.
+  //    `add` = clamp(orig.RGB + blur.RGB * blur.alpha) — predictable,
+  //    forces visible lift on bloom pixels regardless of source alpha
+  //    interpretation. (Sharp `screen` blend was producing no visible
+  //    change with this kind of bright-mask layer.)
   await orig
     .clone()
-    .composite([{ input: blurredPng, blend: "screen" }])
+    .composite([{ input: blurredPng, blend: "add" }])
     .png({ compressionLevel: 6 })
     .toFile(dstPath);
 
