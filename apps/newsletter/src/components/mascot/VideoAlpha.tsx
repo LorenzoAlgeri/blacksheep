@@ -38,12 +38,13 @@ const LOOK_STYLE: Record<VideoLook, React.CSSProperties> = {
   sharp: {
     filter: "url(#bs-mascot-sharpen) contrast(1.18) saturate(1.08) brightness(1.05)",
   },
-  // Glare bloom — designer-canonical "shiny metal" post-fx on bracelet
-  // pearls + necklace chain. Outer brightness/contrast lift compensates
-  // for any palette darkening introduced by the WebP encoder.
-  bloom: {
-    filter: "brightness(1.04) contrast(1.2) url(#bs-mascot-bloom)",
-  },
+  // bloom — TEST PURO: nessun filter, nessun bake, nessun effetto.
+  // Asset = render originale dei PNG source (clean), encodato in
+  // animated WebP. Serve a misurare la fluidità *intrinseca* del
+  // decode WebP nel browser, senza alcun overhead di filter SVG né
+  // CSS filter. Se è fluido qui → si potrà aggiungere un bloom
+  // mirato (solo collana + bracciale) in step successivo.
+  bloom: {},
 };
 
 /** Animated-WebP intro variant.
@@ -148,58 +149,23 @@ export function MascotteIntroVideoAlpha({ look = "flat" }: { look?: VideoLook } 
       data-mascotte-intro
       className={`pointer-events-none fixed inset-0 z-[2] overflow-hidden transition-opacity duration-[600ms] ease-out ${fading ? "opacity-0" : "opacity-100"}`}
     >
-      {look === "sharp" || look === "bloom" ? (
+      {look === "sharp" ? (
         <svg
           aria-hidden="true"
           className="absolute h-0 w-0 overflow-hidden"
           xmlns="http://www.w3.org/2000/svg"
         >
           <defs>
-            {/* Sharpen — Laplacian edge kernel */}
+            {/* Sharpen — Laplacian edge kernel (kept for the optional
+                ?mascot=video-sharp variant; the default video-bloom
+                no longer needs an SVG filter — bloom is pre-baked
+                into intro-mascot.webp by scripts/bake-bloom.mjs). */}
             <filter id="bs-mascot-sharpen" x="0" y="0" width="100%" height="100%">
               <feConvolveMatrix
                 order="3"
                 preserveAlpha="true"
                 kernelMatrix="0 -1 0 -1 5 -1 0 -1 0"
               />
-            </filter>
-            {/* Glare bloom — physical-render shiny-metal post-fx.
-                Threshold tuned so only near-white pixels survive:
-                bracelet pearls + necklace chain + cap text — NOT the
-                body sweater (~0.85) or eye whites.
-                1. ColorMatrix: alpha = R+G+B - 1.40, gates pixels.
-                2. ComponentTransfer slope 10: amplifies the small
-                   surviving alpha so the bloom is visible without
-                   widening the threshold band.
-                3. feFlood white → composite "in" → pure white bright
-                   layer with the gated alpha.
-                4. Erode 0.67 — kills isolated 1-2px dots.
-                5. Two gaussian blurs for a tight "shine".
-                6. feMerge stacks the layers over the original. */}
-            <filter id="bs-mascot-bloom" x="-10%" y="-10%" width="120%" height="120%">
-              <feColorMatrix
-                in="SourceGraphic"
-                type="matrix"
-                values="0 0 0 0 0
-                        0 0 0 0 0
-                        0 0 0 0 0
-                        1 1 1 0 -1.40"
-                result="brightAlpha"
-              />
-              <feComponentTransfer in="brightAlpha" result="brightAlphaSteep">
-                <feFuncA type="linear" slope="10" intercept="0" />
-              </feComponentTransfer>
-              <feFlood floodColor="#ffffff" result="white" />
-              <feComposite in="white" in2="brightAlphaSteep" operator="in" result="brightOnly" />
-              <feMorphology in="brightOnly" operator="erode" radius="0.67" result="brightCleaned" />
-              <feGaussianBlur in="brightCleaned" stdDeviation="3" result="blurNear" />
-              <feGaussianBlur in="brightCleaned" stdDeviation="2" result="blurFar" />
-              <feMerge>
-                <feMergeNode in="SourceGraphic" />
-                <feMergeNode in="blurFar" />
-                <feMergeNode in="blurNear" />
-                <feMergeNode in="brightCleaned" />
-              </feMerge>
             </filter>
           </defs>
         </svg>
@@ -213,7 +179,15 @@ export function MascotteIntroVideoAlpha({ look = "flat" }: { look?: VideoLook } 
         fetchPriority="high"
         style={{
           ...LOOK_STYLE[look],
-          willChange: "filter",
+          // Promote the <img> to its own GPU compositing layer so the
+          // animated WebP decode + paint stay isolated from any other
+          // repaint on the page (cookiebot banner, hero entrance,
+          // scroll). translateZ(0) is the legacy hint; will-change
+          // is the modern declarative form. Both together max out the
+          // chance the browser hardware-composites the layer.
+          transform: "translateZ(0)",
+          willChange: "transform, opacity",
+          backfaceVisibility: "hidden",
         }}
         className="absolute inset-x-0 bottom-0 h-[65%] w-full object-cover object-[36%_bottom] select-none"
       />
