@@ -62,6 +62,12 @@ export default function RootLayout({
           type="image/webp"
           fetchPriority="high"
         />
+        <link
+          rel="preload"
+          as="image"
+          href={`${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/intro-mascot-end.webp`}
+          type="image/webp"
+        />
       </head>
       <body className="min-h-dvh flex flex-col">
         <Script
