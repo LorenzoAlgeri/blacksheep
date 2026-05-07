@@ -60,6 +60,13 @@ export function MascotteIntroVideoAlpha({ look = "flat" }: { look?: VideoLook } 
   const imgRef = useRef<HTMLImageElement>(null);
   const [fading, setFading] = useState(false);
   const [done, setDone] = useState(false);
+  // Cache-buster per iOS Safari: bug WebKit (217897, aperto dal iOS 14)
+  // dove animated WebP cached non riparte all'ingresso pagina e mostra
+  // solo il primo frame. URL univoco a ogni mount → browser scarica
+  // l'asset come "fresh" e il decoder riavvia l'animation correttamente.
+  // useState lazy init: un solo valore per tutto il lifecycle del componente.
+  const [cacheBuster] = useState(() => Date.now().toString(36));
+  const animSrcWithBuster = `${ANIM_SRC}?_=${cacheBuster}`;
 
   useEffect(() => {
     const runtimeWindow = window as MascotteBypassWindow;
@@ -172,7 +179,7 @@ export function MascotteIntroVideoAlpha({ look = "flat" }: { look?: VideoLook } 
       ) : null}
       <img
         ref={imgRef}
-        src={ANIM_SRC}
+        src={animSrcWithBuster}
         alt=""
         draggable={false}
         loading="eager"

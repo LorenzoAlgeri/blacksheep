@@ -48,21 +48,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="it" className={`${arialBlack.variable} h-full antialiased`}>
-      <head>
-        {/* High-priority preload for the mascot intro asset.
-            ~1.8MB animated WebP with the bloom pre-baked into the
-            pixels by scripts/bake-bloom.mjs — fetching it eagerly
-            in <head> lets the browser kick off the network request
-            in parallel with the JS bundle, so the <img> is ready
-            before MascotteIntro mounts. */}
-        <link
-          rel="preload"
-          as="image"
-          href={`${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/intro-mascot.webp`}
-          type="image/webp"
-          fetchPriority="high"
-        />
-      </head>
+      {/* Preload tag rimosso intenzionalmente: il componente
+          MascotteIntro carica il webp con cache-buster runtime per
+          aggirare il bug WebKit 217897 (animated WebP cached non
+          riparte su iOS Safari). Un preload con URL statico
+          divergerebbe dal cache-buster client → fetch duplicato. */}
       <body className="min-h-dvh flex flex-col">
         <Script
           id="Cookiebot"
