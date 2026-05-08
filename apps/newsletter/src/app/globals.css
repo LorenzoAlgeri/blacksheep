@@ -78,10 +78,14 @@ html {
      (autofill flash, native scrollbar in macOS Safari, form widgets)
      so they don't pop a light affordance into the brand palette. */
   color-scheme: dark;
-  /* Reserve scrollbar gutters on both edges so the page never shifts
-     horizontally when overflow appears (e.g. dialog opens, content
-     grows). Pairs with the custom scrollbar styles below. */
-  scrollbar-gutter: stable both-edges;
+  /* Reserve scrollbar gutter only on the scrollbar side. Using
+     `both-edges` was leaving a ~16px strip on the opposite side that
+     `.site-bg` (position: fixed) didn't paint over on some browser
+     + viewport combinations, exposing the body background-color
+     behind the wallpaper. `stable` keeps the layout from shifting
+     when the scrollbar toggles without bleeding the body color
+     through on the empty side. */
+  scrollbar-gutter: stable;
   /* Firefox scrollbar styling — both colors must be set together; the
      `thin` width is set per-element below for the html scrollbar. */
   scrollbar-color: var(--bs-scrollbar-thumb) var(--bs-scrollbar-track);
@@ -151,7 +155,15 @@ textarea {
 /* === Sfondo fisso del sito (gradient blu → nero, full viewport) === */
 .site-bg {
   position: fixed;
-  inset: 0;
+  /* Explicit top/left + viewport units instead of `inset: 0` so the
+     wallpaper paints across the full viewport even when the html has
+     a scrollbar-gutter reservation. `inset: 0` resolves against the
+     containing block which can be smaller than 100vw / 100vh once a
+     gutter is reserved. */
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
   z-index: 0;
   pointer-events: none;
   overflow: hidden;
@@ -234,7 +246,7 @@ body::before {
    on the image itself can reset on src change in some browsers.
    The wrapper is a stable element so transform progresses smoothly.
 
-   Duration matches the frame loop (≈3.33s = 100 frames * 33.3ms) so
+   Duration matches the frame loop (4s = 120 frames * 33.3ms) so
    the slide is synchronized with the wave gesture. Hold position
    through the first 60% (static greet) and ease to translated
    position during the last 40% (wave). cubic-bezier(0.65, 0, 0.35, 1)
@@ -274,7 +286,7 @@ body::before {
 
 @media (max-width: 768px) {
   [data-mascotte-intro] {
-    animation: bs-mascot-mobile-shift 3.6s cubic-bezier(0.65, 0, 0.35, 1) both;
+    animation: bs-mascot-mobile-shift 4s cubic-bezier(0.65, 0, 0.35, 1) both;
   }
 }
 

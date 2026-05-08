@@ -1,5 +1,5 @@
-export const PLAY_UNTIL = 100;
-export const REVEAL_FRAME = 50;
+export const PLAY_UNTIL = 119;
+export const REVEAL_FRAME = 60;
 export const FPS = 30;
 export const FRAME_DURATION_MS = 1000 / FPS;
 export const HOLD_AFTER_END_MS = 350;
@@ -14,7 +14,7 @@ export const MASCOTTE_END_EVENT = "bs-mascotte-end";
 export const MASCOTTE_BYPASS_EVENT = "bs-mascotte-bypass";
 
 export const framePath = (i: number) =>
-  `${BASE_PATH}/mascot-frames/m${String(i).padStart(3, "0")}.webp`;
+  `${BASE_PATH}/mascot-frames-original/BLUSALUTO${String(i + 1).padStart(4, "0")}.png`;
 
 export const fireStart = () => window.dispatchEvent(new CustomEvent(MASCOTTE_START_EVENT));
 export const fireReveal = () => window.dispatchEvent(new CustomEvent(MASCOTTE_REVEAL_EVENT));

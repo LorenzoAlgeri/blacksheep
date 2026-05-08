@@ -53,6 +53,7 @@ npm-debug.log*
 *.png
 # Production PNG assets that must be committed despite the *.png rule above
 !apps/newsletter/public/sfondo.png
+!apps/newsletter/public/mascot-frames-original/*.png
 
 # Lighthouse reports (dev artifacts)
 lighthouse-*.json

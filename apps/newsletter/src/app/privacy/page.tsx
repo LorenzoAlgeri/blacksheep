@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 
 export default function PrivacyPage() {
   return (
-    <main className="flex flex-1 flex-col items-center px-6 py-16">
+    <main className="relative z-10 flex flex-1 flex-col items-center px-6 py-16">
       <Image
         src="/bs-logo.svg"
         alt="BLACK SHEEP"
