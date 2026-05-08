@@ -8,5 +8,12 @@
       "path": "/api/cron/send-followups",
       "schedule": "0 10 * * *"
     }
+  ],
+  "redirects": [
+    {
+      "source": "/newsletter/newsletter/:path*",
+      "destination": "/newsletter/:path*",
+      "permanent": false
+    }
   ]
 }
