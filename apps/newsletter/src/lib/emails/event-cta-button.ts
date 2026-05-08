@@ -23,7 +23,12 @@ interface EventCtaButtonArgs {
  */
 export function renderEventCtaButton(args: EventCtaButtonArgs): string {
   const { siteUrl, slug, title } = args;
-  const baseUrl = siteUrl.endsWith("/") ? siteUrl.slice(0, -1) : siteUrl;
+  const trimmed = siteUrl.endsWith("/") ? siteUrl.slice(0, -1) : siteUrl;
+  // Defensive: strip a trailing /newsletter if siteUrl already
+  // includes the basePath (e.g. NEXT_PUBLIC_SITE_URL on Vercel set as
+  // https://newsletter.blacksheep-community.com/newsletter) — without
+  // this we'd produce /newsletter/newsletter/api/... which 404s.
+  const baseUrl = trimmed.replace(/\/newsletter\/?$/, "");
   const encodedSlug = encodeURIComponent(slug);
   // {{TOKEN}} placeholder must remain literal; do NOT URL-encode it.
   const href = `${baseUrl}/newsletter/api/events/register-from-email?token={{TOKEN}}&event_slug=${encodedSlug}`;

@@ -15,10 +15,15 @@ import { escapeHtml } from "@/lib/html";
  * important for Resend idempotency keys and template caching.
  */
 export function buildEventRegistrationUrl(event: { slug: string }): string {
-  const base =
+  const raw =
     (typeof process !== "undefined"
       ? process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/+$/, "")
       : undefined) ?? "https://www.blacksheep-community.com";
+  // Defensive: if NEXT_PUBLIC_SITE_URL already ends with /newsletter
+  // (e.g. on Vercel set as https://newsletter.blacksheep-community.com/newsletter),
+  // strip it before re-appending — otherwise we'd build a double
+  // /newsletter/newsletter path which 404s on the prod app.
+  const base = raw.replace(/\/newsletter\/?$/, "");
   // {{TOKEN}} must remain literal — do NOT URL-encode it.
   return `${base}/newsletter/api/events/register-from-email?token={{TOKEN}}&event_slug=${encodeURIComponent(event.slug)}`;
 }
