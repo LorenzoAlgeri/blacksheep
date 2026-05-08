@@ -1,0 +1,9 @@
+{
+  "redirects": [
+    {
+      "source": "/newsletter/newsletter/:path*",
+      "destination": "/newsletter/:path*",
+      "permanent": false
+    }
+  ]
+}
