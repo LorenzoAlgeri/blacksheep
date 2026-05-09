@@ -1,5 +1,7 @@
 import { NextRequest } from "next/server";
 import { getSupabase } from "@/lib/supabase";
+import { getResend } from "@/lib/resend";
+import { renderEventRegistrationEmail } from "@/lib/emails/event-registration";
 
 export async function GET(request: NextRequest) {
   const supabase = getSupabase();
@@ -12,7 +14,7 @@ export async function GET(request: NextRequest) {
 
   const { data: subscriber } = await supabase
     .from("subscribers")
-    .select("id, status")
+    .select("id, email, status, token")
     .eq("token", token)
     .single();
 
@@ -44,5 +46,85 @@ export async function GET(request: NextRequest) {
     return Response.redirect(new URL("/newsletter/?error=server", request.url));
   }
 
-  return Response.redirect(new URL("/newsletter/confirm", request.url));
+  // --- Process pending event intents (graceful degradation) ---
+  let anyEventProcessed = false;
+
+  try {
+    const { data: intents, error: intentsError } = await supabase
+      .from("pending_event_intents")
+      .select("event_id")
+      .eq("subscriber_id", subscriber.id);
+
+    if (intentsError) {
+      throw intentsError;
+    }
+
+    if (intents && intents.length > 0) {
+      const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+      const unsubscribeUrl = `${siteUrl}/api/unsubscribe?token=${subscriber.token}`;
+
+      for (const intent of intents) {
+        // Load event — must be published with deadline not passed
+        const { data: event } = await supabase
+          .from("list_events")
+          .select("id, title, event_date, venue, description, status, registration_deadline")
+          .eq("id", intent.event_id)
+          .single();
+
+        if (!event || event.status !== "published") {
+          continue; // archived/draft/missing — silently discard
+        }
+
+        if (event.registration_deadline && new Date(event.registration_deadline) < new Date()) {
+          continue; // deadline passed — silently discard
+        }
+
+        // INSERT registration (ON CONFLICT DO NOTHING via unique constraint)
+        const { error: insertError } = await supabase.from("list_event_registrations").insert({
+          event_id: event.id,
+          subscriber_id: subscriber.id,
+          source: "form",
+        });
+
+        if (insertError) {
+          // 23505 = duplicate key → already registered, skip silently
+          if (insertError.code !== "23505") {
+            console.error("[CONFIRM] Registration insert error:", insertError.message);
+          }
+          continue;
+        }
+
+        // Send event confirmation email (best-effort)
+        const { error: emailError } = await getResend().emails.send({
+          from: process.env.RESEND_FROM_EMAIL ?? "BLACK SHEEP <noreply@blacksheep.community>",
+          to: subscriber.email,
+          subject: `Sei in lista — ${event.title}`,
+          html: renderEventRegistrationEmail({
+            eventTitle: event.title,
+            eventDate: event.event_date,
+            eventVenue: event.venue,
+            eventDescription: event.description,
+            unsubscribeUrl,
+            siteUrl,
+          }),
+        });
+
+        if (emailError) {
+          console.error("[CONFIRM] Event email error:", emailError);
+        }
+
+        anyEventProcessed = true;
+      }
+
+      // Clean up all intents for this subscriber regardless of outcome
+      await supabase.from("pending_event_intents").delete().eq("subscriber_id", subscriber.id);
+    }
+  } catch (err) {
+    // Intent processing failed — subscriber is still confirmed (graceful degradation)
+    console.error("[CONFIRM] Intent processing error:", err);
+  }
+
+  const redirectUrl = anyEventProcessed ? "/newsletter/confirm?event=true" : "/newsletter/confirm";
+
+  return Response.redirect(new URL(redirectUrl, request.url));
 }
