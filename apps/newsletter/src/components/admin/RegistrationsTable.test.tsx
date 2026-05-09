@@ -13,10 +13,13 @@ vi.mock("next/navigation", () => ({
 const makeReg = (
   overrides: Partial<RegistrationRow["subscriber"]> = {},
   id = "r1",
+  attended = false,
 ): RegistrationRow => ({
   id,
   registered_at: "2026-05-01T20:00:00Z",
   source: "form",
+  attended,
+  attended_at: attended ? "2026-05-01T22:00:00Z" : null,
   subscriber: {
     id: "s1",
     email: "test@example.com",
@@ -33,6 +36,7 @@ const baseProps = {
   pageSize: 50,
   eventId: "abc",
   csvHref: "/newsletter/api/admin/events/abc/registrations/export.csv",
+  xlsxHref: "/newsletter/api/admin/events/abc/registrations/export.xlsx",
 };
 
 describe("RegistrationsTable", () => {

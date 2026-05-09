@@ -1,7 +1,9 @@
 "use client";
 
+import { useState } from "react";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import Link from "next/link";
+import { basePath } from "@/lib/base-path";
 import { calculateStats } from "@/lib/registration-stats";
 import type { Registration } from "@/lib/registration-stats";
 
@@ -9,6 +11,8 @@ export type RegistrationRow = {
   id: string;
   registered_at: string | null;
   source: string | null;
+  attended: boolean;
+  attended_at: string | null;
   subscriber: {
     id: string;
     email: string | null;
@@ -25,6 +29,7 @@ type Props = {
   pageSize: number;
   eventId: string;
   csvHref: string;
+  xlsxHref: string;
 };
 
 const STATUS_FILTERS = [
@@ -72,17 +77,41 @@ export function RegistrationsTable({
   pageSize,
   eventId,
   csvHref,
+  xlsxHref,
 }: Props) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const currentStatus = searchParams.get("status") ?? "";
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const visibleRegistrations = searchQuery.trim()
+    ? registrations.filter((r) => {
+        const q = searchQuery.toLowerCase();
+        return (
+          r.subscriber?.email?.toLowerCase().includes(q) ||
+          r.subscriber?.name?.toLowerCase().includes(q)
+        );
+      })
+    : registrations;
 
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
   const stats = calculateStats(registrations as Registration[]);
+  const attendedCount = registrations.filter((r) => r.attended).length;
 
-  // eventId reserved for future use (e.g. back-link construction)
-  void eventId;
+  async function handleToggleAttendance(subscriberId: string | undefined) {
+    if (!subscriberId) return;
+    try {
+      const res = await fetch(`${basePath}/api/admin/events/${eventId}/attendance`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ subscriberId }),
+      });
+      if (res.ok) router.refresh();
+    } catch {
+      // Page refresh will show correct state
+    }
+  }
 
   function buildHref(overrides: Record<string, string>) {
     const params = new URLSearchParams(searchParams.toString());
@@ -106,7 +135,7 @@ export function RegistrationsTable({
     <div>
       {/* Stats cards */}
       <div
-        className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-8"
+        className="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-8"
         aria-label="Statistiche registrazioni"
         aria-live="polite"
       >
@@ -143,9 +172,29 @@ export function RegistrationsTable({
             {stats.pending}
           </p>
         </div>
+        <div className="bg-bs-cream/5 rounded-lg p-4 border border-bs-green/20">
+          <p className="font-body text-xs text-bs-cream/40 uppercase tracking-widest mb-1">
+            Presenti
+          </p>
+          <p className="font-[family-name:var(--font-brand)] text-2xl text-bs-green">
+            {attendedCount}
+          </p>
+        </div>
       </div>
 
-      {/* Controls: filter + CSV */}
+      {/* Search box */}
+      <div className="mb-4">
+        <input
+          type="search"
+          placeholder="Cerca per email o nome..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="w-full bg-transparent border border-bs-cream/20 rounded-md px-3 py-2 font-body text-sm text-bs-cream placeholder:text-bs-cream/30 focus:outline-none focus:border-bs-cream/40"
+          aria-label="Cerca registrazioni"
+        />
+      </div>
+
+      {/* Controls: filter + export */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-5">
         {/* Status filter */}
         <div className="flex gap-1" role="group" aria-label="Filtra per status">
@@ -165,28 +214,39 @@ export function RegistrationsTable({
           ))}
         </div>
 
-        {/* CSV export */}
-        <a
-          href={csvHref}
-          download
-          className="font-body text-xs px-4 py-2 rounded border border-bs-cream/20 text-bs-cream/70 hover:text-bs-cream hover:border-bs-cream/40 transition-colors text-center"
-        >
-          ↓ ESPORTA CSV
-        </a>
+        {/* Export buttons */}
+        <div className="flex gap-2">
+          <a
+            href={csvHref}
+            download
+            className="font-body text-xs px-4 py-2 rounded border border-bs-cream/20 text-bs-cream/70 hover:text-bs-cream hover:border-bs-cream/40 transition-colors text-center"
+          >
+            ↓ ESPORTA CSV
+          </a>
+          <a
+            href={xlsxHref}
+            download
+            className="font-body text-xs px-4 py-2 rounded border border-bs-cream/20 text-bs-cream/70 hover:text-bs-cream hover:border-bs-cream/40 transition-colors text-center"
+          >
+            ↓ ESPORTA EXCEL
+          </a>
+        </div>
       </div>
 
       {/* Table */}
-      {registrations.length === 0 ? (
+      {visibleRegistrations.length === 0 ? (
         <p className="font-body text-bs-cream/30 text-center py-12">
           {total === 0
             ? "Nessuna registrazione ancora. Le iscrizioni appariranno qui appena gli utenti si registrano."
-            : "Nessun risultato per questo filtro."}
+            : searchQuery.trim()
+              ? "Nessun risultato per questa ricerca."
+              : "Nessun risultato per questo filtro."}
         </p>
       ) : (
         <>
           {/* Mobile cards */}
           <div className="flex flex-col gap-3 sm:hidden">
-            {registrations.map((reg) => (
+            {visibleRegistrations.map((reg) => (
               <div key={reg.id} className="bg-bs-cream/5 rounded-lg p-4 space-y-1.5">
                 <p className="font-body text-sm text-bs-cream">{reg.subscriber?.email ?? "—"}</p>
                 {reg.subscriber?.name && (
@@ -199,6 +259,19 @@ export function RegistrationsTable({
                 <p className="font-body text-xs text-bs-cream/30">
                   {formatDate(reg.registered_at)}
                 </p>
+                <button
+                  type="button"
+                  onClick={() => handleToggleAttendance(reg.subscriber?.id)}
+                  className={`min-h-[44px] min-w-[44px] px-3 py-2 rounded-md font-body text-xs transition-colors cursor-pointer ${
+                    reg.attended
+                      ? "bg-bs-green/20 text-bs-green border border-bs-green/30"
+                      : "bg-bs-cream/5 text-bs-cream/40 border border-bs-cream/10 hover:border-bs-cream/30"
+                  }`}
+                  aria-pressed={reg.attended}
+                  aria-label={reg.attended ? "Rimuovi presenza" : "Segna presente"}
+                >
+                  {reg.attended ? "✓ Presente" : "Presente"}
+                </button>
               </div>
             ))}
           </div>
@@ -223,13 +296,16 @@ export function RegistrationsTable({
                   <th scope="col" className="pb-2 pr-4">
                     Data
                   </th>
-                  <th scope="col" className="pb-2">
+                  <th scope="col" className="pb-2 pr-4">
                     Sorgente
+                  </th>
+                  <th scope="col" className="pb-2">
+                    Presenza
                   </th>
                 </tr>
               </thead>
               <tbody>
-                {registrations.map((reg) => (
+                {visibleRegistrations.map((reg) => (
                   <tr key={reg.id} className="border-b border-bs-cream/5">
                     <td className="py-2 pr-4 text-bs-cream">{reg.subscriber?.email ?? "—"}</td>
                     <td className="py-2 pr-4 text-bs-cream/60">{reg.subscriber?.name ?? "—"}</td>
@@ -242,7 +318,22 @@ export function RegistrationsTable({
                     <td className="py-2 pr-4 text-bs-cream/40 whitespace-nowrap">
                       {formatDate(reg.registered_at)}
                     </td>
-                    <td className="py-2 text-bs-cream/30">{reg.source ?? "—"}</td>
+                    <td className="py-2 pr-4 text-bs-cream/30">{reg.source ?? "—"}</td>
+                    <td className="py-2">
+                      <button
+                        type="button"
+                        onClick={() => handleToggleAttendance(reg.subscriber?.id)}
+                        className={`min-h-[44px] min-w-[44px] px-3 py-2 rounded-md font-body text-xs transition-colors cursor-pointer ${
+                          reg.attended
+                            ? "bg-bs-green/20 text-bs-green border border-bs-green/30"
+                            : "bg-bs-cream/5 text-bs-cream/40 border border-bs-cream/10 hover:border-bs-cream/30"
+                        }`}
+                        aria-pressed={reg.attended}
+                        aria-label={reg.attended ? "Rimuovi presenza" : "Segna presente"}
+                      >
+                        {reg.attended ? "✓ Presente" : "Presente"}
+                      </button>
+                    </td>
                   </tr>
                 ))}
               </tbody>

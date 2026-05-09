@@ -79,7 +79,24 @@ export default async function EventRegistrationsPage({ params, searchParams }: P
     console.error("[ADMIN_REG_PAGE] fetch error:", error.message);
   }
 
-  const all: RegistrationRow[] = (allData ?? []) as unknown as RegistrationRow[];
+  // Fetch attendance data for this event
+  const { data: attendanceData } = await supabase
+    .from("event_attendance")
+    .select("subscriber_id, attended_at")
+    .eq("event_id", id);
+
+  const attendanceMap = new Map(
+    (attendanceData ?? []).map((a: { subscriber_id: string; attended_at: string }) => [
+      a.subscriber_id,
+      a.attended_at as string,
+    ]),
+  );
+
+  const all: RegistrationRow[] = ((allData ?? []) as unknown as RegistrationRow[]).map((r) => ({
+    ...r,
+    attended: r.subscriber ? attendanceMap.has(r.subscriber.id) : false,
+    attended_at: r.subscriber ? (attendanceMap.get(r.subscriber.id) ?? null) : null,
+  }));
 
   // Filter by status client-side (server-side, but within the component)
   const filtered =
@@ -94,6 +111,7 @@ export default async function EventRegistrationsPage({ params, searchParams }: P
   const paginated = filtered.slice(offset, offset + pageSize);
 
   const csvHref = `${basePath}/api/admin/events/${id}/registrations/export.csv`;
+  const xlsxHref = `${basePath}/api/admin/events/${id}/registrations/export.xlsx`;
 
   return (
     <div className="mx-auto max-w-3xl py-8">
@@ -131,6 +149,7 @@ export default async function EventRegistrationsPage({ params, searchParams }: P
         pageSize={pageSize}
         eventId={id}
         csvHref={csvHref}
+        xlsxHref={xlsxHref}
       />
     </div>
   );
