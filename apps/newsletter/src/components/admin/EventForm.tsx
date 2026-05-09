@@ -17,6 +17,7 @@ type EventFormValues = {
   venue: string;
   description?: string | null;
   capacity?: number | null;
+  registration_deadline?: string | null;
   status: "draft" | "published" | "archived";
 };
 
@@ -97,6 +98,7 @@ export function EventForm({ mode, defaultValues, eventId }: EventFormProps) {
       ...data,
       capacity: data.capacity ?? null,
       description: data.description ?? null,
+      registration_deadline: data.registration_deadline ?? null,
     };
 
     try {
@@ -232,6 +234,33 @@ export function EventForm({ mode, defaultValues, eventId }: EventFormProps) {
           })}
         />
         {errors.capacity && <p className={errorClass}>{errors.capacity.message}</p>}
+      </div>
+
+      <div>
+        <label htmlFor="event-deadline" className={labelClass}>
+          CHIUSURA ISCRIZIONI{" "}
+          <span className="text-bs-cream/30 normal-case tracking-normal">
+            (opzionale — ora italiana)
+          </span>
+        </label>
+        <Controller
+          control={control}
+          name="registration_deadline"
+          render={({ field, fieldState }) => (
+            <BrandedDateTimePicker
+              id="event-deadline"
+              value={field.value ? isoToDatetimeLocal(field.value) : ""}
+              onChange={(v) => field.onChange(v ? new Date(v).toISOString() : null)}
+              invalid={fieldState.invalid}
+              aria-describedby={fieldState.error ? "event-deadline-error" : undefined}
+            />
+          )}
+        />
+        {errors.registration_deadline && (
+          <p id="event-deadline-error" className={errorClass}>
+            {errors.registration_deadline.message}
+          </p>
+        )}
       </div>
 
       <div>
