@@ -47,9 +47,7 @@ async function fillAndSubmitForm(email = "user@example.com") {
 
 describe("EventRegistrationFlow", () => {
   it("renders the registration form dialog when mounted", () => {
-    render(
-      <EventRegistrationFlow event={mockEvent} onClose={() => {}} onSubscribeClick={() => {}} />,
-    );
+    render(<EventRegistrationFlow event={mockEvent} onClose={() => {}} />);
     expect(screen.getByRole("dialog")).toBeInTheDocument();
     expect(screen.getByLabelText(/^Email$/i)).toBeInTheDocument();
   });
@@ -62,9 +60,7 @@ describe("EventRegistrationFlow", () => {
         eventDate: "2026-05-09T22:00:00Z",
       }),
     );
-    render(
-      <EventRegistrationFlow event={mockEvent} onClose={() => {}} onSubscribeClick={() => {}} />,
-    );
+    render(<EventRegistrationFlow event={mockEvent} onClose={() => {}} />);
     await fillAndSubmitForm();
     await waitFor(() => {
       expect(screen.getByRole("heading", { name: /CI SEI/i })).toBeInTheDocument();
@@ -75,9 +71,7 @@ describe("EventRegistrationFlow", () => {
     mockFetch.mockResolvedValueOnce(
       makeResponse({ status: "pending_subscriber", message: "Conferma prima" }),
     );
-    render(
-      <EventRegistrationFlow event={mockEvent} onClose={() => {}} onSubscribeClick={() => {}} />,
-    );
+    render(<EventRegistrationFlow event={mockEvent} onClose={() => {}} />);
     await fillAndSubmitForm();
     await waitFor(() => {
       expect(screen.getByRole("heading", { name: /CONFERMA L.+EMAIL/i })).toBeInTheDocument();
@@ -93,35 +87,29 @@ describe("EventRegistrationFlow", () => {
         eventDate: "2026-05-09T22:00:00Z",
       }),
     );
-    render(
-      <EventRegistrationFlow event={mockEvent} onClose={() => {}} onSubscribeClick={() => {}} />,
-    );
+    render(<EventRegistrationFlow event={mockEvent} onClose={() => {}} />);
     await fillAndSubmitForm();
     await waitFor(() => {
       expect(screen.getByRole("heading", { name: /GIÀ DENTRO/i })).toBeInTheDocument();
     });
   });
 
-  it("shows NoSubscriberDialog on 'no_subscriber' response", async () => {
+  it("shows NoSubscriberDialog inline form on 'no_subscriber' response", async () => {
     mockFetch.mockResolvedValueOnce(
       makeResponse({ status: "no_subscriber", message: "Iscriviti prima" }),
     );
-    render(
-      <EventRegistrationFlow event={mockEvent} onClose={() => {}} onSubscribeClick={() => {}} />,
-    );
+    render(<EventRegistrationFlow event={mockEvent} onClose={() => {}} />);
     await fillAndSubmitForm();
     await waitFor(() => {
       expect(
-        screen.getByRole("heading", { name: /ISCRIVITI PRIMA ALLA NEWSLETTER/i }),
+        screen.getByRole("heading", { name: /ISCRIVITI E ENTRA IN LISTA/i }),
       ).toBeInTheDocument();
     });
   });
 
   it("shows inline error on API error response", async () => {
     mockFetch.mockResolvedValueOnce(makeResponse({ error: "Errore interno." }, false));
-    render(
-      <EventRegistrationFlow event={mockEvent} onClose={() => {}} onSubscribeClick={() => {}} />,
-    );
+    render(<EventRegistrationFlow event={mockEvent} onClose={() => {}} />);
     await fillAndSubmitForm();
     await waitFor(() => {
       expect(screen.getByRole("alert")).toHaveTextContent("Errore interno.");
@@ -129,35 +117,34 @@ describe("EventRegistrationFlow", () => {
     expect(screen.getByLabelText(/^Email$/i)).toBeInTheDocument();
   });
 
-  it("calls onSubscribeClick from NoSubscriberDialog CTA", async () => {
-    mockFetch.mockResolvedValueOnce(
-      makeResponse({ status: "no_subscriber", message: "Iscriviti prima" }),
-    );
-    const onSubscribeClick = vi.fn();
-    render(
-      <EventRegistrationFlow
-        event={mockEvent}
-        onClose={() => {}}
-        onSubscribeClick={onSubscribeClick}
-      />,
-    );
+  it("shows NoSubscriberDialog success state on 'pending_confirmation'", async () => {
+    // First: no_subscriber, then registerAndSubscribe → pending_confirmation
+    mockFetch
+      .mockResolvedValueOnce(makeResponse({ status: "no_subscriber", message: "Iscriviti prima" }))
+      .mockResolvedValueOnce(makeResponse({ status: "pending_confirmation" }));
+    render(<EventRegistrationFlow event={mockEvent} onClose={() => {}} />);
     await fillAndSubmitForm();
     await waitFor(() => {
       expect(
-        screen.getByRole("button", { name: /Iscriviti alla newsletter/i }),
+        screen.getByRole("heading", { name: /ISCRIVITI E ENTRA IN LISTA/i }),
       ).toBeInTheDocument();
     });
-    fireEvent.click(screen.getByRole("button", { name: /Iscriviti alla newsletter/i }));
-    expect(onSubscribeClick).toHaveBeenCalledTimes(1);
+
+    // Fill out the inline form
+    fireEvent.click(screen.getByRole("radio", { name: /Donna/i }));
+    fireEvent.click(screen.getByRole("checkbox"));
+    fireEvent.click(screen.getByRole("button", { name: /ISCRIVITI E ENTRA IN LISTA/i }));
+
+    await waitFor(() => {
+      expect(screen.getByRole("heading", { name: /CONTROLLA LA TUA EMAIL/i })).toBeInTheDocument();
+    });
   });
 
   it("shows ContactHelpDialog from PendingConfirmationDialog Scrivici button", async () => {
     mockFetch.mockResolvedValueOnce(
       makeResponse({ status: "pending_subscriber", message: "Conferma prima" }),
     );
-    render(
-      <EventRegistrationFlow event={mockEvent} onClose={() => {}} onSubscribeClick={() => {}} />,
-    );
+    render(<EventRegistrationFlow event={mockEvent} onClose={() => {}} />);
     await fillAndSubmitForm();
     await waitFor(() => {
       expect(screen.getByRole("button", { name: /Scrivici/i })).toBeInTheDocument();

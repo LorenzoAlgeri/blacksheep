@@ -11,11 +11,6 @@ interface EventsListItemsProps {
 export function EventsListItems({ events }: EventsListItemsProps) {
   const [activeEvent, setActiveEvent] = useState<EventCardData | null>(null);
 
-  function handleSubscribeClick() {
-    setActiveEvent(null);
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  }
-
   return (
     <>
       <ol className="flex flex-col gap-6 md:gap-8 list-none p-0">
@@ -26,11 +21,7 @@ export function EventsListItems({ events }: EventsListItemsProps) {
         ))}
       </ol>
       {activeEvent && (
-        <EventRegistrationFlow
-          event={activeEvent}
-          onClose={() => setActiveEvent(null)}
-          onSubscribeClick={handleSubscribeClick}
-        />
+        <EventRegistrationFlow event={activeEvent} onClose={() => setActiveEvent(null)} />
       )}
     </>
   );

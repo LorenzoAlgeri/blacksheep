@@ -15,22 +15,24 @@ import type { EventCardData } from "./EventCard";
 interface EventRegistrationFlowProps {
   event: EventCardData;
   onClose: () => void;
-  onSubscribeClick: () => void;
 }
 
-export function EventRegistrationFlow({
-  event,
-  onClose,
-  onSubscribeClick,
-}: EventRegistrationFlowProps) {
+export function EventRegistrationFlow({ event, onClose }: EventRegistrationFlowProps) {
   const titleId = useId();
   const descId = useId();
-  const { state, isSubmitting, register, submitGender, dismiss } = useEventRegistration(event.id);
+  const { state, isSubmitting, register, registerAndSubscribe, submitGender, dismiss } =
+    useEventRegistration(event.id);
   const [showContactHelp, setShowContactHelp] = useState(false);
+  const [submittedEmail, setSubmittedEmail] = useState("");
 
   function handleClose() {
     dismiss();
     onClose();
+  }
+
+  function handleRegister(email: string, emailConfirmation: string) {
+    setSubmittedEmail(email);
+    register(email, emailConfirmation);
   }
 
   if (showContactHelp) {
@@ -78,7 +80,27 @@ export function EventRegistrationFlow({
   }
 
   if (state.kind === "no_subscriber") {
-    return <NoSubscriberDialog open onClose={handleClose} onSubscribeClick={onSubscribeClick} />;
+    return (
+      <NoSubscriberDialog
+        open
+        email={submittedEmail}
+        onClose={handleClose}
+        onSubmit={(email, name, gender) => registerAndSubscribe(email, name, gender)}
+        isSubmitting={isSubmitting}
+      />
+    );
+  }
+
+  if (state.kind === "pending_confirmation") {
+    return (
+      <NoSubscriberDialog
+        open
+        email={submittedEmail}
+        onClose={handleClose}
+        onSubmit={() => {}}
+        submitted
+      />
+    );
   }
 
   if (state.kind === "gender_required") {
@@ -91,7 +113,7 @@ export function EventRegistrationFlow({
       <DialogHeader id={titleId}>ENTRA IN LISTA</DialogHeader>
       <DialogContent id={descId}>
         <EventRegistrationForm
-          onSubmit={register}
+          onSubmit={handleRegister}
           isSubmitting={isSubmitting}
           error={state.kind === "error" ? state.message : null}
         />
