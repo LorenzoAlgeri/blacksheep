@@ -11,6 +11,7 @@ export interface EventCardData {
   venue: string;
   description?: string | null;
   capacity?: number | null;
+  registration_deadline?: string | null;
 }
 
 interface EventCardProps {
@@ -92,6 +93,18 @@ function counterLabel(index: number) {
 export function EventCard({ event, onRegisterClick, index = 0 }: EventCardProps) {
   const titleId = useId();
   const parts = dateParts(event.event_date);
+
+  const deadlinePassed = event.registration_deadline
+    ? new Date(event.registration_deadline) < new Date()
+    : false;
+
+  const deadlineLabel =
+    event.registration_deadline && !deadlinePassed
+      ? new Intl.DateTimeFormat("it-IT", { day: "2-digit", month: "2-digit" }).format(
+          new Date(event.registration_deadline),
+        )
+      : null;
+
   const titleWords = event.title.split(/\s+/).filter(Boolean);
   const articleRef = useRef<HTMLElement>(null);
 
@@ -228,29 +241,42 @@ export function EventCard({ event, onRegisterClick, index = 0 }: EventCardProps)
           ) : null}
 
           <div className="pt-3">
-            <button
-              type="button"
-              onClick={() => onRegisterClick(event)}
-              data-bs-cta
-              className="group/cta inline-flex items-center gap-3 min-h-[44px] px-7 py-3 bg-bs-cream text-[#0a0a0a] font-[family-name:var(--font-brand)] text-sm tracking-[0.2em] uppercase rounded-sm shadow-[0_0_0_1px_rgba(255,255,243,0.08)] hover:shadow-[0_0_0_1px_rgba(255,255,243,0.3),0_8px_32px_rgba(255,255,243,0.1)] transition-shadow duration-300 motion-reduce:transition-none focus:outline-none focus-visible:ring-2 focus-visible:ring-bs-cream/40 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
-            >
-              Entra in lista
-              <svg
-                aria-hidden="true"
-                viewBox="0 0 16 16"
-                width="14"
-                height="14"
-                className="transition-transform duration-300 group-hover/cta:translate-x-1 motion-reduce:transition-none"
-              >
-                <path
-                  d="M2 8h11M9 4l4 4-4 4"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
-                  fill="none"
-                  strokeLinecap="square"
-                />
-              </svg>
-            </button>
+            {deadlinePassed ? (
+              <span className="inline-flex items-center gap-2 min-h-[44px] px-7 py-3 border border-bs-cream/10 text-bs-cream/30 font-[family-name:var(--font-brand)] text-sm tracking-[0.2em] uppercase rounded-sm cursor-not-allowed">
+                Iscrizioni chiuse
+              </span>
+            ) : (
+              <>
+                <button
+                  type="button"
+                  onClick={() => onRegisterClick(event)}
+                  data-bs-cta
+                  className="group/cta inline-flex items-center gap-3 min-h-[44px] px-7 py-3 bg-bs-cream text-[#0a0a0a] font-[family-name:var(--font-brand)] text-sm tracking-[0.2em] uppercase rounded-sm shadow-[0_0_0_1px_rgba(255,255,243,0.08)] hover:shadow-[0_0_0_1px_rgba(255,255,243,0.3),0_8px_32px_rgba(255,255,243,0.1)] transition-shadow duration-300 motion-reduce:transition-none focus:outline-none focus-visible:ring-2 focus-visible:ring-bs-cream/40 focus-visible:ring-offset-2 focus-visible:ring-offset-black"
+                >
+                  Entra in lista
+                  <svg
+                    aria-hidden="true"
+                    viewBox="0 0 16 16"
+                    width="14"
+                    height="14"
+                    className="transition-transform duration-300 group-hover/cta:translate-x-1 motion-reduce:transition-none"
+                  >
+                    <path
+                      d="M2 8h11M9 4l4 4-4 4"
+                      stroke="currentColor"
+                      strokeWidth="1.5"
+                      fill="none"
+                      strokeLinecap="square"
+                    />
+                  </svg>
+                </button>
+                {deadlineLabel && (
+                  <p className="font-body text-[10px] tracking-[0.15em] text-bs-cream/30 mt-2">
+                    Entro il {deadlineLabel}
+                  </p>
+                )}
+              </>
+            )}
           </div>
         </div>
 
