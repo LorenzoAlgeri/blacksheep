@@ -58,12 +58,16 @@ export async function POST(request: NextRequest) {
   // 1. Lookup the event — must exist and be published
   const { data: event, error: eventError } = await supabase
     .from("list_events")
-    .select("id, title, event_date, venue, description, status")
+    .select("id, title, event_date, venue, description, status, registration_deadline")
     .eq("id", eventId)
     .single();
 
   if (eventError || !event || event.status !== "published") {
     return Response.json({ error: "Evento non disponibile" }, { status: 404 });
+  }
+
+  if (event.registration_deadline && new Date(event.registration_deadline) < new Date()) {
+    return Response.json({ error: "Iscrizioni chiuse" }, { status: 403 });
   }
 
   // 2. Lookup the subscriber by lowercase email
