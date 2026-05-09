@@ -70,6 +70,13 @@ export default function RootLayout({
             fetchPriority="high"
           />
         </div>
+        <div
+          className="site-skyline"
+          aria-hidden
+          style={{
+            backgroundImage: `url(${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/bs-collage.jpg)`,
+          }}
+        />
         {children}
       </body>
     </html>
