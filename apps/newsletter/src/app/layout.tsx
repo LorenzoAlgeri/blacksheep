@@ -77,6 +77,7 @@ export default function RootLayout({
             backgroundImage: `url(${process.env.NEXT_PUBLIC_BASE_PATH ?? ""}/bs-collage.jpg)`,
           }}
         />
+        <div className="hero-blur" aria-hidden />
         {children}
       </body>
     </html>

@@ -60,6 +60,12 @@
   --font-body: var(--font-body);
 }
 
+@media (min-width: 768px) {
+  html:not(:has(.admin-layout)) {
+    zoom: 0.8;
+  }
+}
+
 html {
   /* overflow-x: hidden intentionally removed — CSS spec §3.3 coerces the
      other axis from visible to auto when one axis is non-visible, so
@@ -106,6 +112,13 @@ body {
      (mascot, site-bg, scroll-cue). clip still prevents horizontal
      scrollbar without creating a scroll container. */
   overflow-x: clip;
+}
+
+@media (min-width: 768px) {
+  html,
+  body {
+    overflow: visible !important;
+  }
 }
 
 /* WebKit / Blink custom scrollbar — Chrome, Edge, Safari. Firefox
@@ -155,11 +168,6 @@ textarea {
 /* === Sfondo fisso del sito (gradient blu → nero, full viewport) === */
 .site-bg {
   position: fixed;
-  /* Explicit top/left + viewport units instead of `inset: 0` so the
-     wallpaper paints across the full viewport even when the html has
-     a scrollbar-gutter reservation. `inset: 0` resolves against the
-     containing block which can be smaller than 100vw / 100vh once a
-     gutter is reserved. */
   top: 0;
   left: 0;
   width: 100vw;
@@ -221,6 +229,28 @@ textarea {
   }
 }
 
+@media (min-width: 768px) {
+  .site-bg {
+    width: 125vw;
+    height: 125vh;
+  }
+  .site-skyline {
+    width: 250vw;
+    height: 125vh;
+  }
+  .hero-blur {
+    position: absolute !important;
+    top: 0 !important;
+    left: -25vw !important;
+    width: 200vw !important;
+    height: 122.5dvh !important;
+  }
+  body::before {
+    width: 125vw;
+    height: 125vh;
+  }
+}
+
 /* Admin panel — hide the gradient and use solid black */
 body:has(.admin-layout) {
   background: #000000;
@@ -243,10 +273,23 @@ body:has(.admin-layout) .site-skyline {
   min-height: 100dvh !important;
   flex-direction: column;
   position: relative;
+  color: #ffffff;
+}
+
+.hero-blur {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100dvh;
   background: rgba(0, 0, 0, 0.55);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  color: #ffffff;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.content-zoom {
 }
 
 /* Noise grain — analog texture (kept very subtle, behind interactive content) */
