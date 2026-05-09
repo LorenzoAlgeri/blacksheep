@@ -124,7 +124,7 @@ export function SubscribeForm() {
           autoComplete="email"
           aria-invalid={!!errors.email || !!emailDisposable}
           aria-describedby={errors.email || emailDisposable ? emailErrorId : undefined}
-          className="w-full bg-transparent border-0 border-b border-bs-cream/10 rounded-none px-2 input-responsive input-field font-body text-sm text-bs-cream placeholder:text-bs-cream/30 focus:outline-none focus:border-b-bs-cream/70 focus-visible:border-b-bs-cream focus:ring-0 transition-colors duration-200"
+          className="w-full bg-bs-cream/[0.02] border-0 border-b border-bs-cream/60 rounded-md px-3 input-responsive input-field font-body text-sm text-bs-cream placeholder:text-bs-cream/90 focus:outline-none focus:border-b-bs-cream/70 focus-visible:border-b-bs-cream focus:ring-0 transition-colors duration-200"
           {...emailReg}
           onBlur={(e) => {
             emailReg.onBlur(e);
@@ -175,7 +175,7 @@ export function SubscribeForm() {
           aria-describedby={
             errors.emailConfirmation || confirmDisposable ? confirmErrorId : undefined
           }
-          className="w-full bg-transparent border-0 border-b border-bs-cream/10 rounded-none px-2 input-responsive input-field font-body text-sm text-bs-cream placeholder:text-bs-cream/30 focus:outline-none focus:border-b-bs-cream/70 focus-visible:border-b-bs-cream focus:ring-0 transition-colors duration-200"
+          className="w-full bg-bs-cream/[0.02] border-0 border-b border-bs-cream/60 rounded-md px-3 input-responsive input-field font-body text-sm text-bs-cream placeholder:text-bs-cream/90 focus:outline-none focus:border-b-bs-cream/70 focus-visible:border-b-bs-cream focus:ring-0 transition-colors duration-200"
           {...confirmReg}
           onBlur={(e) => {
             confirmReg.onBlur(e);
@@ -213,14 +213,14 @@ export function SubscribeForm() {
 
       {/* Gender segmented control */}
       <fieldset data-motion="input" aria-describedby={errors.gender ? genderErrorId : undefined}>
-        <legend className="block font-[family-name:var(--font-brand)] text-[10px] uppercase tracking-[0.3em] text-bs-cream/30 mb-2">
+        <legend className="block font-[family-name:var(--font-brand)] text-[10px] uppercase tracking-[0.3em] text-bs-cream mb-2">
           Genere
         </legend>
         <div className="grid grid-cols-2 gap-1">
           {genderOptions.map(({ value, label }) => (
             <label key={value} className="relative cursor-pointer">
               <input type="radio" value={value} className="sr-only peer" {...register("gender")} />
-              <span className="flex items-center justify-center px-2 py-1.5 border border-bs-cream/15 rounded-sm font-[family-name:var(--font-brand)] text-[9px] uppercase tracking-[0.18em] text-bs-cream/40 transition-all duration-150 peer-checked:border-bs-cream/50 peer-checked:text-bs-cream peer-checked:bg-bs-cream/5 hover:border-bs-cream/25 hover:text-bs-cream/60">
+              <span className="flex items-center justify-center px-2 py-1.5 border border-bs-cream/60 rounded-sm font-[family-name:var(--font-brand)] text-[9px] uppercase tracking-[0.18em] text-bs-cream/90 transition-all duration-150 peer-checked:border-bs-cream/50 peer-checked:text-bs-cream peer-checked:bg-bs-cream/5 hover:border-bs-cream/25 hover:text-bs-cream/60">
                 {label}
               </span>
             </label>
@@ -242,7 +242,7 @@ export function SubscribeForm() {
           type="text"
           placeholder="Nome"
           autoComplete="given-name"
-          className="w-full bg-transparent border-0 border-b border-bs-cream/10 rounded-none px-2 input-responsive input-field font-body text-sm text-bs-cream placeholder:text-bs-cream/30 focus:outline-none focus:border-b-bs-cream/70 focus-visible:border-b-bs-cream focus:ring-0 transition-colors duration-200"
+          className="w-full bg-bs-cream/[0.02] border-0 border-b border-bs-cream/60 rounded-md px-3 input-responsive input-field font-body text-sm text-bs-cream placeholder:text-bs-cream/90 focus:outline-none focus:border-b-bs-cream/70 focus-visible:border-b-bs-cream focus:ring-0 transition-colors duration-200"
           {...register("name")}
         />
       </div>
