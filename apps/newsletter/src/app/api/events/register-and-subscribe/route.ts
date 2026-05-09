@@ -193,7 +193,7 @@ export async function POST(request: NextRequest) {
       },
       { onConflict: "email" },
     )
-    .select("token")
+    .select("id, token")
     .single();
 
   if (dbError) {
@@ -208,10 +208,8 @@ export async function POST(request: NextRequest) {
 
   // Queue event intent (processed after confirmation via /api/confirm)
   const { error: intentError } = await supabase.from("pending_event_intents").insert({
-    subscriber_email: email,
+    subscriber_id: upserted.id,
     event_id: event.id,
-    ip,
-    user_agent: userAgent,
   });
 
   if (intentError) {
