@@ -212,6 +212,83 @@ describe("useEventRegistration", () => {
     expect(body.email).toBe("user@example.com");
   });
 
+  // ---- registerAndSubscribe() tests ----
+
+  it("registerAndSubscribe() transitions to pending_confirmation on success", async () => {
+    mockFetch.mockResolvedValueOnce(makeResponse({ status: "pending_confirmation" }));
+    const { result } = renderHook(() => useEventRegistration(EVENT_ID));
+    await act(async () => {
+      await result.current.registerAndSubscribe("user@example.com", "Mario", "female" as Gender);
+    });
+    expect(result.current.state.kind).toBe("pending_confirmation");
+  });
+
+  it("registerAndSubscribe() transitions to registered when subscriber already confirmed", async () => {
+    mockFetch.mockResolvedValueOnce(
+      makeResponse({
+        status: "registered",
+        eventTitle: "Black Night",
+        eventDate: "2026-05-09T22:00:00Z",
+      }),
+    );
+    const { result } = renderHook(() => useEventRegistration(EVENT_ID));
+    await act(async () => {
+      await result.current.registerAndSubscribe("user@example.com", undefined, "male" as Gender);
+    });
+    expect(result.current.state.kind).toBe("registered");
+    if (result.current.state.kind === "registered") {
+      expect(result.current.state.eventTitle).toBe("Black Night");
+    }
+  });
+
+  it("registerAndSubscribe() prevents double submission", async () => {
+    let resolveFirst!: (v: ReturnType<typeof makeResponse>) => void;
+    mockFetch.mockReturnValueOnce(
+      new Promise<ReturnType<typeof makeResponse>>((res) => {
+        resolveFirst = res;
+      }),
+    );
+    const { result } = renderHook(() => useEventRegistration(EVENT_ID));
+
+    act(() => {
+      void result.current.registerAndSubscribe("user@example.com", "Mario", "female" as Gender);
+    });
+
+    // Second call while first is in-flight — should be ignored
+    await act(async () => {
+      await result.current.registerAndSubscribe("user@example.com", "Mario", "female" as Gender);
+    });
+
+    expect(mockFetch).toHaveBeenCalledTimes(1);
+
+    resolveFirst(makeResponse({ status: "pending_confirmation" }));
+  });
+
+  it("registerAndSubscribe() sends correct request body", async () => {
+    mockFetch.mockResolvedValueOnce(makeResponse({ status: "pending_confirmation" }));
+    const { result } = renderHook(() => useEventRegistration(EVENT_ID));
+    await act(async () => {
+      await result.current.registerAndSubscribe("user@example.com", "Mario", "female" as Gender);
+    });
+    const [url, init] = mockFetch.mock.calls[0];
+    expect(url).toContain("/api/events/register-and-subscribe");
+    const body = JSON.parse(init.body as string);
+    expect(body.eventId).toBe(EVENT_ID);
+    expect(body.email).toBe("user@example.com");
+    expect(body.name).toBe("Mario");
+    expect(body.gender).toBe("female");
+    expect(body.consentVersion).toBe("v1.0");
+  });
+
+  it("registerAndSubscribe() on network error → error state", async () => {
+    mockFetch.mockRejectedValueOnce(new Error("Network down"));
+    const { result } = renderHook(() => useEventRegistration(EVENT_ID));
+    await act(async () => {
+      await result.current.registerAndSubscribe("user@example.com", undefined, "male" as Gender);
+    });
+    expect(result.current.state.kind).toBe("error");
+  });
+
   it("submitGender() on error transitions to error state", async () => {
     mockFetch
       .mockResolvedValueOnce(makeResponse({ status: "gender_required" }))
