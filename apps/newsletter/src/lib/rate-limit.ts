@@ -97,5 +97,11 @@ export const rateLimitContactHelp = createRateLimiter({
   maxRequests: 3,
 });
 
+// /api/events/register-and-subscribe: 3 requests per minute per IP
+export const rateLimitRegisterAndSubscribe = createRateLimiter({
+  windowMs: 60_000,
+  maxRequests: 3,
+});
+
 export { createRateLimiter };
 export type { RateLimiterConfig, RateLimiter };
