@@ -4,9 +4,9 @@ import { ConfirmMotion } from "@/components/ConfirmMotion";
 export default async function ConfirmPage({
   searchParams,
 }: {
-  searchParams: Promise<{ already?: string }>;
+  searchParams: Promise<{ already?: string; event?: string }>;
 }) {
-  const { already } = await searchParams;
+  const { already, event: hasEvent } = await searchParams;
 
   const mainSiteUrl = process.env.NEXT_PUBLIC_MAIN_SITE_URL ?? "/";
 
@@ -51,6 +51,15 @@ export default async function ConfirmPage({
             ? "La tua email è già confermata. Ci vediamo presto."
             : "Iscrizione confermata. Riceverai tutti gli aggiornamenti per le prossime date in anteprima."}
         </p>
+
+        {hasEvent && !already && (
+          <p
+            data-confirm="event-note"
+            className="font-body text-sm text-bs-cream/50 max-w-xs leading-relaxed mt-3"
+          >
+            Sei anche in lista per l&apos;evento!
+          </p>
+        )}
 
         {/* Back link */}
         <a
