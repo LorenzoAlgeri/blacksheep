@@ -79,7 +79,9 @@ export async function POST(request: Request) {
     const unsubscribeLink = unsubscribeUrl
       ? `<br><a href="${unsubscribeUrl}" style="color:rgba(255,255,243,0.25);text-decoration:underline;">Disiscriviti</a> &middot; <a href="${appBaseUrl}/privacy" style="color:rgba(255,255,243,0.25);text-decoration:underline;">Privacy Policy</a>`
       : "";
-    const htmlWithUnsubPlaceholder = html.replaceAll("{{UNSUB}}", unsubscribeLink);
+    const htmlWithUnsubPlaceholder = html
+      .replaceAll("{{UNSUB}}", unsubscribeLink)
+      .replaceAll("{{TOKEN}}", subscriberToken ?? "");
 
     const unsubscribeHeaders = subscriberToken
       ? buildListUnsubscribeHeaders({
