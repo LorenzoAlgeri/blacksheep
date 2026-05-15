@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { GenderGate } from "./GenderGate";
 
 interface StatusContent {
   title: string;
@@ -33,12 +34,58 @@ const FALLBACK: StatusContent = {
 export default async function EventRegisteredPage({
   searchParams,
 }: {
-  searchParams: Promise<{ status?: string }>;
+  searchParams: Promise<{ status?: string; token?: string; event_slug?: string }>;
 }) {
-  const { status } = await searchParams;
+  const { status, token, event_slug } = await searchParams;
+  const mainSiteUrl = process.env.NEXT_PUBLIC_MAIN_SITE_URL ?? "/";
+
+  if (status === "gender_required" && token && event_slug) {
+    return (
+      <main className="relative z-10 flex min-h-dvh flex-1 flex-col items-center justify-center px-6 text-center">
+        <div>
+          <Image
+            src="/bs-logo.svg"
+            alt="BLACK SHEEP"
+            width={100}
+            height={65}
+            className="opacity-60"
+            style={{
+              height: "auto",
+              filter:
+                "brightness(0) saturate(100%) invert(99%) sepia(3%) saturate(200%) hue-rotate(30deg)",
+            }}
+          />
+        </div>
+
+        <h1
+          className="font-[family-name:var(--font-brand)] text-4xl tracking-wider text-bs-cream mt-8 confirm-title-glow [text-wrap:balance]"
+          translate="no"
+        >
+          UN&apos;ULTIMA COSA
+        </h1>
+
+        <div className="w-full max-w-[200px] mt-6 mb-6">
+          <div className="h-px bg-gradient-to-r from-transparent via-bs-cream/15 to-transparent" />
+        </div>
+
+        <p className="font-body text-sm text-bs-cream/60 max-w-xs leading-relaxed [text-wrap:pretty] mb-6">
+          Per completare l&apos;iscrizione alla lista, indica come ti identifichi.
+        </p>
+
+        <GenderGate token={token} eventSlug={event_slug} />
+
+        <a
+          href={mainSiteUrl}
+          className="rounded-sm font-body text-[10px] text-bs-cream/20 uppercase tracking-[0.2em] mt-10 hover:text-bs-cream/50 focus-visible:text-bs-cream/70 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-bs-cream/20 transition-colors duration-300"
+        >
+          Torna al sito
+        </a>
+      </main>
+    );
+  }
+
   const matched = status ? STATUS_CONTENT[status] : undefined;
   const content: StatusContent = matched ?? FALLBACK;
-  const mainSiteUrl = process.env.NEXT_PUBLIC_MAIN_SITE_URL ?? "/";
 
   return (
     <main className="relative z-10 flex min-h-dvh flex-1 flex-col items-center justify-center px-6 text-center">
