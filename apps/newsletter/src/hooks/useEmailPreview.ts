@@ -7,6 +7,8 @@ export function useEmailPreview(state: EditorState) {
     () => ({
       title: state.title,
       body: state.body,
+      headerTitle: state.headerTitle,
+      headerTagline: state.headerTagline,
       showPhoto: state.showPhoto,
       photoUrl: state.photoUrl,
       showEvents: state.showEvents,
@@ -23,6 +25,8 @@ export function useEmailPreview(state: EditorState) {
     [
       state.title,
       state.body,
+      state.headerTitle,
+      state.headerTagline,
       state.showPhoto,
       state.photoUrl,
       state.showEvents,

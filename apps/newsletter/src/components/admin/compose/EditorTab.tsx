@@ -115,6 +115,36 @@ export function EditorTab({
           />
         </div>
 
+        {/* Header brand */}
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label htmlFor="nl-header-title" className={labelClass}>
+              Header
+            </label>
+            <input
+              id="nl-header-title"
+              type="text"
+              value={state.headerTitle}
+              onChange={(e) => set("headerTitle", e.target.value)}
+              placeholder="BLACK SHEEP"
+              className={inputClass}
+            />
+          </div>
+          <div>
+            <label htmlFor="nl-header-tagline" className={labelClass}>
+              Tagline
+            </label>
+            <input
+              id="nl-header-tagline"
+              type="text"
+              value={state.headerTagline}
+              onChange={(e) => set("headerTagline", e.target.value)}
+              placeholder="EVERY MONDAY"
+              className={inputClass}
+            />
+          </div>
+        </div>
+
         {/* Titolo */}
         <div>
           <label htmlFor="nl-title" className={labelClass}>

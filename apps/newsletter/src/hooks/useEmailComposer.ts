@@ -15,6 +15,8 @@ export interface EditorState {
   subject: string;
   title: string;
   body: string;
+  headerTitle: string;
+  headerTagline: string;
   showPhoto: boolean;
   photoUrl: string;
   showEvents: boolean;
@@ -52,6 +54,8 @@ export function freshState(): EditorState {
     subject: DEFAULTS.subject,
     title: DEFAULTS.title,
     body: DEFAULTS.body,
+    headerTitle: "",
+    headerTagline: "",
     showPhoto: false,
     photoUrl: "",
     showEvents: true,

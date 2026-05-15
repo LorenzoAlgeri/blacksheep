@@ -21,6 +21,8 @@ export interface EmailPalette {
 export interface EmailTemplateData {
   title: string;
   body: string;
+  headerTitle?: string;
+  headerTagline?: string;
   showPhoto: boolean;
   photoUrl: string;
   showEvents: boolean;
@@ -192,8 +194,8 @@ export function buildEmailHtml(data: EmailTemplateData): string {
 <div class="email-body" style="background:${p.bg};color:${p.text};padding:0;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;max-width:480px;margin:0 auto;">
 
   <div style="padding:40px 24px 24px;text-align:center;">
-    <div style="font-family:'Arial Black',sans-serif;font-size:28px;letter-spacing:0.08em;color:${p.text};">BLACK SHEEP</div>
-    <div style="font-size:10px;letter-spacing:0.4em;color:${hexAlpha(p.text, 0.5)};margin-top:4px;">EVERY MONDAY</div>
+    <div style="font-family:'Arial Black',sans-serif;font-size:28px;letter-spacing:0.08em;color:${p.text};">${escapeHtml(data.headerTitle || "BLACK SHEEP")}</div>
+    <div style="font-size:10px;letter-spacing:0.4em;color:${hexAlpha(p.text, 0.5)};margin-top:4px;">${escapeHtml(data.headerTagline || "EVERY MONDAY")}</div>
   </div>
 
   <div style="width:40px;height:1px;background:${hexAlpha(p.accent, 0.25)};margin:0 auto;"></div>
