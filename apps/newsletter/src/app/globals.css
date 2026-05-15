@@ -257,7 +257,8 @@ body:has(.admin-layout) {
 }
 
 body:has(.admin-layout) .site-bg,
-body:has(.admin-layout) .site-skyline {
+body:has(.admin-layout) .site-skyline,
+body:has(.admin-layout) .hero-blur {
   display: none;
 }
 
