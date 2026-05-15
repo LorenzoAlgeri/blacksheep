@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 import { auth } from "@/lib/auth";
-import { adminEventSchema } from "@/lib/validations";
+import { adminEventBaseSchema } from "@/lib/validations";
 import { getSupabase } from "@/lib/supabase";
 
 interface RouteContext {
@@ -52,7 +52,7 @@ export async function PATCH(request: NextRequest, ctx: RouteContext) {
     return Response.json({ error: "Richiesta non valida." }, { status: 400 });
   }
 
-  const parsed = adminEventSchema.partial().safeParse(body);
+  const parsed = adminEventBaseSchema.partial().safeParse(body);
   if (!parsed.success) {
     return Response.json(
       { error: "Dati non validi.", issues: parsed.error.issues },

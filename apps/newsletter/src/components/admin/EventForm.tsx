@@ -96,9 +96,12 @@ export function EventForm({ mode, defaultValues, eventId }: EventFormProps) {
 
     const payload = {
       ...data,
+      event_date: new Date(data.event_date).toISOString(),
       capacity: data.capacity ?? null,
       description: data.description ?? null,
-      registration_deadline: data.registration_deadline ?? null,
+      registration_deadline: data.registration_deadline
+        ? new Date(data.registration_deadline).toISOString()
+        : null,
     };
 
     try {
@@ -128,7 +131,9 @@ export function EventForm({ mode, defaultValues, eventId }: EventFormProps) {
       if (res.status === 409) {
         setBanner({ type: "error", message: "Slug già utilizzato. Scegline un altro." });
       } else {
-        setBanner({ type: "error", message: "Errore durante il salvataggio. Riprova." });
+        const body = await res.json().catch(() => null);
+        const detail = body?.error ?? `HTTP ${res.status}`;
+        setBanner({ type: "error", message: `Errore: ${detail}` });
       }
     } catch {
       setBanner({ type: "error", message: "Errore durante il salvataggio. Riprova." });

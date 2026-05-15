@@ -229,7 +229,7 @@ export function EventCard({ event, onRegisterClick, index = 0 }: EventCardProps)
           </header>
 
           {event.description ? (
-            <p className="font-body text-sm leading-relaxed text-bs-cream/55 max-w-[48ch] [text-wrap:pretty]">
+            <p className="font-body text-sm leading-relaxed text-bs-cream/55 max-w-[48ch] [text-wrap:pretty] whitespace-pre-line">
               {event.description}
             </p>
           ) : null}

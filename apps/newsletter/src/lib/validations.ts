@@ -111,37 +111,37 @@ export const contactHelpSchema = z.object({
  * slug is lowercase + dash (URL-safe). status defaults to 'draft' so
  * admin creates aren't published until explicitly set to 'published'.
  */
-export const adminEventSchema = z
-  .object({
-    slug: z
-      .string()
-      .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, "Slug deve essere lowercase con trattini")
-      .min(3, "Slug troppo corto")
-      .max(80, "Slug troppo lungo"),
-    title: z.string().min(1, "Titolo obbligatorio").max(200, "Titolo troppo lungo"),
-    event_date: z.iso.datetime({
-      offset: true,
-      message: "Data evento non valida (richiesto formato ISO 8601)",
-    }),
-    venue: z.string().min(1, "Venue obbligatorio").max(200, "Venue troppo lungo"),
-    description: z.string().max(5000, "Descrizione troppo lunga").optional().nullable(),
-    capacity: z.number().int().positive().optional().nullable(),
-    status: z.enum(["draft", "published", "archived"]).default("draft"),
-    registration_deadline: z.iso
-      .datetime({ offset: true, message: "Data chiusura non valida (richiesto formato ISO 8601)" })
-      .optional()
-      .nullable(),
-  })
-  .refine(
-    (d) => {
-      if (!d.registration_deadline) return true;
-      return new Date(d.registration_deadline) < new Date(d.event_date);
-    },
-    {
-      message: "La chiusura iscrizioni deve essere prima della data evento",
-      path: ["registration_deadline"],
-    },
-  );
+export const adminEventBaseSchema = z.object({
+  slug: z
+    .string()
+    .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, "Slug deve essere lowercase con trattini")
+    .min(3, "Slug troppo corto")
+    .max(80, "Slug troppo lungo"),
+  title: z.string().min(1, "Titolo obbligatorio").max(200, "Titolo troppo lungo"),
+  event_date: z.iso.datetime({
+    offset: true,
+    message: "Data evento non valida (richiesto formato ISO 8601)",
+  }),
+  venue: z.string().min(1, "Venue obbligatorio").max(200, "Venue troppo lungo"),
+  description: z.string().max(5000, "Descrizione troppo lunga").optional().nullable(),
+  capacity: z.number().int().positive().optional().nullable(),
+  status: z.enum(["draft", "published", "archived"]).default("draft"),
+  registration_deadline: z.iso
+    .datetime({ offset: true, message: "Data chiusura non valida (richiesto formato ISO 8601)" })
+    .optional()
+    .nullable(),
+});
+
+export const adminEventSchema = adminEventBaseSchema.refine(
+  (d) => {
+    if (!d.registration_deadline) return true;
+    return new Date(d.registration_deadline) < new Date(d.event_date);
+  },
+  {
+    message: "La chiusura iscrizioni deve essere prima della data evento",
+    path: ["registration_deadline"],
+  },
+);
 
 export type SubscribeInput = z.infer<typeof subscribeSchema>;
 export type SendNewsletterInput = z.infer<typeof sendNewsletterSchema>;
