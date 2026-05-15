@@ -14,7 +14,7 @@ export const MASCOTTE_END_EVENT = "bs-mascotte-end";
 export const MASCOTTE_BYPASS_EVENT = "bs-mascotte-bypass";
 
 export const framePath = (i: number) =>
-  `${BASE_PATH}/mascot-frames-original/BLUSALUTO${String(i + 1).padStart(4, "0")}.png`;
+  `${BASE_PATH}/mascot-frames/f${String(i + 1).padStart(3, "0")}.webp`;
 
 export const fireStart = () => window.dispatchEvent(new CustomEvent(MASCOTTE_START_EVENT));
 export const fireReveal = () => window.dispatchEvent(new CustomEvent(MASCOTTE_REVEAL_EVENT));
