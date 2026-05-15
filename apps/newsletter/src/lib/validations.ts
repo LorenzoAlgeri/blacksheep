@@ -119,13 +119,16 @@ export const adminEventSchema = z
       .min(3, "Slug troppo corto")
       .max(80, "Slug troppo lungo"),
     title: z.string().min(1, "Titolo obbligatorio").max(200, "Titolo troppo lungo"),
-    event_date: z.iso.datetime({ message: "Data evento non valida (richiesto formato ISO 8601)" }),
+    event_date: z.iso.datetime({
+      offset: true,
+      message: "Data evento non valida (richiesto formato ISO 8601)",
+    }),
     venue: z.string().min(1, "Venue obbligatorio").max(200, "Venue troppo lungo"),
     description: z.string().max(5000, "Descrizione troppo lunga").optional().nullable(),
     capacity: z.number().int().positive().optional().nullable(),
     status: z.enum(["draft", "published", "archived"]).default("draft"),
     registration_deadline: z.iso
-      .datetime({ message: "Data chiusura non valida (richiesto formato ISO 8601)" })
+      .datetime({ offset: true, message: "Data chiusura non valida (richiesto formato ISO 8601)" })
       .optional()
       .nullable(),
   })
