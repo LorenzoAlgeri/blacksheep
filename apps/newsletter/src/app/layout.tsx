@@ -11,7 +11,7 @@ const arialBlack = localFont({
 });
 
 export const metadata: Metadata = {
-  title: "BLACK SHEEP — Every Monday",
+  title: "BLACK SHEEP",
   description:
     "Iscriviti alla newsletter di BLACK SHEEP. Lineup e date prima di tutti. Ogni lunedì al 11 Clubroom, Corso Como, Milano.",
   icons: {
