@@ -169,11 +169,13 @@ export default async function Home() {
           </div>
 
           {/* 9. Push notification opt-in */}
-          <PushOptIn />
+          <div data-motion="push-optin">
+            <PushOptIn />
+          </div>
         </main>
 
         {/* Footer — powered by, ultra-subtle */}
-        <footer className="relative z-10 pb-4 flex justify-center">
+        <footer data-motion="footer" className="relative z-10 pb-4 flex justify-center">
           <a
             href="https://instagram.com/lorenzo.algerii"
             target="_blank"

@@ -159,6 +159,8 @@ export function LandingMotion({ children }: { children: React.ReactNode }) {
         gsap.set("[data-motion='microcopy']", { opacity: 1 });
         gsap.set("[data-motion='consent']", { opacity: 1 });
         gsap.set("[data-motion='socials']", { opacity: 1 });
+        gsap.set("[data-motion='push-optin']", { opacity: 1 });
+        gsap.set("[data-motion='footer']", { opacity: 1 });
         // Reveal the scroll cue immediately — reduced-motion users
         // still get the wayfinding affordance, just without the
         // entrance fade and without the chevron pulse (CSS handles
@@ -189,6 +191,8 @@ export function LandingMotion({ children }: { children: React.ReactNode }) {
       gsap.set("[data-motion='socials']", { opacity: 0 });
       gsap.set("[data-motion='microcopy']", { opacity: 0 });
       gsap.set("[data-motion='consent']", { opacity: 0 });
+      gsap.set("[data-motion='push-optin']", { opacity: 0 });
+      gsap.set("[data-motion='footer']", { opacity: 0 });
       gsap.set("[data-motion='spotlight']", { opacity: 0 });
 
       // Two-stage fallback. The boot stage protects against the intro
@@ -296,6 +300,13 @@ export function LandingMotion({ children }: { children: React.ReactNode }) {
           2.9,
         );
         tl.to("[data-motion='consent']", { opacity: 1, duration: 0.3, ease: "power2.out" }, 2.9);
+
+        tl.to(
+          "[data-motion='push-optin']",
+          { opacity: 1, duration: 0.3, ease: "power2.out" },
+          2.95,
+        );
+        tl.to("[data-motion='footer']", { opacity: 1, duration: 0.3, ease: "power2.out" }, 3.0);
 
         tl.to(
           "[data-motion='spotlight']",
