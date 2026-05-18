@@ -54,35 +54,40 @@ export function EventForm({ mode, defaultValues, eventId }: EventFormProps) {
     show: boolean;
     eventTitle: string;
     eventId: string;
+    notificationTitle: string;
+    notificationBody: string;
   } | null>(null);
   const [pushSending, setPushSending] = useState(false);
   const [pushResult, setPushResult] = useState<string | null>(null);
 
-  const sendPushNotification = useCallback(async (title: string, evtId: string) => {
-    setPushSending(true);
-    try {
-      const res = await fetch(`${basePath}/api/push/send`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          title: "BLACK SHEEP — Nuovo evento",
-          body: title,
-          url: "/newsletter",
-          eventId: evtId,
-        }),
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setPushResult(`Notifica inviata a ${data.sent} iscritti.`);
-      } else {
-        setPushResult("Errore nell'invio della notifica.");
+  const sendPushNotification = useCallback(
+    async (notifTitle: string, notifBody: string, evtId: string) => {
+      setPushSending(true);
+      try {
+        const res = await fetch(`${basePath}/api/push/send`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            title: notifTitle,
+            body: notifBody,
+            url: "/newsletter",
+            eventId: evtId,
+          }),
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setPushResult(`Notifica inviata a ${data.sent} iscritti.`);
+        } else {
+          setPushResult("Errore nell'invio della notifica.");
+        }
+      } catch {
+        setPushResult("Errore di rete nell'invio della notifica.");
+      } finally {
+        setPushSending(false);
       }
-    } catch {
-      setPushResult("Errore di rete nell'invio della notifica.");
-    } finally {
-      setPushSending(false);
-    }
-  }, []);
+    },
+    [],
+  );
 
   const {
     register,
@@ -169,6 +174,8 @@ export function EventForm({ mode, defaultValues, eventId }: EventFormProps) {
             show: true,
             eventTitle: data.title,
             eventId: savedEventId,
+            notificationTitle: "BLACK SHEEP — Nuovo evento",
+            notificationBody: data.title,
           });
           // Don't redirect yet — let the dialog handle it
           return;
@@ -232,11 +239,51 @@ export function EventForm({ mode, defaultValues, eventId }: EventFormProps) {
                   Vuoi inviare una notifica push agli iscritti per &ldquo;{pushDialog.eventTitle}
                   &rdquo;?
                 </p>
+                <div className="flex flex-col gap-3 mb-4">
+                  <div>
+                    <label htmlFor="push-notif-title" className={labelClass}>
+                      TITOLO NOTIFICA
+                    </label>
+                    <input
+                      id="push-notif-title"
+                      type="text"
+                      className={inputClass}
+                      value={pushDialog.notificationTitle}
+                      onChange={(e) =>
+                        setPushDialog((prev) =>
+                          prev ? { ...prev, notificationTitle: e.target.value } : prev,
+                        )
+                      }
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="push-notif-body" className={labelClass}>
+                      TESTO NOTIFICA
+                    </label>
+                    <input
+                      id="push-notif-body"
+                      type="text"
+                      className={inputClass}
+                      value={pushDialog.notificationBody}
+                      onChange={(e) =>
+                        setPushDialog((prev) =>
+                          prev ? { ...prev, notificationBody: e.target.value } : prev,
+                        )
+                      }
+                    />
+                  </div>
+                </div>
                 <div className="flex gap-3">
                   <button
                     type="button"
                     disabled={pushSending}
-                    onClick={() => sendPushNotification(pushDialog.eventTitle, pushDialog.eventId)}
+                    onClick={() =>
+                      sendPushNotification(
+                        pushDialog.notificationTitle,
+                        pushDialog.notificationBody,
+                        pushDialog.eventId,
+                      )
+                    }
                     className="font-[family-name:var(--font-brand)] text-xs tracking-wider bg-bs-cream/10 text-bs-cream px-4 py-2 rounded hover:bg-bs-cream/20 transition-colors disabled:opacity-50 cursor-pointer"
                   >
                     {pushSending ? "INVIO..." : "INVIA"}
