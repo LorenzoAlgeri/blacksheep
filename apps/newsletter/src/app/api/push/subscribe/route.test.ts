@@ -6,6 +6,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 const { state } = vi.hoisted(() => ({
   state: {
     upsertError: null as unknown,
+    deleteError: null as unknown,
     lookupResult: null as null | { id: string },
     fromCalls: [] as string[],
   },
@@ -24,6 +25,20 @@ vi.mock("@/lib/supabase", () => {
       ? vi.fn(singleResolve)
       : vi.fn(() => Promise.resolve({ data: null, error: null }));
     b.upsert = vi.fn(() => Promise.resolve({ data: null, error: state.upsertError ?? null }));
+    b.delete = vi.fn(() => b);
+    // When chained after .delete().eq(), resolves with deleteError
+    // Override eq to resolve the promise when called in delete chain
+    const originalEq = b.eq;
+    b.eq = vi.fn((...args) => {
+      // Return a thenable so await works on the chain
+      const result = originalEq(...args);
+      return Object.assign(result, {
+        then: (resolve: (v: unknown) => unknown) =>
+          Promise.resolve({ data: null, error: state.deleteError ?? null }).then(resolve),
+        catch: (reject: (v: unknown) => unknown) =>
+          Promise.resolve({ data: null, error: state.deleteError ?? null }).catch(reject),
+      });
+    });
     return b;
   }
 
@@ -48,14 +63,17 @@ vi.mock("@/lib/client-ip", () => ({
 // Module under test
 // ---------------------------------------------------------------------------
 let POST: (req: Request) => Promise<Response>;
+let DELETE: (req: Request) => Promise<Response>;
 
 beforeEach(async () => {
   vi.resetModules();
   state.upsertError = null;
+  state.deleteError = null;
   state.lookupResult = null;
   state.fromCalls = [];
   const mod = await import("./route");
   POST = mod.POST as unknown as typeof POST;
+  DELETE = mod.DELETE as unknown as typeof DELETE;
 });
 
 function makeReq(body: Record<string, unknown> = {}): Request {
@@ -144,5 +162,58 @@ describe("POST /api/push/subscribe", () => {
     const localPOST = mod.POST as unknown as typeof POST;
     const res = await localPOST(makeReq());
     expect(res.status).toBe(429);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// DELETE /api/push/subscribe
+// Note: these tests re-import the module with the hoisted vi.mock (not the
+// vi.doMock from the 429 test above) to get a fresh rate-limit stub that
+// returns true.
+// ---------------------------------------------------------------------------
+function makeDeleteReq(body: Record<string, unknown> = {}): Request {
+  const defaultBody = {
+    endpoint: "https://fcm.googleapis.com/fcm/send/abc123",
+    ...body,
+  };
+  return new Request("http://localhost:3000/api/push/subscribe", {
+    method: "DELETE",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify(defaultBody),
+  });
+}
+
+describe("DELETE /api/push/subscribe", () => {
+  let localDELETE: (req: Request) => Promise<Response>;
+
+  beforeEach(async () => {
+    vi.resetModules();
+    // Restore the hoisted mock so rate limiting returns true
+    vi.doMock("@/lib/rate-limit", () => ({
+      rateLimitPushSubscribe: vi.fn(() => true),
+    }));
+    state.deleteError = null;
+    state.fromCalls = [];
+    const mod = await import("./route");
+    localDELETE = mod.DELETE as unknown as typeof localDELETE;
+  });
+
+  it("deletes subscription by endpoint", async () => {
+    const res = await localDELETE(makeDeleteReq());
+    expect(res.status).toBe(200);
+    const json = (await res.json()) as Record<string, unknown>;
+    expect(json).toMatchObject({ ok: true });
+  });
+
+  it("returns ok even if endpoint not found (idempotent)", async () => {
+    // Supabase delete on a non-existent row does not return an error — it's a no-op.
+    // Confirm our handler treats a successful (no-error) response as { ok: true }.
+    state.deleteError = null;
+    const res = await localDELETE(
+      makeDeleteReq({ endpoint: "https://fcm.googleapis.com/fcm/send/nonexistent" }),
+    );
+    expect(res.status).toBe(200);
+    const json = (await res.json()) as Record<string, unknown>;
+    expect(json).toMatchObject({ ok: true });
   });
 });

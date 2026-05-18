@@ -163,6 +163,15 @@ export const pushSubscribeSchema = z.object({
 });
 
 /**
+ * DELETE /api/push/subscribe — unsubscribe by endpoint.
+ */
+export const pushUnsubscribeSchema = z.object({
+  endpoint: z.url("Endpoint non valido").refine((u) => u.startsWith("https://"), {
+    message: "Endpoint deve essere HTTPS",
+  }),
+});
+
+/**
  * POST /api/push/send — admin-only, send push notification to all subscribers.
  */
 export const pushSendSchema = z.object({
@@ -182,4 +191,5 @@ export type ResendConfirmationInput = z.infer<typeof resendConfirmationSchema>;
 export type ContactHelpInput = z.infer<typeof contactHelpSchema>;
 export type AdminEventInput = z.infer<typeof adminEventSchema>;
 export type PushSubscribeInput = z.infer<typeof pushSubscribeSchema>;
+export type PushUnsubscribeInput = z.infer<typeof pushUnsubscribeSchema>;
 export type PushSendInput = z.infer<typeof pushSendSchema>;

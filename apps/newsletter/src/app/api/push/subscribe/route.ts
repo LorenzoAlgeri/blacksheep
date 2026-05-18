@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server";
-import { pushSubscribeSchema } from "@/lib/validations";
+import { pushSubscribeSchema, pushUnsubscribeSchema } from "@/lib/validations";
 import { getSupabase } from "@/lib/supabase";
 import { rateLimitPushSubscribe } from "@/lib/rate-limit";
 import { getClientIp } from "@/lib/client-ip";
@@ -50,6 +50,40 @@ export async function POST(request: NextRequest) {
 
   if (dbError) {
     console.error("[PUSH_SUBSCRIBE] Supabase error:", dbError.message, dbError.code);
+    return Response.json({ error: "Errore interno. Riprova." }, { status: 500 });
+  }
+
+  return Response.json({ ok: true });
+}
+
+export async function DELETE(request: NextRequest) {
+  const ip = getClientIp(request);
+  if (!rateLimitPushSubscribe(ip)) {
+    return Response.json({ error: "Troppi tentativi. Riprova tra un minuto." }, { status: 429 });
+  }
+
+  let body: unknown;
+  try {
+    body = await request.json();
+  } catch {
+    return Response.json({ error: "Richiesta non valida." }, { status: 400 });
+  }
+
+  const parsed = pushUnsubscribeSchema.safeParse(body);
+  if (!parsed.success) {
+    return Response.json({ error: "Dati non validi." }, { status: 400 });
+  }
+
+  const { endpoint } = parsed.data;
+  const supabase = getSupabase();
+
+  const { error: dbError } = await supabase
+    .from("push_subscriptions")
+    .delete()
+    .eq("endpoint", endpoint);
+
+  if (dbError) {
+    console.error("[PUSH_UNSUBSCRIBE] Supabase error:", dbError.message, dbError.code);
     return Response.json({ error: "Errore interno. Riprova." }, { status: 500 });
   }
 
