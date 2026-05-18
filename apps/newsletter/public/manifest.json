@@ -1,0 +1,13 @@
+{
+  "name": "BLACK SHEEP",
+  "short_name": "BS",
+  "description": "Newsletter & lista eventi BLACK SHEEP",
+  "start_url": "/newsletter",
+  "display": "standalone",
+  "background_color": "#03124a",
+  "theme_color": "#03124a",
+  "icons": [
+    { "src": "/newsletter/favicons/logo/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/newsletter/favicons/logo/icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}

@@ -39,6 +39,10 @@ export const metadata: Metadata = {
     ],
   },
   robots: { index: true, follow: true },
+  manifest: "/newsletter/manifest.json",
+  other: {
+    "theme-color": "#03124a",
+  },
 };
 
 export default function RootLayout({

@@ -1,5 +1,6 @@
 import { headers } from "next/headers";
 import { SubscribeForm } from "@/components/SubscribeForm";
+import { PushOptIn } from "@/components/PushOptIn";
 import { LandingMotion } from "@/components/LandingMotion";
 import { MascotteIntro } from "@/components/MascotteIntro";
 import { EventsList } from "@/components/events/EventsList";
@@ -166,6 +167,9 @@ export default async function Home() {
               </svg>
             </a>
           </div>
+
+          {/* 9. Push notification opt-in */}
+          <PushOptIn />
         </main>
 
         {/* Footer — powered by, ultra-subtle */}

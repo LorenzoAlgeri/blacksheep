@@ -143,6 +143,35 @@ export const adminEventSchema = adminEventBaseSchema.refine(
   },
 );
 
+// ============================================================
+// Web Push Notifications
+// ============================================================
+
+/**
+ * POST /api/push/subscribe — save a PushSubscription from the browser.
+ * endpoint must be a valid https URL; keys are base64url strings.
+ */
+export const pushSubscribeSchema = z.object({
+  endpoint: z.url("Endpoint non valido").refine((u) => u.startsWith("https://"), {
+    message: "Endpoint deve essere HTTPS",
+  }),
+  keys: z.object({
+    p256dh: z.string().min(1, "p256dh obbligatorio"),
+    auth: z.string().min(1, "auth obbligatorio"),
+  }),
+  subscriberEmail: z.email("Email non valida").optional(),
+});
+
+/**
+ * POST /api/push/send — admin-only, send push notification to all subscribers.
+ */
+export const pushSendSchema = z.object({
+  title: z.string().min(1, "Titolo obbligatorio").max(200),
+  body: z.string().min(1, "Corpo obbligatorio").max(500),
+  url: z.string().max(500).optional(),
+  eventId: z.uuid("ID evento non valido").optional(),
+});
+
 export type SubscribeInput = z.infer<typeof subscribeSchema>;
 export type SendNewsletterInput = z.infer<typeof sendNewsletterSchema>;
 export type ScheduleNewsletterInput = z.infer<typeof scheduleNewsletterSchema>;
@@ -152,3 +181,5 @@ export type EventRegisterInput = z.infer<typeof eventRegisterSchema>;
 export type ResendConfirmationInput = z.infer<typeof resendConfirmationSchema>;
 export type ContactHelpInput = z.infer<typeof contactHelpSchema>;
 export type AdminEventInput = z.infer<typeof adminEventSchema>;
+export type PushSubscribeInput = z.infer<typeof pushSubscribeSchema>;
+export type PushSendInput = z.infer<typeof pushSendSchema>;

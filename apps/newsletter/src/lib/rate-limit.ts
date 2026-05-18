@@ -103,5 +103,11 @@ export const rateLimitRegisterAndSubscribe = createRateLimiter({
   maxRequests: 3,
 });
 
+// /api/push/subscribe: 3 requests per minute per IP
+export const rateLimitPushSubscribe = createRateLimiter({
+  windowMs: 60_000,
+  maxRequests: 3,
+});
+
 export { createRateLimiter };
 export type { RateLimiterConfig, RateLimiter };
