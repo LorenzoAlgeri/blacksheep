@@ -5,7 +5,7 @@ import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import Link from "next/link";
 import { basePath } from "@/lib/base-path";
 import { calculateStats } from "@/lib/registration-stats";
-import type { Registration } from "@/lib/registration-stats";
+import type { Registration, RegistrationStats } from "@/lib/registration-stats";
 
 export type RegistrationRow = {
   id: string;
@@ -30,6 +30,15 @@ type Props = {
   eventId: string;
   csvHref: string;
   xlsxHref: string;
+  /**
+   * Whole-event aggregate stats, computed server-side over ALL registrations.
+   * When omitted, falls back to computing over the (paginated) `registrations`
+   * prop — kept only for backward compatibility; callers should always pass this
+   * so the stat cards reflect the full event, not the current page.
+   */
+  stats?: RegistrationStats;
+  /** Whole-event attendance count, computed server-side. Falls back to the page. */
+  attendedCount?: number;
 };
 
 const STATUS_FILTERS = [
@@ -78,6 +87,8 @@ export function RegistrationsTable({
   eventId,
   csvHref,
   xlsxHref,
+  stats: statsProp,
+  attendedCount: attendedCountProp,
 }: Props) {
   const router = useRouter();
   const pathname = usePathname();
@@ -96,8 +107,10 @@ export function RegistrationsTable({
     : registrations;
 
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
-  const stats = calculateStats(registrations as Registration[]);
-  const attendedCount = registrations.filter((r) => r.attended).length;
+  // Prefer whole-event stats from the server; fall back to the page only if
+  // they were not provided (keeps the component usable in isolation/tests).
+  const stats = statsProp ?? calculateStats(registrations as Registration[]);
+  const attendedCount = attendedCountProp ?? registrations.filter((r) => r.attended).length;
 
   async function handleToggleAttendance(subscriberId: string | undefined) {
     if (!subscriberId) return;

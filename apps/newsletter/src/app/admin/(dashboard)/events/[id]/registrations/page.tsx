@@ -6,6 +6,8 @@ import { getSupabase } from "@/lib/supabase";
 import { basePath } from "@/lib/base-path";
 import { RegistrationsTable } from "@/components/admin/RegistrationsTable";
 import type { RegistrationRow } from "@/components/admin/RegistrationsTable";
+import { calculateStats } from "@/lib/registration-stats";
+import type { Registration } from "@/lib/registration-stats";
 
 export const metadata: Metadata = {
   title: "Registrazioni — BLACK SHEEP Admin",
@@ -25,7 +27,6 @@ type PageProps = {
 };
 
 const PAGE_SIZE = 50;
-const MAX_PAGE_SIZE = 200;
 
 function formatEventDate(iso: string): string {
   return new Date(iso).toLocaleString("it-IT", {
@@ -62,27 +63,44 @@ export default async function EventRegistrationsPage({ params, searchParams }: P
   if (!eventData) notFound();
   const event = eventData as AdminEvent;
 
-  // Fetch all registrations for this event (with subscriber details)
-  // then filter by subscriber status if requested.
-  // We over-fetch to compute stats accurately for the current status filter
-  // without a second round trip: always fetch without status limit, then filter.
-  const { data: allData, error } = await supabase
-    .from("list_event_registrations")
-    .select("id, registered_at, source, subscriber:subscribers(id, email, name, status, gender)", {
-      count: "exact",
-    })
-    .eq("event_id", id)
-    .order("registered_at", { ascending: false })
-    .range(0, MAX_PAGE_SIZE - 1);
+  // Fetch ALL registrations for this event (with subscriber details), paginating
+  // past PostgREST's per-request row cap. We need the full set — not a single
+  // page — so the stat cards reflect the whole event, not just the visible page.
+  const CHUNK = 1000;
+  const allData: RegistrationRow[] = [];
+  let fetchFrom = 0;
+  let error: { message: string } | null = null;
+  for (;;) {
+    const { data, error: pageError } = await supabase
+      .from("list_event_registrations")
+      .select("id, registered_at, source, subscriber:subscribers(id, email, name, status, gender)")
+      .eq("event_id", id)
+      .order("registered_at", { ascending: false })
+      .range(fetchFrom, fetchFrom + CHUNK - 1);
+    if (pageError) {
+      error = pageError;
+      break;
+    }
+    const rows = (data ?? []) as unknown as RegistrationRow[];
+    allData.push(...rows);
+    if (rows.length < CHUNK) break;
+    fetchFrom += CHUNK;
+  }
 
   if (error) {
     console.error("[ADMIN_REG_PAGE] fetch error:", error.message);
   }
 
-  // Fetch attendance data for this event
+  // Fetch attendance data for this event (all rows, for the per-row toggles).
   const { data: attendanceData } = await supabase
     .from("event_attendance")
     .select("subscriber_id, attended_at")
+    .eq("event_id", id);
+
+  // Whole-event attendance count (exact, server-side) for the "Presenti" card.
+  const { count: attendedCount } = await supabase
+    .from("event_attendance")
+    .select("subscriber_id", { count: "exact", head: true })
     .eq("event_id", id);
 
   const attendanceMap = new Map(
@@ -97,6 +115,10 @@ export default async function EventRegistrationsPage({ params, searchParams }: P
     attended: r.subscriber ? attendanceMap.has(r.subscriber.id) : false,
     attended_at: r.subscriber ? (attendanceMap.get(r.subscriber.id) ?? null) : null,
   }));
+
+  // Whole-event aggregate stats (over ALL registrations, ignoring the status
+  // filter and pagination) so the stat cards show the real event totals.
+  const stats = calculateStats(all as unknown as Registration[]);
 
   // Filter by status client-side (server-side, but within the component)
   const filtered =
@@ -150,6 +172,8 @@ export default async function EventRegistrationsPage({ params, searchParams }: P
         eventId={id}
         csvHref={csvHref}
         xlsxHref={xlsxHref}
+        stats={stats}
+        attendedCount={attendedCount ?? 0}
       />
     </div>
   );

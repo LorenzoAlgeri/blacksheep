@@ -82,4 +82,27 @@ describe("RegistrationsTable", () => {
     // Should not crash and email should be visible
     expect(screen.getAllByText("test@example.com").length).toBeGreaterThan(0);
   });
+
+  it("uses server-provided full-event stats, not the paginated page (bug: counter capped at page size)", () => {
+    // The visible page holds only 2 rows, but the event has 137 registrations.
+    // The stat cards must reflect the whole event (137 / 42 present), not the page (2).
+    render(
+      <RegistrationsTable
+        {...baseProps}
+        registrations={[
+          makeReg({ status: "confirmed" }, "r1"),
+          makeReg({ status: "confirmed" }, "r2"),
+        ]}
+        total={137}
+        stats={{ total: 137, confirmed: 120, pending: 17, women: 60, men: 70, womenConfirmed: 55 }}
+        attendedCount={42}
+      />,
+    );
+    // "Totale" card shows 137 (not 2)
+    expect(screen.getByText("137")).toBeDefined();
+    // "Presenti" card shows 42 (not the 0 attended in the 2-row page)
+    expect(screen.getByText("42")).toBeDefined();
+    // "Confermati" card shows 120 (not 2)
+    expect(screen.getByText("120")).toBeDefined();
+  });
 });
