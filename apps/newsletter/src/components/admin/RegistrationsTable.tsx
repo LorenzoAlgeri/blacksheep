@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import Link from "next/link";
+import { Ticket } from "lucide-react";
 import { basePath } from "@/lib/base-path";
 import { calculateStats } from "@/lib/registration-stats";
 import type { Registration, RegistrationStats } from "@/lib/registration-stats";
@@ -20,6 +21,8 @@ export type RegistrationRow = {
     status: string | null;
     gender: string | null;
   } | null;
+  /** Total events this subscriber has registered for, across ALL events (all-time). */
+  eventCount?: number | null;
 };
 
 type Props = {
@@ -56,6 +59,21 @@ function formatDate(iso: string | null): string {
     hour: "2-digit",
     minute: "2-digit",
   });
+}
+
+function EventCountBadge({ count }: { count?: number | null }) {
+  if (typeof count !== "number") return null;
+  const label = `Iscrizioni a eventi totali: ${count}`;
+  return (
+    <span
+      title={label}
+      aria-label={label}
+      className="inline-flex items-center gap-1 rounded-full bg-bs-cream/10 px-2 py-0.5 font-body text-[10px] text-bs-cream/70"
+    >
+      <Ticket size={11} aria-hidden="true" />
+      {count}
+    </span>
+  );
 }
 
 function GenderLabel({ gender }: { gender: string | null }) {
@@ -261,7 +279,10 @@ export function RegistrationsTable({
           <div className="flex flex-col gap-3 sm:hidden">
             {visibleRegistrations.map((reg) => (
               <div key={reg.id} className="bg-bs-cream/5 rounded-lg p-4 space-y-1.5">
-                <p className="font-body text-sm text-bs-cream">{reg.subscriber?.email ?? "—"}</p>
+                <div className="flex flex-wrap items-center gap-2">
+                  <p className="font-body text-sm text-bs-cream">{reg.subscriber?.email ?? "—"}</p>
+                  <EventCountBadge count={reg.eventCount} />
+                </div>
                 {reg.subscriber?.name && (
                   <p className="font-body text-xs text-bs-cream/50">{reg.subscriber.name}</p>
                 )}
@@ -320,7 +341,12 @@ export function RegistrationsTable({
               <tbody>
                 {visibleRegistrations.map((reg) => (
                   <tr key={reg.id} className="border-b border-bs-cream/5">
-                    <td className="py-2 pr-4 text-bs-cream">{reg.subscriber?.email ?? "—"}</td>
+                    <td className="py-2 pr-4 text-bs-cream">
+                      <span className="inline-flex items-center gap-2">
+                        {reg.subscriber?.email ?? "—"}
+                        <EventCountBadge count={reg.eventCount} />
+                      </span>
+                    </td>
                     <td className="py-2 pr-4 text-bs-cream/60">{reg.subscriber?.name ?? "—"}</td>
                     <td className="py-2 pr-4">
                       <GenderLabel gender={reg.subscriber?.gender ?? null} />

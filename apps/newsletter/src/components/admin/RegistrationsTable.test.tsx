@@ -83,6 +83,19 @@ describe("RegistrationsTable", () => {
     expect(screen.getAllByText("test@example.com").length).toBeGreaterThan(0);
   });
 
+  it("shows a per-subscriber total event-registration count badge", () => {
+    const reg: RegistrationRow = { ...makeReg({}, "r1"), eventCount: 3 };
+    render(<RegistrationsTable {...baseProps} registrations={[reg]} />);
+    // Badge is present (mobile + desktop) with an explanatory title and the number.
+    expect(screen.getAllByTitle(/Iscrizioni a eventi/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText("3").length).toBeGreaterThan(0);
+  });
+
+  it("does not render the count badge when eventCount is missing", () => {
+    render(<RegistrationsTable {...baseProps} registrations={[makeReg({}, "r1")]} />);
+    expect(screen.queryAllByTitle(/Iscrizioni a eventi/i)).toHaveLength(0);
+  });
+
   it("uses server-provided full-event stats, not the paginated page (bug: counter capped at page size)", () => {
     // The visible page holds only 2 rows, but the event has 137 registrations.
     // The stat cards must reflect the whole event (137 / 42 present), not the page (2).

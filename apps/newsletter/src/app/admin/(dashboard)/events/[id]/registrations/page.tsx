@@ -8,6 +8,8 @@ import { RegistrationsTable } from "@/components/admin/RegistrationsTable";
 import type { RegistrationRow } from "@/components/admin/RegistrationsTable";
 import { calculateStats } from "@/lib/registration-stats";
 import type { Registration } from "@/lib/registration-stats";
+import { tallyEventCounts } from "@/lib/registration-counts";
+import type { RegistrationCountRow } from "@/lib/registration-counts";
 
 export const metadata: Metadata = {
   title: "Registrazioni — BLACK SHEEP Admin",
@@ -110,10 +112,39 @@ export default async function EventRegistrationsPage({ params, searchParams }: P
     ]),
   );
 
+  // Per-subscriber total event registrations (all-time, every event). Fetched
+  // for just the subscribers on this event, in id-chunks with pagination.
+  const subscriberIds = [
+    ...new Set(allData.map((r) => r.subscriber?.id).filter((v): v is string => !!v)),
+  ];
+  const countRows: RegistrationCountRow[] = [];
+  const ID_CHUNK = 200;
+  for (let i = 0; i < subscriberIds.length; i += ID_CHUNK) {
+    const idChunk = subscriberIds.slice(i, i + ID_CHUNK);
+    let countFrom = 0;
+    for (;;) {
+      const { data: cData, error: countError } = await supabase
+        .from("list_event_registrations")
+        .select("subscriber_id")
+        .in("subscriber_id", idChunk)
+        .range(countFrom, countFrom + CHUNK - 1);
+      if (countError) {
+        console.error("[ADMIN_REG_PAGE] count fetch error:", countError.message);
+        break;
+      }
+      const rows = (cData ?? []) as RegistrationCountRow[];
+      countRows.push(...rows);
+      if (rows.length < CHUNK) break;
+      countFrom += CHUNK;
+    }
+  }
+  const eventCounts = tallyEventCounts(countRows);
+
   const all: RegistrationRow[] = ((allData ?? []) as unknown as RegistrationRow[]).map((r) => ({
     ...r,
     attended: r.subscriber ? attendanceMap.has(r.subscriber.id) : false,
     attended_at: r.subscriber ? (attendanceMap.get(r.subscriber.id) ?? null) : null,
+    eventCount: r.subscriber ? (eventCounts.get(r.subscriber.id) ?? 0) : null,
   }));
 
   // Whole-event aggregate stats (over ALL registrations, ignoring the status
