@@ -31,7 +31,7 @@ vi.mock("@/lib/supabase", () => {
     const originalEq = b.eq;
     b.eq = vi.fn((...args) => {
       // Return a thenable so await works on the chain
-      const result = originalEq(...args);
+      const result = originalEq(...args) as object;
       return Object.assign(result, {
         then: (resolve: (v: unknown) => unknown) =>
           Promise.resolve({ data: null, error: state.deleteError ?? null }).then(resolve),
